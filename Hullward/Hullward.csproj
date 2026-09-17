@@ -5,4 +5,11 @@
     <RootNamespace>Hullward</RootNamespace>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <!-- 测试项目独立于游戏程序集：排除 tests/ 目录 -->
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+    <EmbeddedResource Remove="tests/**" />
+    <None Remove="tests/**" />
+  </ItemGroup>
 </Project>
