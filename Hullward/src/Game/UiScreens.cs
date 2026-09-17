@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using Hullward.Domain.Save;
+using Hullward.Domain.WorldGen;
 
 namespace Hullward.Game;
 
@@ -167,6 +168,99 @@ public static class UiScreens
 
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
         box.AddChild(ActionButton("返回", onBack, new Color("9aa7c0")));
+        root.AddChild(box);
+        return root;
+    }
+
+    /// <summary>星图（规格 §4）：母舰居中，任务节点散点分布。</summary>
+    public static Control Starmap(StarMap map, Action<StarMapNode> onPick)
+    {
+        Control root = Fullscreen();
+
+        // 标题区
+        var header = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        header.SetAnchorsPreset(Control.LayoutPreset.TopWide);
+        header.OffsetTop = 24;
+        var title = new Label
+        {
+            Text = $"星图 · 第 {map.Chapter} 章（母舰 Lv.{map.MothershipLevel}）",
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        title.AddThemeFontSizeOverride("font_size", 30);
+        title.AddThemeColorOverride("font_color", new Color(TitleColor));
+        header.AddChild(title);
+        var hint = new Label
+        {
+            Text = "选择任务出击 · 无论成败，返回后星图将全部重随机",
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        hint.AddThemeFontSizeOverride("font_size", 15);
+        hint.AddThemeColorOverride("font_color", new Color(SubColor));
+        header.AddChild(hint);
+        root.AddChild(header);
+
+        // 母舰居中
+        var mothership = new Label
+        {
+            Text = "◆ 母舰",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        mothership.AddThemeFontSizeOverride("font_size", 18);
+        mothership.AddThemeColorOverride("font_color", new Color("ffe08a"));
+        mothership.Position = new Vector2(460, 300);
+        root.AddChild(mothership);
+
+        // 任务节点（平面散点）
+        foreach (StarMapNode node in map.Nodes)
+        {
+            var btn = new Button
+            {
+                Text = node.IsBoss ? "☠ BOSS" : $"清剿 ★{node.DangerStars}",
+                CustomMinimumSize = new Vector2(node.IsBoss ? 120 : 96, node.IsBoss ? 56 : 44),
+                Position = new Vector2(480 + node.X - 48, 260 + node.Y - 22),
+                MouseFilter = Control.MouseFilterEnum.Stop
+            };
+            btn.AddThemeFontSizeOverride("font_size", node.IsBoss ? 18 : 15);
+            Color c = node.IsBoss ? new Color("ff3b6b") : new Color(node.DangerStars >= 4 ? "ff6b4a" : "4da6ff");
+            btn.AddThemeColorOverride("font_color", node.IsBoss ? new Color("ffffff") : new Color("10131f"));
+            btn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = c, CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            btn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = c.Lightened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            btn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = c.Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            btn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+            var info = new Label
+            {
+                Text = $"强度 {node.Strength}",
+                Position = new Vector2(480 + node.X - 30, 260 + node.Y + (node.IsBoss ? 34 : 24)),
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            info.AddThemeFontSizeOverride("font_size", 12);
+            info.AddThemeColorOverride("font_color", new Color(SubColor));
+            root.AddChild(info);
+            StarMapNode picked = node;
+            btn.Pressed += () => onPick(picked);
+            root.AddChild(btn);
+        }
+
+        return root;
+    }
+
+    /// <summary>任务结算（规格 §4.3）：无论成败消耗一次时间，返回星图重随机。</summary>
+    public static Control Settlement(bool victory, string lootSummary, string missionSummary, Action onReturn)
+    {
+        Control root = Fullscreen();
+        var box = CenterBox();
+        box.AddChild(Title(victory ? "任务完成" : "远征失败"));
+        box.AddChild(Info(missionSummary, victory ? TitleColor : "ff6b4a"));
+        box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+        if (!string.IsNullOrEmpty(lootSummary))
+        {
+            box.AddChild(Info(lootSummary));
+        }
+        box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+        box.AddChild(Info("无论成败，此次出击已消耗一次时间 —— 返回后星图将全部重随机", SubColor));
+        box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 16) });
+        box.AddChild(ActionButton("返回星图", onReturn, victory ? new Color("6ee06e") : new Color("4da6ff")));
         root.AddChild(box);
         return root;
     }

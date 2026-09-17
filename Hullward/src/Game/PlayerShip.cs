@@ -34,6 +34,9 @@ public partial class PlayerShip : CharacterBody2D
     /// <summary>当前船体耐久（域层数据）。</summary>
     public int Hull => ShipStats.Hull;
 
+    /// <summary>舰船被击毁（任务失败判定，由 Main 接管结算）。</summary>
+    public event Action? Died;
+
     public override void _Ready()
     {
         AddChild(MakeCamera());
@@ -116,8 +119,8 @@ public partial class PlayerShip : CharacterBody2D
         if (ShipStats.IsDestroyed)
         {
             ShipStats.ResetCombatState();
-            Position = Vector2.Zero;
-            GD.Print("PlayerShip destroyed - respawning at origin");
+            Died?.Invoke();
+            GD.Print("PlayerShip destroyed - mission failed");
         }
     }
 

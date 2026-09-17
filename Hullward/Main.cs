@@ -8,21 +8,27 @@ using Hullward.Domain.Loot;
 using Hullward.Domain.Modules;
 using Hullward.Domain.Save;
 using Hullward.Domain.Ships;
+using Hullward.Domain.WorldGen;
 using Hullward.Game;
 
 namespace Hullward;
 
 /// <summary>
-/// Hullward 入口节点：
-/// 4 星域推进（清怪跃迁 → 难度/掉落随区提升 → Boss 波次）、
-/// 拾取 → 背包 → 自动装配（属性实时生效）、F5 存档 / F9 读档（JSON）。
+/// Hullward 入口节点（UI 规格 v0.2 任务制循环）：
+/// 主菜单 → 命名/选档 → 星图（随机任务） → 任务战斗 → 结算 → 星图全重随机。
+/// 章节随母舰等级解锁；任务完成获得母舰经验；F5 存档 / F9 读档（文件制+命名制）。
 /// </summary>
 public partial class Main : Node
 {
-    private enum GameState { Menu, Naming, Starmap, Battle }
+    private enum GameState { Menu, Naming, Starmap, Battle, Settlement }
 
-    [Export] public int ZoneLevel = 1;
     [Export] public float JumpDelay = 2.5f;
+
+    /// <summary>当前章节（= 母舰等级，1-4）。</summary>
+    public int ZoneLevel => Math.Clamp(_mothershipLevel, 1, 4);
+
+    /// <summary>母舰经验：每 3 点升 1 级。</summary>
+    public const int ExpPerLevel = 3;
 
     private readonly LootTable _loot = new();
     private readonly Random _rng = new();
@@ -34,10 +40,9 @@ public partial class Main : Node
     private HUD _hud = null!;
     private bool _waveActive;
     private float _jumpTimer;
-    private bool _victory;
     private int _modulesPicked;
 
-    // UI 流程（UI 规格 v0.2：主菜单 → 命名/选档 → 星图 → 战斗）
+    // UI 流程（主菜单 → 命名/选档 → 星图 → 战斗 → 结算）
     private GameState _state = GameState.Menu;
     private CanvasLayer _uiLayer = null!;
     private string _namingError = "";
@@ -46,15 +51,25 @@ public partial class Main : Node
     private SaveService _saveService = null!;
     private string _captainName = "captain";
 
+    // 星图 / 任务
+    private StarMap _starMap = null!;
+    private StarMapNode? _currentTask;
+    private int _mothershipLevel = 1;
+    private int _mothershipExp;
+    private int _pendingHull;
+    private int _taskStartAlloy;
+    private int _taskStartModules;
+    private bool _taskIsBoss;
+
     public override void _Ready()
     {
         GD.Print("Hullward bootstrap OK - Godot C# pipeline ready");
         _saveService = new SaveService(ProjectSettings.GlobalizePath("user://saves"));
 
-        // 像素星空背景（按星域变色）
+        // 像素星空背景（按章节变色）
         _background = new ColorRect
         {
-            Color = ZoneColor(1),
+            Color = ZoneColor(ZoneLevel),
             Size = new Vector2(5000, 5000),
             Position = new Vector2(-2500, -2500)
         };
@@ -76,10 +91,10 @@ public partial class Main : Node
 
         string qState = _player.SkillQ.IsReady ? "就绪" : $"{_player.SkillQ.Remaining:0.0}s";
         string eState = _player.SkillE.IsReady ? "就绪" : $"{_player.SkillE.Remaining:0.0}s";
-        string zoneLabel = _victory ? "已通关" : $"星域 {ZoneLevel}/4";
+        string task = _taskIsBoss ? "BOSS 讨伐" : $"清剿任务（剩余 {_targets.Count}）";
 
         _hud.UpdateStatus(
-            $"{zoneLabel}  |  耐久 {_player.ShipStats.Hull}  护盾 {_player.ShipStats.Shield}/{_player.ShipStats.MaxShield}" +
+            $"[第{ZoneLevel}章·{task}]  耐久 {_player.ShipStats.Hull}  护盾 {_player.ShipStats.Shield}/{_player.ShipStats.MaxShield}" +
             $"  |  火力 {_player.ShipStats.Firepower:0}  |  Q过载炮[{qState}]  E护盾[{eState}]" +
             $"  |  合金 {_inventory.Alloy}  模块 {_modulesPicked}  |  F5存 F9读");
     }
@@ -91,14 +106,14 @@ public partial class Main : Node
             return;
         }
 
-        // 清怪 → 短暂延迟 → 跃迁下一星域
-        if (_waveActive && _targets.Count == 0 && !_victory)
+        // 清怪 → 短暂延迟 → 任务胜利结算
+        if (_waveActive && _targets.Count == 0)
         {
             _jumpTimer += (float)delta;
             if (_jumpTimer >= JumpDelay)
             {
                 _jumpTimer = 0f;
-                AdvanceZone();
+                ShowSettlement(true);
             }
         }
     }
@@ -122,7 +137,7 @@ public partial class Main : Node
         }
     }
 
-    // ---------- UI 流程（UI 规格 v0.2 §1-3） ----------
+    // ---------- UI 流程（UI 规格 v0.2 §1-4） ----------
 
     private void ClearUi()
     {
@@ -153,6 +168,16 @@ public partial class Main : Node
         _uiLayer.AddChild(UiScreens.SaveList(_saveService.List(), OnSavePicked, ShowMenu));
     }
 
+    private void ShowStarmap()
+    {
+        ClearUi();
+        _state = GameState.Starmap;
+        _background.Color = ZoneColor(ZoneLevel);
+        _starMap = new StarMapGenerator().Generate(ZoneLevel, _mothershipLevel, _rng);
+        _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked));
+        GD.Print($"星图就绪: 第{_starMap.Chapter}章 母舰Lv{_mothershipLevel} {_starMap.Nodes.Count} 个任务");
+    }
+
     private void OnNewGame()
     {
         _namingError = "";
@@ -178,26 +203,54 @@ public partial class Main : Node
         _captainName = name;
         _inventory = new Inventory();
         _modulesPicked = 0;
-        ZoneLevel = 1;
-        StartBattle(false);
+        _mothershipLevel = 1;
+        _mothershipExp = 0;
+        _pendingHull = 0;
+        ShowStarmap();
     }
 
     private void OnSavePicked(string name)
     {
+        SaveData? data = _saveService.Load(name);
+        if (data == null)
+        {
+            GD.Print($"存档 {name} 读取失败，返回主菜单");
+            ShowMenu();
+            return;
+        }
+
         _captainName = name;
-        StartBattle(true);
+        _modulesPicked = data.ModulesPicked;
+        _mothershipLevel = Math.Clamp(data.MothershipLevel, 1, 4);
+        _mothershipExp = data.MothershipExp;
+        _pendingHull = data.PlayerHull;
+        _inventory = new Inventory();
+        _inventory.AddAlloy(data.Alloy);
+        foreach (var module in data.Modules)
+        {
+            _inventory.AddModule(new ModuleDrop(module.Slot, module.Rarity));
+        }
+        GD.Print($"已读档: 章节 {ZoneLevel}, 母舰 Lv{_mothershipLevel}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}");
+        ShowStarmap();
     }
 
     private void OnQuit() => GetTree().Quit();
 
-    private void StartBattle(bool loadExisting)
+    private void OnTaskPicked(StarMapNode node)
+    {
+        _currentTask = node;
+        _taskIsBoss = node.IsBoss;
+        StartBattle();
+    }
+
+    private void StartBattle()
     {
         ClearUi();
         _state = GameState.Battle;
-        _victory = false;
         _jumpTimer = 0f;
 
         _player = new PlayerShip { Position = Vector2.Zero };
+        _player.Died += () => ShowSettlement(false);
         AddChild(_player);
 
         _enemies = new Node2D { Name = "Enemies" };
@@ -206,64 +259,97 @@ public partial class Main : Node
         _hud = new HUD();
         AddChild(_hud);
 
-        if (loadExisting)
+        // 应用读档耐久
+        if (_pendingHull > 0)
         {
-            LoadGame();
+            _player.ShipStats.ResetCombatState();
+            _player.ShipStats.Hull = Math.Max(1, _pendingHull);
+            _pendingHull = 0;
+        }
+        ShipFitting.AutoEquipBest(_player.ShipStats, _inventory);
+
+        _taskStartAlloy = _inventory.Alloy;
+        _taskStartModules = _modulesPicked;
+        SpawnWave();
+        GD.Print($"任务开始: 章节{ZoneLevel} 强度{_currentTask!.Strength} Boss={_taskIsBoss} 敌舰 {_targets.Count}");
+    }
+
+    // ---------- 任务结算 ----------
+
+    private void ShowSettlement(bool victory)
+    {
+        if (_state != GameState.Battle)
+        {
+            return; // 防重复结算
+        }
+        ClearUi();
+        _state = GameState.Settlement;
+
+        int alloyGain = _inventory.Alloy - _taskStartAlloy;
+        int moduleGain = _modulesPicked - _taskStartModules;
+        string missionSummary = _taskIsBoss
+            ? $"BOSS 讨伐 — 第 {ZoneLevel} 章守关旗舰"
+            : $"清剿任务 — 强度 {_currentTask!.Strength}（危险 ★{_currentTask.DangerStars}）";
+
+        string lootText;
+        if (victory)
+        {
+            lootText = $"战利品：模块 ×{moduleGain}　合金 +{alloyGain}";
+            int expGain = _taskIsBoss ? 2 : 1;
+            _mothershipExp += expGain;
+            int oldLevel = _mothershipLevel;
+            while (_mothershipExp >= ExpPerLevel)
+            {
+                _mothershipExp -= ExpPerLevel;
+                _mothershipLevel++;
+            }
+            if (_mothershipLevel > oldLevel)
+            {
+                lootText += $"\n◆ 母舰升级 Lv.{oldLevel} → Lv.{_mothershipLevel}（章节解锁）";
+            }
+            else
+            {
+                lootText += $"\n母舰经验 +{expGain}（{_mothershipExp}/{ExpPerLevel}）";
+            }
         }
         else
         {
-            SpawnWave();
-        }
-        GD.Print($"World ready: 1 player ship, {_targets.Count} enemies, zone {ZoneLevel}");
-    }
-
-    // ---------- 星域推进 ----------
-
-    private void AdvanceZone()
-    {
-        if (ZoneLevel >= 4)
-        {
-            _victory = true;
-            GD.Print("=== 通关！坍缩禁区已肃清，深空暗骸战役结束 ===");
-            return;
+            lootText = "舰长阵亡，远征记录保留 —— 残骸已回收";
         }
 
-        ZoneLevel++;
-        _background.Color = ZoneColor(ZoneLevel);
-        GD.Print($"=== 跃迁到星域 {ZoneLevel}（难度提升） ===");
-        SpawnWave();
+        _uiLayer.AddChild(UiScreens.Settlement(victory, lootText, missionSummary, ShowStarmap));
+        GD.Print($"结算: 胜利={victory} 合金+{alloyGain} 模块+{moduleGain} 母舰Lv{_mothershipLevel}");
     }
+
+    // ---------- 波次生成（按任务强度） ----------
 
     private void SpawnWave()
     {
         ClearEnemies();
 
-        switch (ZoneLevel)
+        int strength = _currentTask!.Strength;
+        if (_taskIsBoss)
         {
-            case 1:
-                AddEnemies(() => new ReconDrone(), 3, new Color("3ec6ff"), new Vector2(24, 24));
-                AddEnemies(() => new RaiderShip(), 2, new Color("ff6b4a"), new Vector2(34, 18));
-                AddEnemies(() => new HeavyFortress(), 1, new Color("b74aff"), new Vector2(42, 42));
-                break;
-            case 2:
-                AddEnemies(() => new ReconDrone(), 4, new Color("3ec6ff"), new Vector2(24, 24));
-                AddEnemies(() => new RaiderShip(), 3, new Color("ff6b4a"), new Vector2(34, 18));
-                AddEnemies(() => new HeavyFortress(), 2, new Color("b74aff"), new Vector2(42, 42));
-                break;
-            case 3:
-                AddEnemies(() => new ReconDrone(), 5, new Color("3ec6ff"), new Vector2(24, 24));
-                AddEnemies(() => new RaiderShip(), 4, new Color("ff6b4a"), new Vector2(34, 18));
-                AddEnemies(() => new HeavyFortress(), 2, new Color("b74aff"), new Vector2(42, 42));
-                break;
-            case 4:
-                AddEnemies(() => new GuardianBoss(), 1, new Color("ff3b6b"), new Vector2(64, 64));
-                AddEnemies(() => new ReconDrone(), 4, new Color("3ec6ff"), new Vector2(24, 24));
-                break;
+            AddEnemies(() => new GuardianBoss(), 1, new Color("ff3b6b"), new Vector2(64, 64));
+            AddEnemies(() => new ReconDrone(), 2, new Color("3ec6ff"), new Vector2(24, 24));
+            AddEnemies(() => new RaiderShip(), 2, new Color("ff6b4a"), new Vector2(34, 18));
+        }
+        else
+        {
+            // 强度 → 敌人构成（侦察/突击/重甲 ≈ 4:3:2）
+            int recon = Math.Max(1, strength * 4 / 9);
+            int raider = Math.Max(1, strength * 3 / 9);
+            int heavy = Math.Max(0, strength * 2 / 9);
+            AddEnemies(() => new ReconDrone(), recon, new Color("3ec6ff"), new Vector2(24, 24));
+            AddEnemies(() => new RaiderShip(), raider, new Color("ff6b4a"), new Vector2(34, 18));
+            if (heavy > 0)
+            {
+                AddEnemies(() => new HeavyFortress(), heavy, new Color("b74aff"), new Vector2(42, 42));
+            }
         }
 
         _player.SetTargets(_targets);
         _waveActive = true;
-        GD.Print($"星域 {ZoneLevel} 波次就绪: {_targets.Count} 敌舰");
     }
 
     private void AddEnemies(Func<EnemyShip> factory, int count, Color color, Vector2 size)
@@ -290,9 +376,12 @@ public partial class Main : Node
 
     private void ClearEnemies()
     {
-        foreach (var node in _enemies.GetChildren().OfType<EnemyDrone>())
+        if (_enemies != null)
         {
-            node.QueueFree();
+            foreach (var node in _enemies.GetChildren().OfType<EnemyDrone>())
+            {
+                node.QueueFree();
+            }
         }
         _targets.Clear();
     }
@@ -311,10 +400,10 @@ public partial class Main : Node
 
     private static Color ZoneColor(int zone) => zone switch
     {
-        1 => new Color("0b1c2c"), // 安全：深蓝
-        2 => new Color("1a1030"), // 争议：深紫
-        3 => new Color("301018"), // 无人深空：暗红
-        _ => new Color("0a0a0f")  // 坍缩禁区：黑
+        1 => new Color("0b1c2c"), // 第1章 航标：深蓝
+        2 => new Color("1a1030"), // 第2章 星港：深紫
+        3 => new Color("301018"), // 第3章 深空：暗红
+        _ => new Color("0a0a0f")  // 终章 坍缩：黑
     };
 
     // ---------- 掉落 / 背包 / 装配 ----------
@@ -370,14 +459,16 @@ public partial class Main : Node
             ZoneLevel = ZoneLevel,
             Alloy = _inventory.Alloy,
             PlayerHull = _player.ShipStats.Hull,
-            ModulesPicked = _modulesPicked
+            ModulesPicked = _modulesPicked,
+            MothershipLevel = _mothershipLevel,
+            MothershipExp = _mothershipExp
         };
         foreach (var module in _inventory.Modules)
         {
             data.Modules.Add(new ModuleDropData { Slot = module.Slot, Rarity = module.Rarity });
         }
         _saveService.Save(_captainName, data);
-        GD.Print($"已存档 -> {_saveService.SavePathFor(_captainName)} (星域 {data.ZoneLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count})");
+        GD.Print($"已存档 -> {_saveService.SavePathFor(_captainName)} (章节 {data.ZoneLevel}, 母舰 Lv{data.MothershipLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count})");
     }
 
     private void LoadGame()
@@ -385,28 +476,20 @@ public partial class Main : Node
         SaveData? data = _saveService.Load(_captainName);
         if (data == null)
         {
-            GD.Print("无存档，按 F5 可创建");
+            GD.Print("无存档");
             return;
         }
-
-        ZoneLevel = Math.Clamp(data.ZoneLevel, 1, 4);
-        _modulesPicked = data.ModulesPicked;
-        _inventory = new Inventory();
+        _mothershipLevel = Math.Clamp(data.MothershipLevel, 1, 4);
+        _mothershipExp = data.MothershipExp;
         _inventory.AddAlloy(data.Alloy);
         foreach (var module in data.Modules)
         {
             _inventory.AddModule(new ModuleDrop(module.Slot, module.Rarity));
         }
-
         _player.ShipStats.ResetCombatState();
         _player.ShipStats.Hull = Math.Max(1, data.PlayerHull);
         ShipFitting.AutoEquipBest(_player.ShipStats, _inventory);
-        _player.Position = Vector2.Zero;
-        _victory = false;
-        _background.Color = ZoneColor(ZoneLevel);
-        SpawnWave();
-
-        GD.Print($"已读档: 星域 {ZoneLevel}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 火力 {_player.ShipStats.Firepower}");
+        GD.Print($"战斗中读档: 章节 {ZoneLevel}, 合金 {_inventory.Alloy}, 火力 {_player.ShipStats.Firepower}");
     }
 
     // ---------- 环境 ----------
