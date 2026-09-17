@@ -18,7 +18,11 @@ public partial class EnemyDrone : Node2D, ITargetable
 
     private Color _baseColor;
     private float _flashTimer;
+    private float _attackCooldown;
     private ColorRect _visual = null!;
+
+    private const float AttackRange = 45f;
+    private const float AttackInterval = 0.8f;
 
     public float X => Ship.X;
     public float Y => Ship.Y;
@@ -57,6 +61,19 @@ public partial class EnemyDrone : Node2D, ITargetable
             if (_flashTimer <= 0f)
             {
                 _visual.Color = _baseColor;
+            }
+        }
+
+        // 近身攻击玩家（按域层火力）
+        _attackCooldown -= (float)delta;
+        if (Player != null && _attackCooldown <= 0f)
+        {
+            float dx = Player.Position.X - Position.X;
+            float dy = Player.Position.Y - Position.Y;
+            if (dx * dx + dy * dy < AttackRange * AttackRange)
+            {
+                Player.TakeDamage(Math.Max(1, (int)Ship.Firepower));
+                _attackCooldown = AttackInterval;
             }
         }
 

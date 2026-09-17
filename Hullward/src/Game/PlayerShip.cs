@@ -17,16 +17,22 @@ public partial class PlayerShip : CharacterBody2D
     [Export] public float ProjectileSpeed = 520f;
     [Export] public float WorldHalfWidth = 960f;
     [Export] public float WorldHalfHeight = 540f;
+    [Export] public int MaxHull = 100;
 
     private readonly TargetingSystem _targeting = new();
     private readonly List<ITargetable> _targets = new();
     private float _fireCooldown;
+    private float _hitFlashTimer;
+
+    /// <summary>当前船体耐久（受击扣减，归零重生）。</summary>
+    public int Hull { get; private set; }
 
     public override void _Ready()
     {
+        Hull = MaxHull;
         AddChild(MakeCamera());
         AddChild(MakeShipVisual());
-        GD.Print($"PlayerShip ready - speed {MoveSpeed}, dmg {CannonDamage}");
+        GD.Print($"PlayerShip ready - speed {MoveSpeed}, dmg {CannonDamage}, hull {MaxHull}");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -56,6 +62,31 @@ public partial class PlayerShip : CharacterBody2D
         {
             FireAt(target);
             _fireCooldown = FireInterval;
+        }
+
+        // 受击闪红恢复
+        if (_hitFlashTimer > 0f)
+        {
+            _hitFlashTimer -= (float)delta;
+            if (_hitFlashTimer <= 0f)
+            {
+                Modulate = Colors.White;
+            }
+        }
+    }
+
+    /// <summary>敌舰攻击入口：扣耐久 + 闪红反馈；归零重生。</summary>
+    public void TakeDamage(int damage)
+    {
+        Hull = Math.Max(0, Hull - damage);
+        Modulate = new Color("ff6b6b");
+        _hitFlashTimer = 0.12f;
+        GD.Print($"PlayerShip hit -{damage}, hull {Hull}");
+        if (Hull <= 0)
+        {
+            Hull = MaxHull;
+            Position = Vector2.Zero;
+            GD.Print("PlayerShip destroyed - respawning at origin");
         }
     }
 

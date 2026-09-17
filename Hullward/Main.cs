@@ -48,6 +48,7 @@ public partial class Main : Node
         AddChild(enemies);
 
         SpawnWave(enemies, player);
+        player.SetTargets(_targets); // 关键：注入索敌目标，主炮才能开火
         GD.Print($"World ready: 1 player ship, {_targets.Count} enemies, zone {ZoneLevel}");
     }
 
