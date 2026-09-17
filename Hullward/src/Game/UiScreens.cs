@@ -199,7 +199,8 @@ public static class UiScreens
         header.AddChild(hint);
         root.AddChild(header);
 
-        // 母舰居中
+        // 母舰居中（窗口 960×540，节点半径带映射缩放 0.55）
+        const float scale = 0.55f;
         var mothership = new Label
         {
             Text = "◆ 母舰",
@@ -208,7 +209,7 @@ public static class UiScreens
         };
         mothership.AddThemeFontSizeOverride("font_size", 18);
         mothership.AddThemeColorOverride("font_color", new Color("ffe08a"));
-        mothership.Position = new Vector2(460, 300);
+        mothership.Position = new Vector2(440, 258);
         root.AddChild(mothership);
 
         // 任务节点（平面散点）
@@ -218,7 +219,7 @@ public static class UiScreens
             {
                 Text = node.IsBoss ? "☠ BOSS" : $"清剿 ★{node.DangerStars}",
                 CustomMinimumSize = new Vector2(node.IsBoss ? 120 : 96, node.IsBoss ? 56 : 44),
-                Position = new Vector2(480 + node.X - 48, 260 + node.Y - 22),
+                Position = new Vector2(480 + node.X * scale - 48, 270 + node.Y * scale - 22),
                 MouseFilter = Control.MouseFilterEnum.Stop
             };
             btn.AddThemeFontSizeOverride("font_size", node.IsBoss ? 18 : 15);
@@ -231,7 +232,7 @@ public static class UiScreens
             var info = new Label
             {
                 Text = $"强度 {node.Strength}",
-                Position = new Vector2(480 + node.X - 30, 260 + node.Y + (node.IsBoss ? 34 : 24)),
+                Position = new Vector2(480 + node.X * scale - 30, 270 + node.Y * scale + (node.IsBoss ? 34 : 24)),
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
             info.AddThemeFontSizeOverride("font_size", 12);
