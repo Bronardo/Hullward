@@ -59,6 +59,9 @@ public sealed partial class MothershipPanel : Control
 
     public override void _Ready()
     {
+        // 面板自身满屏（与 UiScreens.Fullscreen 一致）：挂到 CanvasLayer 时若无锚点，
+        // rect 保持 0x0，FullRect 子节点随之塌缩 → 内容区空白（LD B5 复现修复）。
+        SetAnchorsPreset(Control.LayoutPreset.FullRect);
         ShipFittingService.ApplyToShip(_ship, _slots); // 进入母舰即同步属性（维修/预览口径一致）
         Rebuild();
     }
@@ -96,7 +99,7 @@ public sealed partial class MothershipPanel : Control
         var contentHost = new PanelContainer
         {
             MouseFilter = Control.MouseFilterEnum.Stop,
-            CustomMinimumSize = new Vector2(0, 0)
+            CustomMinimumSize = new Vector2(0, 200) // 保证内容区最小可见高度（防容器分配 0 高度）
         };
         contentHost.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color("151a28"), CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6 });
         contentHost.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
