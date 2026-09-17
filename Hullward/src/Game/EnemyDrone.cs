@@ -1,66 +1,74 @@
 using System;
 using Godot;
 using Hullward.Domain.Combat;
+using Hullward.Domain.Enemies;
 
 namespace Hullward.Game;
 
 /// <summary>
-/// 暗骸侦察机（表现层占位）：实现 ITargetable 供自动索敌与受击。
-/// 简单巡游移动；AI 状态机在 Day 3 迭代接入 EnemyShip 域层次。
+/// 敌舰表现层节点（渲染桥接）：
+/// 持有域层 EnemyShip 对象（多态行为在域层），每帧调用 UpdateBehavior 并同步位置。
+/// 视觉/受击反馈留在表现层；逻辑全部走域层（ULO2/ULO3 证据）。
 /// </summary>
-public partial class EnemyDrone : CharacterBody2D, ITargetable
+public partial class EnemyDrone : Node2D, ITargetable
 {
-    [Export] public float PatrolSpeed = 70f;
-    [Export] public int MaxHull = 30;
-    [Export] public float WorldHalfWidth = 960f;
-    [Export] public float WorldHalfHeight = 540f;
-
-    private Vector2 _patrolDir = Vector2.Right;
-
-    /// <summary>击毁通知（由 Main 订阅，用于清理索敌列表）。</summary>
+    public EnemyShip Ship { get; private set; } = null!;
+    public PlayerShip? Player { get; set; }
     public event Action<EnemyDrone>? Destroyed;
 
-    public float X => Position.X;
-    public float Y => Position.Y;
-    public int Hull { get; private set; }
+    private Color _baseColor;
+    private float _flashTimer;
+    private ColorRect _visual = null!;
 
-    public override void _Ready()
+    public float X => Ship.X;
+    public float Y => Ship.Y;
+    public int Hull => Ship.Hull;
+
+    /// <summary>注入域层敌舰 + 视觉配色（按船型由 Main 决定尺寸）。</summary>
+    public void Setup(EnemyShip ship, Color color, Vector2 visualSize)
     {
-        Hull = MaxHull;
-        // 简单像素绘制：方块 + 边框色（深空暗骸蓝）
-        var body = new ColorRect
+        Ship = ship;
+        _baseColor = color;
+
+        _visual = new ColorRect
         {
-            Size = new Vector2(24, 24),
-            Color = new Color("3ec6ff"),
-            Position = new Vector2(-12, -12)
+            Size = visualSize,
+            Color = color,
+            Position = -visualSize / 2f
         };
-        AddChild(body);
+        AddChild(_visual);
     }
 
     public override void _PhysicsProcess(double delta)
     {
-        Velocity = _patrolDir * PatrolSpeed;
-        MoveAndSlide();
-
-        // 碰世界边界折返
-        if (Position.X > WorldHalfWidth - 20 || Position.X < -WorldHalfWidth + 20)
+        if (Player != null)
         {
-            _patrolDir = new Vector2(-_patrolDir.X, _patrolDir.Y);
+            Ship.UpdateBehavior((float)delta, Player.Position.X, Player.Position.Y);
+            Position = new Vector2(Ship.X, Ship.Y);
         }
-        if (Position.Y > WorldHalfHeight - 20 || Position.Y < -WorldHalfHeight + 20)
+
+        if (_flashTimer > 0f)
         {
-            _patrolDir = new Vector2(_patrolDir.X, -_patrolDir.Y);
+            _flashTimer -= (float)delta;
+            if (_flashTimer <= 0f)
+            {
+                _visual.Color = _baseColor;
+            }
+        }
+
+        if (Ship.IsDestroyed)
+        {
+            Destroyed?.Invoke(this);
+            QueueFree();
         }
     }
 
     public void TakeHit(int damage)
     {
-        Hull = Math.Max(0, Hull - damage);
-        GD.Print($"EnemyDrone hit -{damage}, hull {Hull}");
-        if (Hull <= 0)
-        {
-            Destroyed?.Invoke(this);
-            QueueFree();
-        }
+        Ship.TakeHit(damage);
+        GD.Print($"{Ship.Name} hit -{damage}, hull {Ship.Hull}");
+        // 受击反馈：闪白
+        _visual.Color = new Color("ffffff");
+        _flashTimer = 0.1f;
     }
 }
