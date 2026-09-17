@@ -35,11 +35,14 @@ public partial class Main : Node
     private bool _victory;
     private int _modulesPicked;
 
-    private string SavePath => ProjectSettings.GlobalizePath("user://save.json");
+    // 存档（UI 规格 v0.2 §3：文件制 + 命名制；Step 2 接入主菜单命名后替换固定名）
+    private SaveService _saveService = null!;
+    private string _captainName = "captain";
 
     public override void _Ready()
     {
         GD.Print("Hullward bootstrap OK - Godot C# pipeline ready");
+        _saveService = new SaveService(ProjectSettings.GlobalizePath("user://saves"));
 
         // 像素星空背景（按星域变色）
         _background = new ColorRect
@@ -269,13 +272,13 @@ public partial class Main : Node
         {
             data.Modules.Add(new ModuleDropData { Slot = module.Slot, Rarity = module.Rarity });
         }
-        SaveService.Save(data, SavePath);
-        GD.Print($"已存档 -> {SavePath} (星域 {data.ZoneLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count})");
+        _saveService.Save(_captainName, data);
+        GD.Print($"已存档 -> {_saveService.SavePathFor(_captainName)} (星域 {data.ZoneLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count})");
     }
 
     private void LoadGame()
     {
-        SaveData? data = SaveService.Load(SavePath);
+        SaveData? data = _saveService.Load(_captainName);
         if (data == null)
         {
             GD.Print("无存档，按 F5 可创建");
