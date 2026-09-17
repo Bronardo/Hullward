@@ -273,6 +273,25 @@ public partial class Main : Node
         _state = GameState.Battle;
         _jumpTimer = 0f;
 
+        // 清理上一场战斗节点（防重入累积多艘玩家船：现象=多船同步移动、仅最新一艘有索敌开火）
+        if (_player != null && IsInstanceValid(_player))
+        {
+            _player.QueueFree();
+        }
+        if (_hud != null && IsInstanceValid(_hud))
+        {
+            _hud.QueueFree();
+        }
+        if (_enemies != null && IsInstanceValid(_enemies))
+        {
+            foreach (var node in _enemies.GetChildren())
+            {
+                node.QueueFree();
+            }
+            _enemies.QueueFree();
+        }
+        _targets.Clear();
+
         _player = new PlayerShip { Position = Vector2.Zero };
         _player.Died += () => ShowSettlement(false);
         AddChild(_player);
