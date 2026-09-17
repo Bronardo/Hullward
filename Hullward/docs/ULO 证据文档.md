@@ -1,0 +1,143 @@
+# Hullward《深空暗骸》ULO1-5 证据文档
+
+> 版本：v1.0 ｜ 日期：2026-09-17 ｜ 用途：SIT771 "Something Awesome" 7.4H 任务最终证据
+> 对应作业要求：ULO1（代码规范/调试定位问题）ULO2（抽象/封装/继承/多态）ULO3（实现并测试）ULO4（图表文字表达设计）ULO5（证据论证）
+
+---
+
+## ULO1：代码规范与调试能力
+
+### 证据 1：工程日志（秒级时间戳 + 问题修复全链路）
+
+`工程日志.md`（vault 侧）全程记录，格式强制 `YYYY-MM-DD HH:mm:ss`，每条问题按 **现象 → 排查 → 根因 → 修复** 四段式记录。摘录：
+
+| 时间 | 问题 | 根因 | 修复 |
+|---|---|---|---|
+| Day2 | 敌舰不可见 | 生成范围超出相机视口 | 收进视口（`318f24f`） |
+| Day2 | 敌舰仍不可见 | 域对象初始位置 (0,0) 未同步节点，首帧被拽回原点 | Setup 时同步域位置（`1ef5924`） |
+| Day2 | 无战斗发生 | 重构漏调 `SetTargets`，索敌列表为空；敌人无攻击逻辑 | 注入目标 + 近身攻击（`d728233`） |
+| Day3 | 装配白装不加护盾 | `AutoEquipBest` 中 `Rarity > Common` 恒假，最低品质永不装配 | 单测复现 + `bestIndex < 0` 兜底（`06cc140`） |
+| Day4 | 导出 exe 崩溃 | solution 位置不符合 Godot .NET 导出预期，C# 程序集未发布 | solution 移入项目目录（`64c65f9`） |
+
+### 证据 2：代码规范
+
+- 统一命名：PascalCase 类型/方法、camelCase 局部、`_camelCase` 字段；XML doc 注释覆盖全部公开类型（见 `src/Domain/**`）
+- 分层铁律：Domain 零 Godot 依赖（`using Godot` 在 `src/Domain` 下出现次数 = 0）；表现层只做桥接
+- `dotnet build` 全程 0 error 0 warning；`dotnet test` 53/53 通过
+
+### 证据 3：Git 工作流
+
+9 个功能提交，每个提交单一时序逻辑（scaffold → 设计 → 域层 → 表现层 → 修复 → 导出），见 `git log --oneline`。
+
+---
+
+## ULO2：抽象 / 封装 / 继承 / 多态
+
+### 继承层次（ShipBase 抽象基类 + 4 派生）
+
+```csharp
+public abstract class ShipBase : IShip          // 抽象：船体共性
+public sealed class ScoutShip : ShipBase        // 轻巡：2 槽
+public sealed class AssaultShip : ShipBase      // 突击：3 槽
+public sealed class Battleship : ShipBase       // 战列：4 槽
+public sealed class FortressShip : ShipBase     // 要塞：5 槽
+```
+
+### 接口多态（IShipModule / ITargetable）
+
+```csharp
+public interface IShipModule { void ApplyEffect(ShipBase ship); }
+public sealed class WeaponModule : IShipModule  // 火力加成
+public sealed class ArmorModule : IShipModule   // 护盾/抗性加成
+
+public interface ITargetable { float X; float Y; int Hull; void TakeHit(int); }
+// EnemyDrone（表现层节点）实现 ITargetable，桥接域层 EnemyShip
+```
+
+### 行为多态（EnemyShip 抽象方法，杜绝 if-else）
+
+```csharp
+public abstract class EnemyShip : ShipBase, ITargetable
+{
+    public abstract void UpdateBehavior(float dt, float playerX, float playerY);
+}
+public sealed class ReconDrone : EnemyShip    // 高速直线追击
+public sealed class RaiderShip : EnemyShip     // 保持中距环形游走
+public sealed class HeavyFortress : EnemyShip  // 慢速重甲逼近
+public sealed class GuardianBoss : EnemyShip   // 全图索敌 Boss
+```
+`Main.SpawnWave` 用 `Func<EnemyShip>` 工厂注入不同子类，无任何分支判断行为。
+
+### 抽象技能（ActiveSkill）
+
+```csharp
+public abstract class ActiveSkill { bool TryUse(PlayerContext); void Tick(float); }
+public sealed class OverdriveCannon : ActiveSkill  // Q：3× 火力直击
+public sealed class ShieldBurst : ActiveSkill      // E：回复 50% 护盾
+```
+
+### 封装
+
+- `ShipBase` 属性 `protected set` / `internal` 加成方法（`AddFirepower/AddShield/AddArmor`），外部无法篡改船体数值
+- `EnemyShip` 行为速度/索敌范围 `protected abstract`，子类决定
+- 域层状态（位置/耐久/背包/存档）与表现层渲染完全隔离
+
+---
+
+## ULO3：实现并测试
+
+### 测试统计
+
+```
+dotnet test Hullward.sln
+Passed! - Failed: 0, Passed: 53, Skipped: 0, Total: 53
+```
+
+| 测试类 | 覆盖系统 | 用例数 |
+|---|---|---|
+| StarSystemGeneratorTests | 星域生成规则/连通/种子复现 | 7 |
+| TargetingSystemTests | 自动索敌优先级/失效过滤 | 5 |
+| CombatCalculatorTests | 伤害公式/护盾吸收/下限 | 7 |
+| EnemyShipTests | 多态行为/Boss/区域缩放 | 9 |
+| LootTableTests | 品质权重/合金/确定性 | 7 |
+| InventoryAndFittingTests | 背包/装配/拆解/重置 | 9 |
+| SaveServiceTests | JSON 存档往返 | 3 |
+| ActiveSkillTests | 技能施放/冷却/上限 | 6 |
+
+### 测试要点
+
+- 全部为纯 C# 域层测试，不依赖 Godot 运行时（`dotnet test` 直接跑）
+- 随机逻辑注入 `Random` 种子保证确定性；边界情况（空列表/槽满/护盾封顶/最低品质）均有用例
+- 回归价值实证：`AutoEquip_ArmorModule_IncreasesShield` 捕获了"白装永不装配"的真实 bug
+
+---
+
+## ULO4：图表与文字表达设计
+
+设计文档 `docs/设计文档.md` v1.0 包含：
+- 分层架构表（Domain / Presentation 职责与依赖）
+- Mermaid 类图（ShipBase/EnemyShip/模块/服务完整关系）
+- Godot 场景树（Main → StarSystemView/PlayerShipView/Enemies/UI）
+- 系统实现顺序表（迭代 1-4 映射）+ 验收标准（Day 2/3/4 可勾选清单）
+- 战斗结算公式、掉落品质权重表、星域难度缩放公式
+
+---
+
+## ULO5：证据论证
+
+| 声明 | 证据位置 |
+|---|---|
+| 代码规范良好、构建无警告 | `dotnet build` 0W/0E；`工程日志.md` |
+| 调试定位问题能力 | `工程日志.md` 5 条"现象→根因→修复"记录 |
+| 抽象/继承/多态运用 | `src/Domain/Ships/ShipBase.cs`、`src/Domain/Enemies/EnemyShip.cs`、`src/Domain/Combat/ActiveSkill.cs`、`src/Domain/Modules/IShipModule.cs` |
+| 实现并测试 | `tests/Hullward.Tests/` 8 个测试类 53 用例全绿 |
+| 设计表达能力 | `docs/设计文档.md`（类图/场景树/表格/公式） |
+| 完整可交付 | release exe `build/Hullward.exe`（含 .NET 运行时，启动验证通过） |
+| 可复现 | `git log` 9 提交；README 运行/测试命令 |
+
+---
+
+## 相关
+- [[设计文档]]
+- [[工程日志]]
+- [[游戏策划文档]]
