@@ -30,6 +30,10 @@ public partial class EnemyDrone : Node2D, ITargetable
         Ship = ship;
         _baseColor = color;
 
+        // 域对象是行为真源：用节点出生点初始化域位置，避免首帧被覆盖回原点
+        ship.X = Position.X;
+        ship.Y = Position.Y;
+
         _visual = new ColorRect
         {
             Size = visualSize,
