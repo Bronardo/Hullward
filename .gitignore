@@ -1,0 +1,19 @@
+# Godot 4
+.godot/
+*.translation
+*.uid.bak
+
+# .NET
+bin/
+obj/
+*.user
+
+# IDE
+.vscode/
+.idea/
+
+# OS / sync
+Thumbs.db
+Desktop.ini
+~$*
+*.tmp
