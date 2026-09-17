@@ -96,7 +96,7 @@ public partial class Main : Node
         _hud.UpdateStatus(
             $"[第{ZoneLevel}章·{task}]  耐久 {_player.ShipStats.Hull}  护盾 {_player.ShipStats.Shield}/{_player.ShipStats.MaxShield}" +
             $"  |  火力 {_player.ShipStats.Firepower:0}  |  Q过载炮[{qState}]  E护盾[{eState}]" +
-            $"  |  合金 {_inventory.Alloy}  模块 {_modulesPicked}  |  F5存 F9读");
+            $"  |  合金 {_inventory.Alloy}  模块 {_modulesPicked}  |  F5快存 F9读档·结算自动保存");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -315,8 +315,11 @@ public partial class Main : Node
         else
         {
             lootText = "舰长阵亡，远征记录保留 —— 残骸已回收";
+            _player.ShipStats.Hull = 1; // 失败存档耐久按最低记录
         }
 
+        SaveGame(); // 任务结算自动存档（远征记录留存，重开可继续）
+        lootText += "\n✓ 远征记录已自动保存";
         _uiLayer.AddChild(UiScreens.Settlement(victory, lootText, missionSummary, ShowStarmap));
         GD.Print($"结算: 胜利={victory} 合金+{alloyGain} 模块+{moduleGain} 母舰Lv{_mothershipLevel}");
     }
