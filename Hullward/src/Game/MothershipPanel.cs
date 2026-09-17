@@ -199,30 +199,53 @@ public sealed partial class MothershipPanel : Control
         var box = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         box.AddThemeConstantOverride("separation", 8);
 
-        // 属性预览
+        // 属性预览（含词缀加成属性，LD Sprint 3 §4.6 B3：词缀明细可见）
         ShipFittingService.ApplyToShip(_ship, _slots);
+        var affixStats = new List<string> { $"火力 {_ship.Firepower:0}", $"护盾 {_ship.Shield}/{_ship.MaxShield}", $"耐久 {_ship.Hull}/{_ship.MaxHull}", $"攻速 ×{_ship.FireRateMultiplier:0.00}", $"抗性 {_ship.Armor}" };
+        if (_ship.MagicFind > 0)
+        {
+            affixStats.Add($"MF {_ship.MagicFind}");
+        }
+        if (_ship.CritChance > 0f)
+        {
+            affixStats.Add($"暴击 {_ship.CritChance * 100f:0}%");
+        }
+        if (_ship.CritDamage > 2f)
+        {
+            affixStats.Add($"暴伤 ×{_ship.CritDamage:0.00}");
+        }
+        if (_ship.DamageReductionPct > 0f)
+        {
+            affixStats.Add($"减伤 {_ship.DamageReductionPct * 100f:0}%");
+        }
+        if (_ship.ThornsPct > 0f)
+        {
+            affixStats.Add($"反伤 {_ship.ThornsPct * 100f:0}%");
+        }
         var stats = new Label
         {
-            Text = $"属性预览 — 火力 {_ship.Firepower:0}｜护盾 {_ship.Shield}/{_ship.MaxShield}｜耐久 {_ship.Hull}/{_ship.MaxHull}" +
-                   $"｜攻速 ×{_ship.FireRateMultiplier:0.00}｜抗性 {_ship.Armor}｜MF {_ship.MagicFind}",
+            Text = "属性预览（基础 + 词缀 = 最终）｜ " + string.Join(" ｜ ", affixStats),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         stats.AddThemeFontSizeOverride("font_size", 16);
         stats.AddThemeColorOverride("font_color", new Color(TitleColor));
         box.AddChild(stats);
 
-        // 槽位列表（点击选中/卸下）
+        // 槽位列表（点击选中/卸下；显示词缀数，LD §4.6 B3）
         var slotRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         slotRow.AddThemeConstantOverride("separation", 8);
         for (int i = 0; i < _slots.Count; i++)
         {
             int slotIndex = i;
             ModuleDrop? drop = _slots[i];
-            string label = drop == null ? $"[{i + 1}] 空槽" : $"[{i + 1}] {drop.Name}";
+            string label = drop == null
+                ? $"[{i + 1}] 空槽"
+                : $"[{i + 1}] {drop.Name}" + (drop.Affixes.Count > 0 ? $"（{drop.Affixes.Count}词缀）" : "");
             var btn = new Button
             {
                 Text = label,
-                CustomMinimumSize = new Vector2(190, 44),
+                CustomMinimumSize = new Vector2(230, 44),
                 MouseFilter = Control.MouseFilterEnum.Stop
             };
             btn.AddThemeFontSizeOverride("font_size", 14);
@@ -282,6 +305,22 @@ public sealed partial class MothershipPanel : Control
         presetRow.AddChild(saveB); presetRow.AddChild(applyB);
         box.AddChild(slotRow);
         box.AddChild(presetRow);
+
+        // 选中槽位词缀明细（LD §4.6 B3：装配界面可见词缀名称+数值）
+        if (_selectedSlot >= 0 && _slots[_selectedSlot] != null)
+        {
+            ModuleDrop selected = _slots[_selectedSlot]!;
+            var detail = new Label
+            {
+                Text = $"◆ 槽位 {_selectedSlot + 1}：{selected.Name}\n{selected.AffixSummary()}",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            detail.AddThemeFontSizeOverride("font_size", 14);
+            detail.AddThemeColorOverride("font_color", RarityColor(selected.Rarity));
+            box.AddChild(detail);
+        }
+
         box.AddChild(new Label { Text = "点击槽位选中 → 在下方背包模块列表点击模块装入该槽（未选中则装入首个空槽）", HorizontalAlignment = HorizontalAlignment.Left, MouseFilter = Control.MouseFilterEnum.Ignore });
 
         // 背包模块列表（点击装入）

@@ -98,9 +98,21 @@ public partial class Main : Node
         string eState = _player.SkillE.IsReady ? "就绪" : $"{_player.SkillE.Remaining:0.0}s";
         string task = _taskIsBoss ? "BOSS 讨伐" : $"清剿任务（剩余 {_targets.Count}）";
 
+        var ship = _player.ShipStats;
+        string affixHud = ship.CritChance > 0f ? $"  暴击 {ship.CritChance * 100f:0}%" : "";
+        if (ship.ThornsPct > 0f)
+        {
+            affixHud += $"  反伤 {ship.ThornsPct * 100f:0}%";
+        }
+        if (ship.DamageReductionPct > 0f)
+        {
+            affixHud += $"  减伤 {ship.DamageReductionPct * 100f:0}%";
+        }
+
         _hud.UpdateStatus(
-            $"[第{ZoneLevel}章·{task}]  耐久 {_player.ShipStats.Hull}  护盾 {_player.ShipStats.Shield}/{_player.ShipStats.MaxShield}" +
-            $"  |  火力 {_player.ShipStats.Firepower:0}  |  Q过载炮[{qState}]  E护盾[{eState}]" +
+            $"[第{ZoneLevel}章·{task}]  耐久 {ship.Hull}  护盾 {ship.Shield}/{ship.MaxShield}" +
+            $"  |  火力 {ship.Firepower:0}{affixHud}" +
+            $"  |  Q过载炮[{qState}]  E护盾[{eState}]" +
             $"  |  合金 {_inventory.Alloy}  模块 {_modulesPicked}  |  F5快存 F9读档·结算自动保存");
     }
 
@@ -490,15 +502,28 @@ public partial class Main : Node
             // 新模块自动装入空槽并即时应用到出战船体
             AutoFit.AutoEquipIntoSlots(_inventory, _equippedSlots);
             ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
+            // 掉落反馈（LD Sprint 3 §4.6 B4）：品质 + 模块名 + 词缀数
+            _hud.ShowToast($"获得 {RarityLabel(pickup.ModuleData.Rarity)} {pickup.ModuleData.Name}（{pickup.ModuleData.Affixes.Count} 词缀）");
             GD.Print($"拾取模块: {pickup.ModuleData.Name} | 装配后火力 {_player.ShipStats.Firepower}, 护盾 {_player.ShipStats.Shield}");
         }
         else
         {
             int alloy = ExtractAlloyAmount(pickup.Label);
             _inventory.AddAlloy(alloy);
+            _hud.ShowToast($"获得 合金 ×{alloy}");
             GD.Print($"拾取合金×{alloy} | 合金总量 {_inventory.Alloy}");
         }
     }
+
+    private static string RarityLabel(ItemRarity rarity) => rarity switch
+    {
+        ItemRarity.Common => "白色",
+        ItemRarity.Magic => "蓝色",
+        ItemRarity.Rare => "黄色",
+        ItemRarity.Set => "绿色",
+        ItemRarity.Ancient => "太古",
+        _ => "未知"
+    };
 
     private static int ExtractAlloyAmount(string label)
     {

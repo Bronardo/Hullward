@@ -135,6 +135,63 @@ public class Sprint3AffixAndEnemiesTests
         Assert.Equal(enemyInitial - thorns, enemy.Hull);
     }
 
+    // ---------- B1/B2 端到端：掉落词缀 → 装配生效（LD §4.6 补丁） ----------
+
+    [Fact]
+    public void RollModule_MagicOrBetter_AlwaysHasAffixes()
+    {
+        var loot = new LootTable();
+        var rng = new Random(20260918);
+        for (int i = 0; i < 200; i++)
+        {
+            ModuleDrop? drop = loot.RollModule(2, rng); // 第 2 章（含蓝+）
+            Assert.NotNull(drop);
+            if (drop.Rarity != ItemRarity.Common)
+            {
+                Assert.NotEmpty(drop.Affixes); // 蓝+ 必带词缀（B1）
+            }
+            else
+            {
+                Assert.Empty(drop.Affixes); // 白装无词缀
+            }
+        }
+    }
+
+    [Fact]
+    public void RollModule_ThenCreateAndEquip_ChangesShipStats()
+    {
+        var loot = new LootTable();
+        var rng = new Random(20260918);
+        for (int i = 0; i < 200; i++)
+        {
+            ModuleDrop? drop = loot.RollModule(2, rng);
+            Assert.NotNull(drop);
+            if (drop.Affixes.Count == 0)
+            {
+                continue;
+            }
+
+            var ship = new ScoutShip { Shield = 0 };
+            IShipModule module = ShipFitting.CreateModule(drop);
+            float beforeCrit = ship.CritChance;
+            float beforeReduction = ship.DamageReductionPct;
+            float beforeThorns = ship.ThornsPct;
+            module.ApplyEffect(ship);
+
+            bool anyAffixEffect = ship.CritChance > beforeCrit
+                || ship.CritDamage > 2f
+                || ship.DamageReductionPct > beforeReduction
+                || ship.ThornsPct > beforeThorns
+                || ship.FireRateMultiplier > 1f
+                || ship.MagicFind > 0
+                || ship.Armor > 0
+                || ship.Shield > 0;
+            Assert.True(anyAffixEffect, $"词缀装配后应至少一项属性变化（{string.Join(",", drop.Affixes.Select(a => a.Name))}）");
+            return;
+        }
+        Assert.Fail("200 次掉落未产生任何带词缀模块");
+    }
+
     // ---------- P0-2 远程炮艇（GunboatShip） ----------
 
     [Fact]
