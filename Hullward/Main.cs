@@ -19,6 +19,8 @@ namespace Hullward;
 /// </summary>
 public partial class Main : Node
 {
+    private enum GameState { Menu, Naming, Starmap, Battle }
+
     [Export] public int ZoneLevel = 1;
     [Export] public float JumpDelay = 2.5f;
 
@@ -35,7 +37,12 @@ public partial class Main : Node
     private bool _victory;
     private int _modulesPicked;
 
-    // 存档（UI 规格 v0.2 §3：文件制 + 命名制；Step 2 接入主菜单命名后替换固定名）
+    // UI 流程（UI 规格 v0.2：主菜单 → 命名/选档 → 星图 → 战斗）
+    private GameState _state = GameState.Menu;
+    private CanvasLayer _uiLayer = null!;
+    private string _namingError = "";
+
+    // 存档（文件制 + 命名制：主角名为唯一标识）
     private SaveService _saveService = null!;
     private string _captainName = "captain";
 
@@ -47,29 +54,22 @@ public partial class Main : Node
         // 像素星空背景（按星域变色）
         _background = new ColorRect
         {
-            Color = ZoneColor(ZoneLevel),
+            Color = ZoneColor(1),
             Size = new Vector2(5000, 5000),
             Position = new Vector2(-2500, -2500)
         };
         AddChild(_background);
         SpawnStars();
 
-        _player = new PlayerShip { Position = Vector2.Zero };
-        AddChild(_player);
-
-        _enemies = new Node2D { Name = "Enemies" };
-        AddChild(_enemies);
-
-        _hud = new HUD();
-        AddChild(_hud);
-
-        SpawnWave();
-        GD.Print($"World ready: 1 player ship, {_targets.Count} enemies, zone {ZoneLevel}");
+        _uiLayer = new CanvasLayer { Name = "UILayer" };
+        AddChild(_uiLayer);
+        ShowMenu();
+        GD.Print("UI ready: 主菜单");
     }
 
     public override void _Process(double delta)
     {
-        if (_hud == null)
+        if (_state != GameState.Battle || _hud == null)
         {
             return;
         }
@@ -86,6 +86,11 @@ public partial class Main : Node
 
     public override void _PhysicsProcess(double delta)
     {
+        if (_state != GameState.Battle)
+        {
+            return;
+        }
+
         // 清怪 → 短暂延迟 → 跃迁下一星域
         if (_waveActive && _targets.Count == 0 && !_victory)
         {
@@ -100,6 +105,10 @@ public partial class Main : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (_state != GameState.Battle)
+        {
+            return;
+        }
         if (@event is InputEventKey key && key.Pressed && !key.Echo)
         {
             if (key.Keycode == Key.F5)
@@ -111,6 +120,101 @@ public partial class Main : Node
                 LoadGame();
             }
         }
+    }
+
+    // ---------- UI 流程（UI 规格 v0.2 §1-3） ----------
+
+    private void ClearUi()
+    {
+        foreach (var child in _uiLayer.GetChildren())
+        {
+            child.QueueFree();
+        }
+    }
+
+    private void ShowMenu()
+    {
+        ClearUi();
+        _state = GameState.Menu;
+        _uiLayer.AddChild(UiScreens.Menu(OnNewGame, ShowSaveList, OnQuit));
+    }
+
+    private void ShowNaming()
+    {
+        ClearUi();
+        _state = GameState.Naming;
+        _uiLayer.AddChild(UiScreens.Naming(_namingError, OnNameConfirmed, ShowMenu));
+    }
+
+    private void ShowSaveList()
+    {
+        ClearUi();
+        _state = GameState.Naming; // 选档属菜单层
+        _uiLayer.AddChild(UiScreens.SaveList(_saveService.List(), OnSavePicked, ShowMenu));
+    }
+
+    private void OnNewGame()
+    {
+        _namingError = "";
+        ShowNaming();
+    }
+
+    private void OnNameConfirmed(string name)
+    {
+        name = name.Trim();
+        if (!SaveNameValidator.IsValid(name))
+        {
+            _namingError = "名字需为 1-12 个字符，且不含 / \\ : * ? \" < > |";
+            ShowNaming();
+            return;
+        }
+        if (_saveService.Exists(name))
+        {
+            _namingError = "这个名字已存在，请换一个（或选继续游戏）";
+            ShowNaming();
+            return;
+        }
+
+        _captainName = name;
+        _inventory = new Inventory();
+        _modulesPicked = 0;
+        ZoneLevel = 1;
+        StartBattle(false);
+    }
+
+    private void OnSavePicked(string name)
+    {
+        _captainName = name;
+        StartBattle(true);
+    }
+
+    private void OnQuit() => GetTree().Quit();
+
+    private void StartBattle(bool loadExisting)
+    {
+        ClearUi();
+        _state = GameState.Battle;
+        _victory = false;
+        _jumpTimer = 0f;
+
+        _player = new PlayerShip { Position = Vector2.Zero };
+        AddChild(_player);
+
+        _enemies = new Node2D { Name = "Enemies" };
+        AddChild(_enemies);
+
+        _hud = new HUD();
+        AddChild(_hud);
+
+        if (loadExisting)
+        {
+            LoadGame();
+        }
+        else
+        {
+            SpawnWave();
+        }
+        GD.Print($"World ready: 1 player ship, {_targets.Count} enemies, zone {ZoneLevel}");
     }
 
     // ---------- 星域推进 ----------
