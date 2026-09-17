@@ -44,6 +44,8 @@ public partial class Main : Node
             {
                 Position = new Vector2(rng.RandfRange(-700, 700), rng.RandfRange(-400, 400))
             };
+            // 击毁时从索敌列表移除，避免访问已释放对象
+            drone.Destroyed += _ => targets.Remove(drone);
             enemies.AddChild(drone);
             targets.Add(drone);
         }

@@ -37,6 +37,13 @@ public partial class Projectile : Area2D
             return;
         }
 
+        // 目标已被击毁/释放（Godot 对象）：本投射物自行消失
+        if (Target is GodotObject go && !GodotObject.IsInstanceValid(go))
+        {
+            QueueFree();
+            return;
+        }
+
         Vector2 toTarget = new Vector2(Target.X, Target.Y) - Position;
         if (toTarget.Length() < HitRadius)
         {

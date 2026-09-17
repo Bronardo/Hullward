@@ -25,11 +25,15 @@ public partial class PlayerShip : CharacterBody2D
     public override void _Ready()
     {
         AddChild(MakeCamera());
+        AddChild(MakeShipVisual());
         GD.Print($"PlayerShip ready - speed {MoveSpeed}, dmg {CannonDamage}");
     }
 
     public override void _PhysicsProcess(double delta)
     {
+        // 清理已击毁/释放的目标，避免访问 disposed 对象
+        _targets.RemoveAll(t => t is GodotObject go && !GodotObject.IsInstanceValid(go));
+
         // 方向键/WASD 移动（MVP 直接读键，避免 input map 配置风险）
         Vector2 input = Vector2.Zero;
         if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left)) input.X -= 1f;
@@ -83,5 +87,38 @@ public partial class PlayerShip : CharacterBody2D
             Zoom = new Vector2(1f, 1f)
         };
         return camera;
+    }
+
+    /// <summary>像素风玩家舰船视觉（开发期占位：主舰体 + 核心 + 炮口指示）。</summary>
+    private static Node2D MakeShipVisual()
+    {
+        var ship = new Node2D();
+
+        var hull = new ColorRect
+        {
+            Size = new Vector2(30, 22),
+            Color = new Color("7fd8be"),
+            Position = new Vector2(-15, -11)
+        };
+        ship.AddChild(hull);
+
+        var core = new ColorRect
+        {
+            Size = new Vector2(10, 10),
+            Color = new Color("ffe08a"),
+            Position = new Vector2(-5, -5)
+        };
+        ship.AddChild(core);
+
+        // 炮口方向指示（朝右）
+        var barrel = new ColorRect
+        {
+            Size = new Vector2(10, 4),
+            Color = new Color("ffffff"),
+            Position = new Vector2(15, -2)
+        };
+        ship.AddChild(barrel);
+
+        return ship;
     }
 }

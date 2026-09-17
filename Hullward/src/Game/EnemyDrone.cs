@@ -17,6 +17,9 @@ public partial class EnemyDrone : CharacterBody2D, ITargetable
 
     private Vector2 _patrolDir = Vector2.Right;
 
+    /// <summary>击毁通知（由 Main 订阅，用于清理索敌列表）。</summary>
+    public event Action<EnemyDrone>? Destroyed;
+
     public float X => Position.X;
     public float Y => Position.Y;
     public int Hull { get; private set; }
@@ -56,6 +59,7 @@ public partial class EnemyDrone : CharacterBody2D, ITargetable
         GD.Print($"EnemyDrone hit -{damage}, hull {Hull}");
         if (Hull <= 0)
         {
+            Destroyed?.Invoke(this);
             QueueFree();
         }
     }
