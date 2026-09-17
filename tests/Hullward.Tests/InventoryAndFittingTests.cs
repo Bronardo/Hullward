@@ -38,7 +38,7 @@ public class InventoryAndFittingTests
         Assert.Single(inv.Modules); // Common 被留下
         Assert.Equal(ItemRarity.Common, inv.Modules[0].Rarity);
         // 先装配的是最高品质（Ancient → +30 火力）
-        Assert.True(ship.Modules.Any(m => ((WeaponModule)m).FirepowerBonus == 30f));
+        Assert.Contains(ship.Modules, m => ((WeaponModule)m).FirepowerBonus == 30f);
     }
 
     [Fact]
