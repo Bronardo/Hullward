@@ -17,6 +17,17 @@ public sealed class Inventory
 
     public void AddAlloy(int amount) => Alloy += Math.Max(0, amount);
 
+    /// <summary>消费合金（工坊/商店）。不足返回 false。</summary>
+    public bool SpendAlloy(int amount)
+    {
+        if (amount < 0 || Alloy < amount)
+        {
+            return false;
+        }
+        Alloy -= amount;
+        return true;
+    }
+
     public bool TryRemoveModule(int index, out ModuleDrop? removed)
     {
         if (index < 0 || index >= Modules.Count)

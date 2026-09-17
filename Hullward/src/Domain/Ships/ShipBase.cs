@@ -18,6 +18,15 @@ public abstract class ShipBase : IShip
     /// <summary>护盾上限（装配/重置时同步），技能回盾与 UI 使用。</summary>
     public int MaxShield { get; private set; }
 
+    /// <summary>船体耐久上限（词缀"船体加固"扩容）。</summary>
+    public int MaxHull { get; private set; }
+
+    /// <summary>攻速倍率（词缀"急速供弹"：1.0 = 无加成，表现层攻击间隔按此缩放）。</summary>
+    public float FireRateMultiplier { get; private set; } = 1f;
+
+    /// <summary>寻宝值（词缀"打捞增效"，合金掉落加成）。</summary>
+    public int MagicFind { get; private set; }
+
     public int Armor { get; protected set; }
     public float Firepower { get; protected set; }
     public float Speed { get; protected set; }
@@ -36,6 +45,7 @@ public abstract class ShipBase : IShip
         Hull = hull;
         Shield = shield;
         MaxShield = shield;
+        MaxHull = hull;
         Armor = armor;
         Firepower = firepower;
         Speed = speed;
@@ -66,6 +76,9 @@ public abstract class ShipBase : IShip
         Hull = _baseHull;
         Shield = _baseShield;
         MaxShield = _baseShield;
+        MaxHull = _baseHull;
+        FireRateMultiplier = 1f;
+        MagicFind = 0;
         Firepower = _baseFirepower;
         foreach (var module in Modules)
         {
@@ -80,6 +93,16 @@ public abstract class ShipBase : IShip
         Shield += bonus;
         MaxShield += bonus;
     }
+
+    internal void AddMaxHull(int bonus)
+    {
+        MaxHull += bonus;
+        Hull += bonus; // 扩容同时抬升当前耐久（出战即满）
+    }
+
+    internal void AddFireRate(float multiplierBonus) => FireRateMultiplier += multiplierBonus;
+
+    internal void AddMagicFind(int bonus) => MagicFind += bonus;
 
     internal void AddArmor(int bonus) => Armor += bonus;
 }

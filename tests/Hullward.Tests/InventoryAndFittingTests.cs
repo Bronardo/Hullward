@@ -120,9 +120,10 @@ public class InventoryAndFittingTests
     [Fact]
     public void ScrapValue_MonotonicallyIncreasesWithRarity()
     {
+        // LD §4：白1/蓝3/黄8/绿15；太古不可拆（0）
         Assert.True(CraftService.ScrapValue(ItemRarity.Common) < CraftService.ScrapValue(ItemRarity.Magic));
         Assert.True(CraftService.ScrapValue(ItemRarity.Magic) < CraftService.ScrapValue(ItemRarity.Rare));
         Assert.True(CraftService.ScrapValue(ItemRarity.Rare) < CraftService.ScrapValue(ItemRarity.Set));
-        Assert.True(CraftService.ScrapValue(ItemRarity.Set) < CraftService.ScrapValue(ItemRarity.Ancient));
+        Assert.Equal(0, CraftService.ScrapValue(ItemRarity.Ancient));
     }
 }

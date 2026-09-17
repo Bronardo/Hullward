@@ -187,7 +187,7 @@ public static class UiScreens
     }
 
     /// <summary>星图（规格 §4）：母舰居中，任务节点散点分布；节点锚定窗口中心，随 resize 自适应。</summary>
-    public static Control Starmap(StarMap map, Action<StarMapNode> onPick)
+    public static Control Starmap(StarMap map, Action<StarMapNode> onPick, Action onMothership)
     {
         Control root = Fullscreen();
 
@@ -211,6 +211,25 @@ public static class UiScreens
         hint.AddThemeFontSizeOverride("font_size", 15);
         hint.AddThemeColorOverride("font_color", new Color(SubColor));
         header.AddChild(hint);
+
+        // 进入母舰仓库（底部按钮，锚定底部居中）
+        var mothershipBtn = new Button
+        {
+            Text = "⚙ 进入母舰（仓库/装配/工坊/维修/商店）",
+            CustomMinimumSize = new Vector2(360, 48),
+            MouseFilter = Control.MouseFilterEnum.Stop
+        };
+        mothershipBtn.AddThemeFontSizeOverride("font_size", 18);
+        mothershipBtn.AddThemeColorOverride("font_color", new Color("10131f"));
+        mothershipBtn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("ffe08a"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        mothershipBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("ffe08a").Lightened(0.15f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        mothershipBtn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = new Color("ffe08a").Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        mothershipBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        mothershipBtn.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
+        mothershipBtn.Position = new Vector2(-180, -64);
+        mothershipBtn.Pressed += onMothership;
+        root.AddChild(mothershipBtn);
+
         root.AddChild(header);
 
         // 节点半径带映射缩放（相对窗口中心）

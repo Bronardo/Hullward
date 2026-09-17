@@ -9,7 +9,7 @@ namespace Hullward.Game;
 /// <summary>
 /// 玩家舰船（表现层）：WASD/方向键移动，主炮自动索敌开火（域层 TargetingSystem）。
 /// 船体属性来自域层 ShipBase（ScoutShip）：耐久/护盾/火力受模块装配影响。
-/// 技能位占位（Day 5 接入 ActiveSkill）。
+/// 技能位（迭代 4 接入 ActiveSkill）。
 /// </summary>
 public partial class PlayerShip : CharacterBody2D
 {
@@ -70,7 +70,7 @@ public partial class PlayerShip : CharacterBody2D
         if (target != null && _fireCooldown <= 0f)
         {
             FireAt(target);
-            _fireCooldown = FireInterval;
+            _fireCooldown = FireInterval / Math.Max(0.2f, ShipStats.FireRateMultiplier); // 词缀"急速供弹"
         }
 
         // 受击闪红恢复

@@ -62,10 +62,47 @@ public static class ShipFitting
         }
     }
 
-    /// <summary>模块掉落 → 具体模块实现（数值随品质）。</summary>
-    public static IShipModule CreateModule(ModuleDrop drop) => drop.Slot switch
+    /// <summary>模块掉落 → 具体模块实现（数值随品质；词缀按 LD §3 并入加成）。</summary>
+    public static IShipModule CreateModule(ModuleDrop drop)
     {
-        ModuleType.Armor => new ArmorModule(drop.Name, ShieldBonus(drop.Rarity), ShieldBonus(drop.Rarity) / 5),
-        _ => new WeaponModule(drop.Name, FirepowerBonus(drop.Rarity))
-    };
+        float fp = FirepowerBonus(drop.Rarity);
+        float fr = 0f;
+        int shield = ShieldBonus(drop.Rarity);
+        int armor = ShieldBonus(drop.Rarity) / 5;
+        int hull = 0;
+        int magicFind = 0;
+
+        foreach (var affix in drop.Affixes)
+        {
+            switch (affix.Stat)
+            {
+                case AffixStat.FirepowerPercent:
+                    fp *= 1f + affix.Value / 100f;
+                    break;
+                case AffixStat.AttackSpeedPercent:
+                    fr += affix.Value / 100f;
+                    break;
+                case AffixStat.MaxShieldPercent:
+                    shield += (int)(shield * affix.Value / 100f);
+                    break;
+                case AffixStat.MaxHullPercent:
+                    hull += (int)(shield * affix.Value / 100f); // 以品质护盾为基数（口径见设计文档）
+                    break;
+                case AffixStat.ResistancePercent:
+                    armor += (int)(armor * affix.Value / 100f);
+                    break;
+                case AffixStat.MagicFind:
+                    magicFind += (int)affix.Value;
+                    break;
+            }
+        }
+
+        return drop.Slot switch
+        {
+            ModuleType.Armor => new ArmorModule(drop.Name, shield, armor, hull),
+            ModuleType.Power => new PowerModule(drop.Name),
+            ModuleType.Special => new SpecialModule(drop.Name, magicFind),
+            _ => new WeaponModule(drop.Name, fp, fr)
+        };
+    }
 }

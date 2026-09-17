@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Hullward.Domain.Modules;
 
 namespace Hullward.Domain.Loot;
@@ -13,12 +15,21 @@ public enum ItemRarity
     Ancient  // 太古
 }
 
-/// <summary>一次模块掉落结果。</summary>
+/// <summary>一次模块掉落结果（含词缀，LD 词缀表 §3）。</summary>
 public sealed class ModuleDrop
 {
     public ModuleType Slot { get; }
     public ItemRarity Rarity { get; }
     public string Name { get; }
+
+    /// <summary>词缀列表（白装为空）。</summary>
+    public List<Affix> Affixes { get; } = new();
+
+    /// <summary>洗练次数（费用递增 5×2^n，太古不可洗）。</summary>
+    public int RerollCount { get; set; }
+
+    /// <summary>本次洗练费用（LD §4：5/10/20/40…）。</summary>
+    public int RerollCost => 5 * (1 << RerollCount);
 
     public ModuleDrop(ModuleType slot, ItemRarity rarity)
     {
@@ -26,6 +37,9 @@ public sealed class ModuleDrop
         Rarity = rarity;
         Name = $"{rarity}{slot}模块";
     }
+
+    /// <summary>词缀摘要（多行，用于 UI/存档显示）。</summary>
+    public string AffixSummary() => Affixes.Count == 0 ? "（无词缀）" : string.Join("\n", Affixes.Select(a => a.Describe()));
 }
 
 /// <summary>
@@ -63,11 +77,13 @@ public sealed class LootTable
         }
 
         ModuleType slot = Slots[rng.Next(Slots.Length)];
-        return new ModuleDrop(slot, rarity);
+        var drop = new ModuleDrop(slot, rarity);
+        ModuleRoller.RollAffixes(drop, rng);
+        return drop;
     }
 
-    /// <summary>合金掉落量：随等级提升。</summary>
-    public int RollAlloy(int zoneLevel, Random rng)
+    /// <summary>合金掉落量：随等级提升；受打捞增效（MF）加成。</summary>
+    public int RollAlloy(int zoneLevel, Random rng, int magicFind = 0)
     {
         if (zoneLevel < 1 || zoneLevel > 4)
         {
@@ -80,7 +96,8 @@ public sealed class LootTable
             3 => 10,
             _ => 16
         };
-        return baseAmount + rng.Next(0, zoneLevel + 2);
+        int rolled = baseAmount + rng.Next(0, zoneLevel + 2);
+        return rolled + Math.Max(0, magicFind);
     }
 
     private static int WeightedPick(int[] weights, Random rng)

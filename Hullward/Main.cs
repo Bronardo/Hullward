@@ -20,7 +20,7 @@ namespace Hullward;
 /// </summary>
 public partial class Main : Node
 {
-    private enum GameState { Menu, Naming, Starmap, Battle, Settlement }
+    private enum GameState { Menu, Naming, Starmap, Mothership, Battle, Settlement }
 
     [Export] public float JumpDelay = 2.5f;
 
@@ -60,6 +60,11 @@ public partial class Main : Node
     private int _taskStartAlloy;
     private int _taskStartModules;
     private bool _taskIsBoss;
+
+    // 母舰内部（LD §6：装配槽位 / 配装方案 / 出战船体）
+    private ShipBase _mothershipShip = null!;
+    private List<ModuleDrop?> _equippedSlots = null!;
+    private readonly ShipPresets _presets = new();
 
     public override void _Ready()
     {
@@ -174,8 +179,21 @@ public partial class Main : Node
         _state = GameState.Starmap;
         _background.Color = ZoneColor(ZoneLevel);
         _starMap = new StarMapGenerator().Generate(ZoneLevel, _mothershipLevel, _rng);
-        _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked));
+        _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked, ShowMothership));
         GD.Print($"星图就绪: 第{_starMap.Chapter}章 母舰Lv{_mothershipLevel} {_starMap.Nodes.Count} 个任务");
+    }
+
+    /// <summary>进入母舰内部（LD §6 仓库/装配/工坊/维修/商店）。</summary>
+    private void ShowMothership()
+    {
+        ClearUi();
+        _state = GameState.Mothership;
+        ShipFittingService.ApplyToShip(_mothershipShip, _equippedSlots);
+        _uiLayer.AddChild(new MothershipPanel(
+            _inventory, _equippedSlots, _mothershipShip, _mothershipLevel, _mothershipExp, _presets, _rng,
+            onClose: ShowStarmap,
+            onChanged: () => { }));
+        GD.Print($"母舰内部: 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
     }
 
     private void OnNewGame()
@@ -206,6 +224,8 @@ public partial class Main : Node
         _mothershipLevel = 1;
         _mothershipExp = 0;
         _pendingHull = 0;
+        _mothershipShip = new ScoutShip();
+        _equippedSlots = ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
         ShowStarmap();
     }
 
@@ -224,13 +244,17 @@ public partial class Main : Node
         _mothershipLevel = Math.Clamp(data.MothershipLevel, 1, 4);
         _mothershipExp = data.MothershipExp;
         _pendingHull = data.PlayerHull;
+        _mothershipShip = new ScoutShip();
+        _equippedSlots = data.EquippedSlots.Count > 0
+            ? SaveDataMapper.ToDomainSlots(data.EquippedSlots)
+            : ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
         _inventory = new Inventory();
         _inventory.AddAlloy(data.Alloy);
         foreach (var module in data.Modules)
         {
-            _inventory.AddModule(new ModuleDrop(module.Slot, module.Rarity));
+            _inventory.AddModule(SaveDataMapper.ToDomain(module));
         }
-        GD.Print($"已读档: 章节 {ZoneLevel}, 母舰 Lv{_mothershipLevel}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}");
+        GD.Print($"已读档: 章节 {ZoneLevel}, 母舰 Lv{_mothershipLevel}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
         ShowStarmap();
     }
 
@@ -266,7 +290,9 @@ public partial class Main : Node
             _player.ShipStats.Hull = Math.Max(1, _pendingHull);
             _pendingHull = 0;
         }
-        ShipFitting.AutoEquipBest(_player.ShipStats, _inventory);
+        // 出战装配：空槽自动装入背包最优，再按槽位应用到出战船体
+        AutoFit.AutoEquipIntoSlots(_inventory, _equippedSlots);
+        ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
 
         _taskStartAlloy = _inventory.Alloy;
         _taskStartModules = _modulesPicked;
@@ -440,7 +466,9 @@ public partial class Main : Node
         {
             _modulesPicked++;
             _inventory.AddModule(pickup.ModuleData);
-            ShipFitting.AutoEquipBest(_player.ShipStats, _inventory);
+            // 新模块自动装入空槽并即时应用到出战船体
+            AutoFit.AutoEquipIntoSlots(_inventory, _equippedSlots);
+            ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
             GD.Print($"拾取模块: {pickup.ModuleData.Name} | 装配后火力 {_player.ShipStats.Firepower}, 护盾 {_player.ShipStats.Shield}");
         }
         else
@@ -472,10 +500,11 @@ public partial class Main : Node
         };
         foreach (var module in _inventory.Modules)
         {
-            data.Modules.Add(new ModuleDropData { Slot = module.Slot, Rarity = module.Rarity });
+            data.Modules.Add(SaveDataMapper.ToData(module));
         }
+        data.EquippedSlots = SaveDataMapper.ToDataSlots(_equippedSlots);
         _saveService.Save(_captainName, data);
-        GD.Print($"已存档 -> {_saveService.SavePathFor(_captainName)} (章节 {data.ZoneLevel}, 母舰 Lv{data.MothershipLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count})");
+        GD.Print($"已存档 -> {_saveService.SavePathFor(_captainName)} (章节 {data.ZoneLevel}, 母舰 Lv{data.MothershipLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count})");
     }
 
     private void LoadGame()
@@ -491,11 +520,15 @@ public partial class Main : Node
         _inventory.AddAlloy(data.Alloy);
         foreach (var module in data.Modules)
         {
-            _inventory.AddModule(new ModuleDrop(module.Slot, module.Rarity));
+            _inventory.AddModule(SaveDataMapper.ToDomain(module));
+        }
+        if (data.EquippedSlots.Count > 0)
+        {
+            _equippedSlots = SaveDataMapper.ToDomainSlots(data.EquippedSlots);
         }
         _player.ShipStats.ResetCombatState();
         _player.ShipStats.Hull = Math.Max(1, data.PlayerHull);
-        ShipFitting.AutoEquipBest(_player.ShipStats, _inventory);
+        ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
         GD.Print($"战斗中读档: 章节 {ZoneLevel}, 合金 {_inventory.Alloy}, 火力 {_player.ShipStats.Firepower}");
     }
 
