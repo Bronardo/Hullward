@@ -90,9 +90,15 @@ public partial class Main : Node
 
     private Vector2 RandomSpawnPosition()
     {
-        float x = _rng.NextSingle() * 1400f - 700f;
-        float y = _rng.NextSingle() * 800f - 400f;
-        return new Vector2(x, y);
+        // 保证开局落在相机视野内（视口约 ±640/±360），留边便于发现；不与玩家贴脸
+        Vector2 pos;
+        do
+        {
+            pos = new Vector2(
+                _rng.NextSingle() * 1000f - 500f,
+                _rng.NextSingle() * 600f - 300f);
+        } while (pos.Length() < 150f);
+        return pos;
     }
 
     private void DropLoot(Vector2 worldPosition, PlayerShip player)
