@@ -71,6 +71,10 @@ public static class ShipFitting
         int armor = ShieldBonus(drop.Rarity) / 5;
         int hull = 0;
         int magicFind = 0;
+        float critChance = 0f;
+        float critDamage = 0f;
+        float damageReduction = 0f;
+        float thorns = 0f;
 
         foreach (var affix in drop.Affixes)
         {
@@ -94,15 +98,27 @@ public static class ShipFitting
                 case AffixStat.MagicFind:
                     magicFind += (int)affix.Value;
                     break;
+                case AffixStat.CritChance:
+                    critChance += affix.Value / 100f; // 3-12% → 0.03-0.12
+                    break;
+                case AffixStat.CritDamage:
+                    critDamage += affix.Value / 100f; // 10-40% → 倍率加值
+                    break;
+                case AffixStat.DamageReduction:
+                    damageReduction += affix.Value / 100f;
+                    break;
+                case AffixStat.Thorns:
+                    thorns += affix.Value / 100f;
+                    break;
             }
         }
 
         return drop.Slot switch
         {
-            ModuleType.Armor => new ArmorModule(drop.Name, shield, armor, hull),
+            ModuleType.Armor => new ArmorModule(drop.Name, shield, armor, hull, damageReduction, thorns),
             ModuleType.Power => new PowerModule(drop.Name),
             ModuleType.Special => new SpecialModule(drop.Name, magicFind),
-            _ => new WeaponModule(drop.Name, fp, fr)
+            _ => new WeaponModule(drop.Name, fp, fr, critChance, critDamage)
         };
     }
 }

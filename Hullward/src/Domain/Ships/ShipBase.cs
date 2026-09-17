@@ -27,6 +27,38 @@ public abstract class ShipBase : IShip
     /// <summary>寻宝值（词缀"打捞增效"，合金掉落加成）。</summary>
     public int MagicFind { get; private set; }
 
+    /// <summary>暴击概率 0-1（词缀"致命一击"）。</summary>
+    public float CritChance { get; private set; }
+
+    /// <summary>暴击伤害倍率（词缀"暴击增幅"，默认 2.0）。</summary>
+    public float CritDamage { get; private set; } = 2f;
+
+    /// <summary>受击减伤 %（词缀"受击减伤"：受击后 2s 窗口内生效）。</summary>
+    public float DamageReductionPct { get; private set; }
+
+    /// <summary>反弹近身伤害 %（词缀"反伤镀层"）。</summary>
+    public float ThornsPct { get; private set; }
+
+    private float _mitigationTimer;
+
+    /// <summary>减伤窗口是否生效（受击后 2s）。</summary>
+    public bool IsMitigating => _mitigationTimer > 0f;
+
+    /// <summary>有效减伤率：窗口内取词缀值，否则 0。</summary>
+    public float EffectiveDamageReduction => IsMitigating ? DamageReductionPct : 0f;
+
+    /// <summary>受击时启动 2s 减伤窗口。</summary>
+    public void OnHit() => _mitigationTimer = 2f;
+
+    /// <summary>递减减伤窗口（表现层每帧调用）。</summary>
+    public void TickTimers(float dt)
+    {
+        if (_mitigationTimer > 0f)
+        {
+            _mitigationTimer -= dt;
+        }
+    }
+
     public int Armor { get; protected set; }
     public float Firepower { get; protected set; }
     public float Speed { get; protected set; }
@@ -79,6 +111,11 @@ public abstract class ShipBase : IShip
         MaxHull = _baseHull;
         FireRateMultiplier = 1f;
         MagicFind = 0;
+        CritChance = 0f;
+        CritDamage = 2f;
+        DamageReductionPct = 0f;
+        ThornsPct = 0f;
+        _mitigationTimer = 0f;
         Firepower = _baseFirepower;
         foreach (var module in Modules)
         {
@@ -103,6 +140,14 @@ public abstract class ShipBase : IShip
     internal void AddFireRate(float multiplierBonus) => FireRateMultiplier += multiplierBonus;
 
     internal void AddMagicFind(int bonus) => MagicFind += bonus;
+
+    internal void AddCritChance(float bonus) => CritChance = Math.Clamp(CritChance + bonus, 0f, 1f);
+
+    internal void AddCritDamage(float bonus) => CritDamage += bonus;
+
+    internal void AddDamageReduction(float bonus) => DamageReductionPct = Math.Clamp(DamageReductionPct + bonus, 0f, 0.8f);
+
+    internal void AddThorns(float bonus) => ThornsPct += bonus;
 
     internal void AddArmor(int bonus) => Armor += bonus;
 }

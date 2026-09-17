@@ -72,9 +72,15 @@ public partial class EnemyDrone : Node2D, ITargetable
             float dy = Player.Position.Y - Position.Y;
             if (dx * dx + dy * dy < AttackRange * AttackRange)
             {
-                Player.TakeDamage(Math.Max(1, (int)Ship.Firepower));
+                Player.TakeDamage(Math.Max(1, (int)Ship.Firepower), this); // 反伤镀层经 TakeDamage 反弹
                 _attackCooldown = AttackInterval;
             }
+        }
+
+        // 远程射击（LD Sprint 3 §4.2：炮艇类敌舰多态 TryFire）
+        if (Player != null && Ship.TryFire((float)delta, Player.Position.X, Player.Position.Y, out float tx, out float ty))
+        {
+            SpawnEnemyProjectile(tx, ty);
         }
 
         if (Ship.IsDestroyed)
@@ -82,6 +88,19 @@ public partial class EnemyDrone : Node2D, ITargetable
             Destroyed?.Invoke(this);
             QueueFree();
         }
+    }
+
+    private void SpawnEnemyProjectile(float targetX, float targetY)
+    {
+        var proj = new EnemyProjectile
+        {
+            Position = Position,
+            Player = Player,
+            Attacker = this,
+            Direction = (new Vector2(targetX, targetY) - Position).Normalized(),
+            Damage = Math.Max(1, (int)Ship.Firepower)
+        };
+        GetTree().CurrentScene.AddChild(proj);
     }
 
     public void TakeHit(int damage)

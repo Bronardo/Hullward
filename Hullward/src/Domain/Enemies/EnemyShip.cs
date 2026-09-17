@@ -31,6 +31,17 @@ public abstract class EnemyShip : ShipBase, ITargetable
     /// <summary>多态行为入口：子类实现各自战术。</summary>
     public abstract void UpdateBehavior(float dt, float playerX, float playerY);
 
+    /// <summary>
+    /// 远程开火入口（LD Sprint 3 §4.2：远程炮艇弹幕）。
+    /// 基类默认不开火（近战敌舰）；子类覆写：冷却到且射程内返回 true 并给出弹道目标点。
+    /// </summary>
+    public virtual bool TryFire(float dt, float playerX, float playerY, out float targetX, out float targetY)
+    {
+        targetX = 0f;
+        targetY = 0f;
+        return false;
+    }
+
     /// <summary>按星域等级缩放强度（Zone4 = 2.5× 耐久 / 1.75× 火力）。</summary>
     public void ScaleForZone(int zoneLevel)
     {
@@ -158,6 +169,72 @@ public sealed class HeavyFortress : EnemyShip
             return;
         }
         MoveToward(playerX, playerY, BehaviorSpeed, dt);
+    }
+}
+
+/// <summary>
+/// 远程炮艇（LD Sprint 3 §4.2 第 2 章新敌人）：保持中距环形游走，射程内周期性弹幕。
+/// 行为差异 = 多态扩展（TryFire 覆写），近战敌舰不受影响。
+/// </summary>
+public sealed class GunboatShip : EnemyShip
+{
+    protected override float BehaviorSpeed => 95f;
+    protected override float AggroRange => 850f;
+
+    private const float PreferredDistance = 300f;
+    private const float Deadband = 60f;
+    private const float FireRange = 620f;
+    private const float FireInterval = 1.8f;
+
+    private int _orbitDir = 1;
+    private float _fireCooldown;
+
+    public GunboatShip()
+        : base("远程炮艇", hull: 90, shield: 30, armor: 8, firepower: 9f)
+    {
+    }
+
+    public override void UpdateBehavior(float dt, float playerX, float playerY)
+    {
+        float dist = Distance(X, Y, playerX, playerY);
+        if (dist > AggroRange)
+        {
+            return;
+        }
+
+        if (dist > PreferredDistance + Deadband)
+        {
+            MoveToward(playerX, playerY, BehaviorSpeed, dt);
+        }
+        else if (dist < PreferredDistance - Deadband)
+        {
+            MoveToward(X - (playerX - X), Y - (playerY - Y), BehaviorSpeed, dt);
+        }
+        else
+        {
+            float tangentX = -(playerY - Y) * _orbitDir;
+            float tangentY = (playerX - X) * _orbitDir;
+            X += tangentX / dist * BehaviorSpeed * dt;
+            Y += tangentY / dist * BehaviorSpeed * dt;
+            ClampToWorld();
+        }
+    }
+
+    public override bool TryFire(float dt, float playerX, float playerY, out float targetX, out float targetY)
+    {
+        targetX = playerX;
+        targetY = playerY;
+        _fireCooldown -= dt;
+        if (_fireCooldown > 0f)
+        {
+            return false;
+        }
+        if (Distance(X, Y, playerX, playerY) > FireRange)
+        {
+            return false;
+        }
+        _fireCooldown = FireInterval;
+        return true;
     }
 }
 

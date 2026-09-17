@@ -1,4 +1,5 @@
 using System;
+using Hullward.Domain.Ships;
 
 namespace Hullward.Domain.Combat;
 
@@ -13,8 +14,9 @@ public interface IShip
 
 /// <summary>
 /// 战斗结算（纯 C# 域层，可单测）。
-/// 公式：命中伤害 = max(1, 火力 × 技能系数 − 抗性减免)
+/// 公式：命中伤害 = max(1, 火力 × 技能系数 − 抗性减免)；暴击 = 火力 × 暴伤倍率。
 /// 吸收顺序：护盾优先，溢出转船体耐久。
+/// 减伤：受击后 2s 窗口内按"受击减伤"词缀比例减免（LD Sprint 3 §4.1）。
 /// </summary>
 public static class CombatCalculator
 {
@@ -25,12 +27,38 @@ public static class CombatCalculator
         return Math.Max(1, raw - armorReduction);
     }
 
-    /// <summary>对目标应用伤害：护盾先吸收，溢出转耐久。</summary>
+    /// <summary>
+    /// 攻击者开火伤害结算：按暴击率判定，暴击则乘暴伤倍率（LD Sprint 3 词缀"致命一击/暴击增幅"）。
+    /// </summary>
+    public static int RollAttackDamage(ShipBase attacker, Random rng, out bool isCritical)
+    {
+        int dmg = Math.Max(1, (int)attacker.Firepower);
+        bool crit = attacker.CritChance > 0f && rng.NextDouble() < attacker.CritChance;
+        if (crit)
+        {
+            dmg = Math.Max(1, (int)(dmg * attacker.CritDamage));
+        }
+        isCritical = crit;
+        return dmg;
+    }
+
+    /// <summary>对目标应用伤害：受击减伤窗口（上次受击后 2s 内减免）+ 护盾先吸收，溢出转耐久。</summary>
     public static void ApplyHit(IShip target, int damage)
     {
         if (damage <= 0)
         {
             return;
+        }
+
+        // 受击减伤（词缀"受击减伤"）：减伤窗口 = 上次受击后 2s；本次受击后刷新窗口
+        if (target is ShipBase ship)
+        {
+            float reduction = ship.EffectiveDamageReduction;
+            if (reduction > 0f)
+            {
+                damage = Math.Max(1, (int)(damage * (1f - reduction)));
+            }
+            ship.OnHit();
         }
 
         int shieldAbsorbed = Math.Min(target.Shield, damage);

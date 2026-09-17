@@ -357,27 +357,29 @@ public partial class Main : Node
         ClearEnemies();
 
         int strength = _currentTask!.Strength;
-        if (_taskIsBoss)
+        // 波次构成域层化（WaveComposer：章节差异化规则可单测，LD Sprint 3 §4.2）
+        foreach (var entry in WaveComposer.Compose(ZoneLevel, strength, _taskIsBoss))
         {
-            AddEnemies(() => new GuardianBoss(), 1, new Color("ff3b6b"), new Vector2(64, 64));
-            AddEnemies(() => new ReconDrone(), 2, new Color("3ec6ff"), new Vector2(24, 24));
-            AddEnemies(() => new RaiderShip(), 2, new Color("ff6b4a"), new Vector2(34, 18));
-        }
-        else
-        {
-            // 强度 → 敌人构成（侦察/突击/重甲 ≈ 4:3:2；第3章+ 混入虫群）
-            int recon = Math.Max(1, strength * 4 / 9);
-            int raider = Math.Max(1, strength * 3 / 9);
-            int heavy = Math.Max(0, strength * 2 / 9);
-            AddEnemies(() => new ReconDrone(), recon, new Color("3ec6ff"), new Vector2(24, 24));
-            AddEnemies(() => new RaiderShip(), raider, new Color("ff6b4a"), new Vector2(34, 18));
-            if (heavy > 0)
+            switch (entry.Kind)
             {
-                AddEnemies(() => new HeavyFortress(), heavy, new Color("b74aff"), new Vector2(42, 42));
-            }
-            if (ZoneLevel >= 3)
-            {
-                AddEnemies(() => new SwarmDrone(), Math.Max(2, strength / 3), new Color("8dff5a"), new Vector2(14, 14));
+                case EnemyKind.Recon:
+                    AddEnemies(() => new ReconDrone(), entry.Count, new Color("3ec6ff"), new Vector2(24, 24));
+                    break;
+                case EnemyKind.Raider:
+                    AddEnemies(() => new RaiderShip(), entry.Count, new Color("ff6b4a"), new Vector2(34, 18));
+                    break;
+                case EnemyKind.Heavy:
+                    AddEnemies(() => new HeavyFortress(), entry.Count, new Color("b74aff"), new Vector2(42, 42));
+                    break;
+                case EnemyKind.Gunboat:
+                    AddEnemies(() => new GunboatShip(), entry.Count, new Color("ff9f43"), new Vector2(30, 14));
+                    break;
+                case EnemyKind.Swarm:
+                    AddEnemies(() => new SwarmDrone(), entry.Count, new Color("8dff5a"), new Vector2(14, 14));
+                    break;
+                case EnemyKind.Boss:
+                    AddEnemies(() => new GuardianBoss(), entry.Count, new Color("ff3b6b"), new Vector2(64, 64));
+                    break;
             }
         }
 

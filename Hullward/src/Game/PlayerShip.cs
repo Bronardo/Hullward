@@ -28,6 +28,7 @@ public partial class PlayerShip : CharacterBody2D
 
     private readonly TargetingSystem _targeting = new();
     private readonly List<ITargetable> _targets = new();
+    private readonly Random _rng = new();
     private float _fireCooldown;
     private float _hitFlashTimer;
 
@@ -86,6 +87,9 @@ public partial class PlayerShip : CharacterBody2D
         // 技能冷却
         SkillQ.Tick((float)delta);
         SkillE.Tick((float)delta);
+
+        // 受击减伤窗口递减（词缀"受击减伤"：受击后 2s）
+        ShipStats.TickTimers((float)delta);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -109,9 +113,17 @@ public partial class PlayerShip : CharacterBody2D
         }
     }
 
-    /// <summary>敌舰攻击入口：扣耐久（护盾先吸收）+ 闪红反馈；归零重生。</summary>
-    public void TakeDamage(int damage)
+    /// <summary>敌舰攻击入口：扣耐久（护盾先吸收）+ 闪红反馈；反伤镀层反弹近身伤害；归零重生。</summary>
+    public void TakeDamage(int damage, ITargetable? attacker = null)
     {
+        // 词缀"反伤镀层"：反弹近身伤害 % 给攻击者
+        if (attacker != null && ShipStats.ThornsPct > 0f)
+        {
+            int thorns = Math.Max(1, (int)(damage * ShipStats.ThornsPct));
+            attacker.TakeHit(thorns);
+            GD.Print($"PlayerShip thorns rebound {thorns} to attacker");
+        }
+
         ShipStats.TakeHit(damage);
         Modulate = new Color("ff6b6b");
         _hitFlashTimer = 0.12f;
@@ -133,12 +145,15 @@ public partial class PlayerShip : CharacterBody2D
 
     private void FireAt(ITargetable target)
     {
+        // 词缀"致命一击/暴击增幅"：开火按暴击率判定，暴击伤害 = 火力 × 暴伤倍率
+        int damage = CombatCalculator.RollAttackDamage(ShipStats, _rng, out bool isCritical);
         var projectile = new Projectile
         {
             Position = Position,
             Target = target,
             Speed = ProjectileSpeed,
-            Damage = (int)ShipStats.Firepower // 火力随装配变化
+            Damage = damage,
+            IsCritical = isCritical // 表现层标注（暴击弹丸更大/更亮）
         };
         GetTree().CurrentScene.AddChild(projectile);
     }

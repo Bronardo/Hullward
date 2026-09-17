@@ -14,16 +14,19 @@ public partial class Projectile : Area2D
     public float HitRadius { get; set; } = 14f;
     public float MaxLifetime { get; set; } = 4f;
 
+    /// <summary>暴击弹丸标记（词缀"致命一击/暴击增幅"）：尺寸/颜色增强，仅表现层。</summary>
+    public bool IsCritical { get; set; }
+
     private float _lifetime;
 
     public override void _Ready()
     {
-        // 像素弹丸
+        // 像素弹丸（暴击更大更亮）
         var dot = new ColorRect
         {
-            Size = new Vector2(6, 6),
-            Color = new Color("ffd166"),
-            Position = new Vector2(-3, -3)
+            Size = IsCritical ? new Vector2(10, 10) : new Vector2(6, 6),
+            Color = IsCritical ? new Color("ffd166") : new Color("ffd166"),
+            Position = IsCritical ? new Vector2(-5, -5) : new Vector2(-3, -3)
         };
         AddChild(dot);
     }
