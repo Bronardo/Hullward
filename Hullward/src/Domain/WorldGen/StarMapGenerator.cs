@@ -14,14 +14,8 @@ public sealed class StarMapGenerator
     public const int MinNodes = 4;
     public const int MaxNodes = 8;
 
-    /// <summary>章节强度基准（敌人总量参考）。</summary>
-    public static int ChapterBase(int chapter) => chapter switch
-    {
-        1 => 5,
-        2 => 8,
-        3 => 12,
-        _ => 16
-    };
+    /// <summary>章节强度基准（敌人总量参考，来自章节目录）。</summary>
+    public static int ChapterBase(int chapter) => ChapterCatalog.Get(chapter).BaseStrength;
 
     /// <summary>强度 → 危险等级 ★（1-5）。</summary>
     public static int DangerStars(int strength) => strength switch

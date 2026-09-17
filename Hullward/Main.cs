@@ -336,7 +336,7 @@ public partial class Main : Node
         }
         else
         {
-            // 强度 → 敌人构成（侦察/突击/重甲 ≈ 4:3:2）
+            // 强度 → 敌人构成（侦察/突击/重甲 ≈ 4:3:2；第3章+ 混入虫群）
             int recon = Math.Max(1, strength * 4 / 9);
             int raider = Math.Max(1, strength * 3 / 9);
             int heavy = Math.Max(0, strength * 2 / 9);
@@ -345,6 +345,10 @@ public partial class Main : Node
             if (heavy > 0)
             {
                 AddEnemies(() => new HeavyFortress(), heavy, new Color("b74aff"), new Vector2(42, 42));
+            }
+            if (ZoneLevel >= 3)
+            {
+                AddEnemies(() => new SwarmDrone(), Math.Max(2, strength / 3), new Color("8dff5a"), new Vector2(14, 14));
             }
         }
 
