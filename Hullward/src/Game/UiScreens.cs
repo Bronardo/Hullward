@@ -9,6 +9,7 @@ namespace Hullward.Game;
 /// <summary>
 /// UI 屏幕构建器（UI 规格 v0.2）：主菜单 / 命名 / 存档列表 / 星图 / 结算。
 /// 全部代码构建 Control 树（像素风基调：深色底 + 高对比文字，美术规范后替换样式）。
+/// 居中策略：全屏根 + CenterContainer 真居中（随窗口 resize 自适应）；星图节点锚定窗口中心。
 /// </summary>
 public static class UiScreens
 {
@@ -29,6 +30,14 @@ public static class UiScreens
         return bg;
     }
 
+    /// <summary>全屏居中容器：子内容随窗口尺寸自动居中。</summary>
+    private static CenterContainer Centered()
+    {
+        var center = new CenterContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        return center;
+    }
+
     private static VBoxContainer CenterBox(float width = 420)
     {
         var box = new VBoxContainer
@@ -36,7 +45,6 @@ public static class UiScreens
             Alignment = BoxContainer.AlignmentMode.Center,
             MouseFilter = Control.MouseFilterEnum.Stop
         };
-        box.SetAnchorsPreset(Control.LayoutPreset.Center);
         box.AddThemeConstantOverride("separation", 14);
         box.CustomMinimumSize = new Vector2(width, 0);
         return box;
@@ -97,7 +105,9 @@ public static class UiScreens
         box.AddChild(ActionButton("开始游戏（新建远征）", onNew, new Color("4da6ff")));
         box.AddChild(ActionButton("继续游戏", onContinue, new Color("6ee06e")));
         box.AddChild(ActionButton("退出", onQuit, new Color("ff6b4a")));
-        root.AddChild(box);
+        var center = Centered();
+        center.AddChild(box);
+        root.AddChild(center);
         return root;
     }
 
@@ -124,7 +134,9 @@ public static class UiScreens
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
         box.AddChild(ActionButton("确认命名，出发", () => onConfirm(edit.Text), new Color("4da6ff")));
         box.AddChild(ActionButton("返回", onBack, new Color("9aa7c0")));
-        root.AddChild(box);
+        var center = Centered();
+        center.AddChild(box);
+        root.AddChild(center);
         return root;
     }
 
@@ -168,11 +180,13 @@ public static class UiScreens
 
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
         box.AddChild(ActionButton("返回", onBack, new Color("9aa7c0")));
-        root.AddChild(box);
+        var center = Centered();
+        center.AddChild(box);
+        root.AddChild(center);
         return root;
     }
 
-    /// <summary>星图（规格 §4）：母舰居中，任务节点散点分布。</summary>
+    /// <summary>星图（规格 §4）：母舰居中，任务节点散点分布；节点锚定窗口中心，随 resize 自适应。</summary>
     public static Control Starmap(StarMap map, Action<StarMapNode> onPick)
     {
         Control root = Fullscreen();
@@ -199,8 +213,10 @@ public static class UiScreens
         header.AddChild(hint);
         root.AddChild(header);
 
-        // 母舰居中（窗口 960×540，节点半径带映射缩放 0.55）
+        // 节点半径带映射缩放（相对窗口中心）
         const float scale = 0.55f;
+
+        // 母舰居中（锚定窗口中心）
         var mothership = new Label
         {
             Text = "◆ 母舰",
@@ -209,17 +225,17 @@ public static class UiScreens
         };
         mothership.AddThemeFontSizeOverride("font_size", 18);
         mothership.AddThemeColorOverride("font_color", new Color("ffe08a"));
-        mothership.Position = new Vector2(440, 258);
+        mothership.SetAnchorsPreset(Control.LayoutPreset.Center);
+        mothership.Position = new Vector2(-30, -18);
         root.AddChild(mothership);
 
-        // 任务节点（平面散点）
+        // 任务节点（相对窗口中心偏移，resize 自动跟随）
         foreach (StarMapNode node in map.Nodes)
         {
             var btn = new Button
             {
                 Text = node.IsBoss ? "☠ BOSS" : $"清剿 ★{node.DangerStars}",
                 CustomMinimumSize = new Vector2(node.IsBoss ? 120 : 96, node.IsBoss ? 56 : 44),
-                Position = new Vector2(480 + node.X * scale - 48, 270 + node.Y * scale - 22),
                 MouseFilter = Control.MouseFilterEnum.Stop
             };
             btn.AddThemeFontSizeOverride("font_size", node.IsBoss ? 18 : 15);
@@ -229,17 +245,22 @@ public static class UiScreens
             btn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = c.Lightened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
             btn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = c.Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
             btn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+            btn.SetAnchorsPreset(Control.LayoutPreset.Center);
+            btn.Position = new Vector2(node.X * scale - 48, node.Y * scale - 22);
+
             var info = new Label
             {
                 Text = $"强度 {node.Strength}",
-                Position = new Vector2(480 + node.X * scale - 30, 270 + node.Y * scale + (node.IsBoss ? 34 : 24)),
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
             info.AddThemeFontSizeOverride("font_size", 12);
             info.AddThemeColorOverride("font_color", new Color(SubColor));
-            root.AddChild(info);
+            info.SetAnchorsPreset(Control.LayoutPreset.Center);
+            info.Position = new Vector2(node.X * scale - 30, node.Y * scale + (node.IsBoss ? 34 : 24));
+
             StarMapNode picked = node;
             btn.Pressed += () => onPick(picked);
+            root.AddChild(info);
             root.AddChild(btn);
         }
 
@@ -262,7 +283,9 @@ public static class UiScreens
         box.AddChild(Info("无论成败，此次出击已消耗一次时间 —— 返回后星图将全部重随机", SubColor));
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 16) });
         box.AddChild(ActionButton("返回星图", onReturn, victory ? new Color("6ee06e") : new Color("4da6ff")));
-        root.AddChild(box);
+        var center = Centered();
+        center.AddChild(box);
+        root.AddChild(center);
         return root;
     }
 }
