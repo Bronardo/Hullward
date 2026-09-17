@@ -42,7 +42,8 @@ public static class ShipFitting
 
             for (int i = 0; i < inventory.Modules.Count; i++)
             {
-                if (inventory.Modules[i].Rarity > bestRarity)
+                // bestIndex < 0：首个模块兜底选中，避免"只有 Common 时永远不装"的边界 bug
+                if (bestIndex < 0 || inventory.Modules[i].Rarity > bestRarity)
                 {
                     bestRarity = inventory.Modules[i].Rarity;
                     bestIndex = i;

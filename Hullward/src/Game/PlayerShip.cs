@@ -2,37 +2,39 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using Hullward.Domain.Combat;
+using Hullward.Domain.Ships;
 
 namespace Hullward.Game;
 
 /// <summary>
 /// 玩家舰船（表现层）：WASD/方向键移动，主炮自动索敌开火（域层 TargetingSystem）。
-/// 技能位占位（Day 3 接入 ActiveSkill）。
+/// 船体属性来自域层 ShipBase（ScoutShip）：耐久/护盾/火力受模块装配影响。
+/// 技能位占位（Day 5 接入 ActiveSkill）。
 /// </summary>
 public partial class PlayerShip : CharacterBody2D
 {
     [Export] public float MoveSpeed = 260f;
     [Export] public float FireInterval = 0.25f;
-    [Export] public int CannonDamage = 10;
     [Export] public float ProjectileSpeed = 520f;
     [Export] public float WorldHalfWidth = 960f;
     [Export] public float WorldHalfHeight = 540f;
-    [Export] public int MaxHull = 100;
+
+    /// <summary>玩家船体（域层）：火力/耐久/护盾由装配模块驱动。</summary>
+    public ScoutShip ShipStats { get; } = new();
 
     private readonly TargetingSystem _targeting = new();
     private readonly List<ITargetable> _targets = new();
     private float _fireCooldown;
     private float _hitFlashTimer;
 
-    /// <summary>当前船体耐久（受击扣减，归零重生）。</summary>
-    public int Hull { get; private set; }
+    /// <summary>当前船体耐久（域层数据）。</summary>
+    public int Hull => ShipStats.Hull;
 
     public override void _Ready()
     {
-        Hull = MaxHull;
         AddChild(MakeCamera());
         AddChild(MakeShipVisual());
-        GD.Print($"PlayerShip ready - speed {MoveSpeed}, dmg {CannonDamage}, hull {MaxHull}");
+        GD.Print($"PlayerShip ready - speed {MoveSpeed}, dmg {ShipStats.Firepower}, hull {ShipStats.Hull}");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -75,16 +77,16 @@ public partial class PlayerShip : CharacterBody2D
         }
     }
 
-    /// <summary>敌舰攻击入口：扣耐久 + 闪红反馈；归零重生。</summary>
+    /// <summary>敌舰攻击入口：扣耐久（护盾先吸收）+ 闪红反馈；归零重生。</summary>
     public void TakeDamage(int damage)
     {
-        Hull = Math.Max(0, Hull - damage);
+        ShipStats.TakeHit(damage);
         Modulate = new Color("ff6b6b");
         _hitFlashTimer = 0.12f;
-        GD.Print($"PlayerShip hit -{damage}, hull {Hull}");
-        if (Hull <= 0)
+        GD.Print($"PlayerShip hit -{damage}, hull {ShipStats.Hull}, shield {ShipStats.Shield}");
+        if (ShipStats.IsDestroyed)
         {
-            Hull = MaxHull;
+            ShipStats.ResetCombatState();
             Position = Vector2.Zero;
             GD.Print("PlayerShip destroyed - respawning at origin");
         }
@@ -104,7 +106,7 @@ public partial class PlayerShip : CharacterBody2D
             Position = Position,
             Target = target,
             Speed = ProjectileSpeed,
-            Damage = CannonDamage
+            Damage = (int)ShipStats.Firepower // 火力随装配变化
         };
         GetTree().CurrentScene.AddChild(projectile);
     }

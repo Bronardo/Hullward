@@ -22,6 +22,10 @@ public abstract class ShipBase : IShip
     /// <summary>已装配模块（接口多态：Weapon/Armor/Power/Special）。</summary>
     public List<IShipModule> Modules { get; } = new();
 
+    private readonly int _baseHull;
+    private readonly int _baseShield;
+    private readonly float _baseFirepower;
+
     protected ShipBase(string name, int hull, int shield, int armor, float firepower, float speed, int moduleSlots)
     {
         Name = name;
@@ -31,6 +35,9 @@ public abstract class ShipBase : IShip
         Firepower = firepower;
         Speed = speed;
         ModuleSlots = moduleSlots;
+        _baseHull = hull;
+        _baseShield = shield;
+        _baseFirepower = firepower;
     }
 
     public bool IsDestroyed => Hull <= 0;
@@ -47,6 +54,18 @@ public abstract class ShipBase : IShip
     }
 
     public virtual void TakeHit(int damage) => CombatCalculator.ApplyHit(this, damage);
+
+    /// <summary>重生/读档：重置战斗状态并重新应用模块加成。</summary>
+    public void ResetCombatState()
+    {
+        Hull = _baseHull;
+        Shield = _baseShield;
+        Firepower = _baseFirepower;
+        foreach (var module in Modules)
+        {
+            module.ApplyEffect(this);
+        }
+    }
 
     // 模块加成入口（internal：同一程序集的模块实现可调用）
     internal void AddFirepower(float bonus) => Firepower += bonus;

@@ -1,97 +1,176 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using Hullward.Domain.Combat;
 using Hullward.Domain.Enemies;
 using Hullward.Domain.Loot;
+using Hullward.Domain.Modules;
+using Hullward.Domain.Save;
+using Hullward.Domain.Ships;
 using Hullward.Game;
 
 namespace Hullward;
 
 /// <summary>
-/// Hullward 入口节点：搭建可玩世界（像素星空 + 玩家舰船 + 混合敌舰 + 掉落循环）。
-/// 域层逻辑（星域/索敌/战斗/掉落）全部由 src/Domain 提供，本节点只做桥接。
+/// Hullward 入口节点：
+/// 4 星域推进（清怪跃迁 → 难度/掉落随区提升 → Boss 波次）、
+/// 拾取 → 背包 → 自动装配（属性实时生效）、F5 存档 / F9 读档（JSON）。
 /// </summary>
 public partial class Main : Node
 {
-    [Export] public int ReconCount = 3;
-    [Export] public int RaiderCount = 2;
-    [Export] public int FortressCount = 1;
-    [Export] public int ZoneLevel = 1; // MVP：安全星域
+    [Export] public int ZoneLevel = 1;
+    [Export] public float JumpDelay = 2.5f;
 
     private readonly LootTable _loot = new();
     private readonly Random _rng = new();
     private readonly List<ITargetable> _targets = new();
+    private Inventory _inventory = new();
+    private PlayerShip _player = null!;
+    private Node2D _enemies = null!;
+    private ColorRect _background = null!;
+    private bool _waveActive;
+    private float _jumpTimer;
+    private bool _victory;
     private int _modulesPicked;
-    private int _alloyPicked;
+
+    private string SavePath => ProjectSettings.GlobalizePath("user://save.json");
 
     public override void _Ready()
     {
         GD.Print("Hullward bootstrap OK - Godot C# pipeline ready");
 
-        // 像素星空背景（深空底色 + 随机星点）
-        var bg = new ColorRect
+        // 像素星空背景（按星域变色）
+        _background = new ColorRect
         {
-            Color = new Color("0b1c2c"),
+            Color = ZoneColor(ZoneLevel),
             Size = new Vector2(5000, 5000),
             Position = new Vector2(-2500, -2500)
         };
-        AddChild(bg);
+        AddChild(_background);
         SpawnStars();
 
-        // 玩家舰船（自动索敌开火）
-        var player = new PlayerShip { Position = Vector2.Zero };
-        AddChild(player);
+        _player = new PlayerShip { Position = Vector2.Zero };
+        AddChild(_player);
 
-        // 敌人容器 + 混合敌舰（多态）
-        var enemies = new Node2D { Name = "Enemies" };
-        AddChild(enemies);
+        _enemies = new Node2D { Name = "Enemies" };
+        AddChild(_enemies);
 
-        SpawnWave(enemies, player);
-        player.SetTargets(_targets); // 关键：注入索敌目标，主炮才能开火
+        SpawnWave();
         GD.Print($"World ready: 1 player ship, {_targets.Count} enemies, zone {ZoneLevel}");
     }
 
-    private void SpawnWave(Node2D container, PlayerShip player)
+    public override void _PhysicsProcess(double delta)
     {
-        for (int i = 0; i < ReconCount; i++)
+        // 清怪 → 短暂延迟 → 跃迁下一星域
+        if (_waveActive && _targets.Count == 0 && !_victory)
         {
-            SpawnEnemy(new ReconDrone(), new Color("3ec6ff"), new Vector2(24, 24), container, player);
-        }
-        for (int i = 0; i < RaiderCount; i++)
-        {
-            SpawnEnemy(new RaiderShip(), new Color("ff6b4a"), new Vector2(34, 18), container, player);
-        }
-        for (int i = 0; i < FortressCount; i++)
-        {
-            SpawnEnemy(new HeavyFortress(), new Color("b74aff"), new Vector2(42, 42), container, player);
+            _jumpTimer += (float)delta;
+            if (_jumpTimer >= JumpDelay)
+            {
+                _jumpTimer = 0f;
+                AdvanceZone();
+            }
         }
     }
 
-    private void SpawnEnemy(
-        EnemyShip ship, Color color, Vector2 size, Node2D container, PlayerShip player)
+    public override void _UnhandledInput(InputEvent @event)
     {
-        var drone = new EnemyDrone
+        if (@event is InputEventKey key && key.Pressed && !key.Echo)
         {
-            Player = player,
-            Position = RandomSpawnPosition()
-        };
-        drone.Setup(ship, color, size);
+            if (key.Keycode == Key.F5)
+            {
+                SaveGame();
+            }
+            else if (key.Keycode == Key.F9)
+            {
+                LoadGame();
+            }
+        }
+    }
 
-        // 击毁：清理索敌列表 + 掉落
-        drone.Destroyed += d =>
+    // ---------- 星域推进 ----------
+
+    private void AdvanceZone()
+    {
+        if (ZoneLevel >= 4)
         {
-            _targets.Remove(d);
-            DropLoot(d.Position, player);
-        };
+            _victory = true;
+            GD.Print("=== 通关！坍缩禁区已肃清，深空暗骸战役结束 ===");
+            return;
+        }
 
-        container.AddChild(drone);
-        _targets.Add(drone);
+        ZoneLevel++;
+        _background.Color = ZoneColor(ZoneLevel);
+        GD.Print($"=== 跃迁到星域 {ZoneLevel}（难度提升） ===");
+        SpawnWave();
+    }
+
+    private void SpawnWave()
+    {
+        ClearEnemies();
+
+        switch (ZoneLevel)
+        {
+            case 1:
+                AddEnemies(() => new ReconDrone(), 3, new Color("3ec6ff"), new Vector2(24, 24));
+                AddEnemies(() => new RaiderShip(), 2, new Color("ff6b4a"), new Vector2(34, 18));
+                AddEnemies(() => new HeavyFortress(), 1, new Color("b74aff"), new Vector2(42, 42));
+                break;
+            case 2:
+                AddEnemies(() => new ReconDrone(), 4, new Color("3ec6ff"), new Vector2(24, 24));
+                AddEnemies(() => new RaiderShip(), 3, new Color("ff6b4a"), new Vector2(34, 18));
+                AddEnemies(() => new HeavyFortress(), 2, new Color("b74aff"), new Vector2(42, 42));
+                break;
+            case 3:
+                AddEnemies(() => new ReconDrone(), 5, new Color("3ec6ff"), new Vector2(24, 24));
+                AddEnemies(() => new RaiderShip(), 4, new Color("ff6b4a"), new Vector2(34, 18));
+                AddEnemies(() => new HeavyFortress(), 2, new Color("b74aff"), new Vector2(42, 42));
+                break;
+            case 4:
+                AddEnemies(() => new GuardianBoss(), 1, new Color("ff3b6b"), new Vector2(64, 64));
+                AddEnemies(() => new ReconDrone(), 4, new Color("3ec6ff"), new Vector2(24, 24));
+                break;
+        }
+
+        _player.SetTargets(_targets);
+        _waveActive = true;
+        GD.Print($"星域 {ZoneLevel} 波次就绪: {_targets.Count} 敌舰");
+    }
+
+    private void AddEnemies(Func<EnemyShip> factory, int count, Color color, Vector2 size)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var ship = factory();
+            ship.ScaleForZone(ZoneLevel);
+            var drone = new EnemyDrone
+            {
+                Player = _player,
+                Position = RandomSpawnPosition()
+            };
+            drone.Setup(ship, color, size);
+            drone.Destroyed += d =>
+            {
+                _targets.Remove(d);
+                DropLoot(d.Position, _player);
+            };
+            _enemies.AddChild(drone);
+            _targets.Add(drone);
+        }
+    }
+
+    private void ClearEnemies()
+    {
+        foreach (var node in _enemies.GetChildren().OfType<EnemyDrone>())
+        {
+            node.QueueFree();
+        }
+        _targets.Clear();
     }
 
     private Vector2 RandomSpawnPosition()
     {
-        // 保证开局落在相机视野内（视口约 ±640/±360），留边便于发现；不与玩家贴脸
         Vector2 pos;
         do
         {
@@ -102,13 +181,22 @@ public partial class Main : Node
         return pos;
     }
 
+    private static Color ZoneColor(int zone) => zone switch
+    {
+        1 => new Color("0b1c2c"), // 安全：深蓝
+        2 => new Color("1a1030"), // 争议：深紫
+        3 => new Color("301018"), // 无人深空：暗红
+        _ => new Color("0a0a0f")  // 坍缩禁区：黑
+    };
+
+    // ---------- 掉落 / 背包 / 装配 ----------
+
     private void DropLoot(Vector2 worldPosition, PlayerShip player)
     {
-        // 模块掉落（品质色） + 合金掉落
         ModuleDrop? drop = _loot.RollModule(ZoneLevel, _rng);
         if (drop != null)
         {
-            SpawnPickup(Pickup.CreateModule(drop.Name, RarityColor(drop.Rarity)), worldPosition, player);
+            SpawnPickup(Pickup.CreateModule(drop, RarityColor(drop.Rarity)), worldPosition, player);
         }
         int alloy = _loot.RollAlloy(ZoneLevel, _rng);
         SpawnPickup(Pickup.CreateAlloy(alloy), worldPosition, player);
@@ -124,31 +212,84 @@ public partial class Main : Node
 
     private void OnPickupCollected(Pickup pickup)
     {
-        if (pickup.Kind == Pickup.PickupKind.Module)
+        if (pickup.Kind == Pickup.PickupKind.Module && pickup.ModuleData != null)
         {
             _modulesPicked++;
+            _inventory.AddModule(pickup.ModuleData);
+            ShipFitting.AutoEquipBest(_player.ShipStats, _inventory);
+            GD.Print($"拾取模块: {pickup.ModuleData.Name} | 装配后火力 {_player.ShipStats.Firepower}, 护盾 {_player.ShipStats.Shield}");
         }
         else
         {
-            _alloyPicked += ExtractAlloyAmount(pickup.Label);
+            int alloy = ExtractAlloyAmount(pickup.Label);
+            _inventory.AddAlloy(alloy);
+            GD.Print($"拾取合金×{alloy} | 合金总量 {_inventory.Alloy}");
         }
-        GD.Print($"库存: 模块 {_modulesPicked} 件, 合金 {_alloyPicked}");
     }
 
     private static int ExtractAlloyAmount(string label)
     {
-        // "合金×N"
         int idx = label.IndexOf('×');
         return idx >= 0 && int.TryParse(label[(idx + 1)..], out int n) ? n : 0;
     }
 
+    // ---------- 存档 ----------
+
+    private void SaveGame()
+    {
+        var data = new SaveData
+        {
+            ZoneLevel = ZoneLevel,
+            Alloy = _inventory.Alloy,
+            PlayerHull = _player.ShipStats.Hull,
+            ModulesPicked = _modulesPicked
+        };
+        foreach (var module in _inventory.Modules)
+        {
+            data.Modules.Add(new ModuleDropData { Slot = module.Slot, Rarity = module.Rarity });
+        }
+        SaveService.Save(data, SavePath);
+        GD.Print($"已存档 -> {SavePath} (星域 {data.ZoneLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count})");
+    }
+
+    private void LoadGame()
+    {
+        SaveData? data = SaveService.Load(SavePath);
+        if (data == null)
+        {
+            GD.Print("无存档，按 F5 可创建");
+            return;
+        }
+
+        ZoneLevel = Math.Clamp(data.ZoneLevel, 1, 4);
+        _modulesPicked = data.ModulesPicked;
+        _inventory = new Inventory();
+        _inventory.AddAlloy(data.Alloy);
+        foreach (var module in data.Modules)
+        {
+            _inventory.AddModule(new ModuleDrop(module.Slot, module.Rarity));
+        }
+
+        _player.ShipStats.ResetCombatState();
+        _player.ShipStats.Hull = Math.Max(1, data.PlayerHull);
+        ShipFitting.AutoEquipBest(_player.ShipStats, _inventory);
+        _player.Position = Vector2.Zero;
+        _victory = false;
+        _background.Color = ZoneColor(ZoneLevel);
+        SpawnWave();
+
+        GD.Print($"已读档: 星域 {ZoneLevel}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 火力 {_player.ShipStats.Firepower}");
+    }
+
+    // ---------- 环境 ----------
+
     private static Color RarityColor(ItemRarity rarity) => rarity switch
     {
-        ItemRarity.Common => new Color("c8c8c8"),  // 白
-        ItemRarity.Magic => new Color("4da6ff"),    // 蓝
-        ItemRarity.Rare => new Color("ffd166"),     // 黄
-        ItemRarity.Set => new Color("6ee06e"),      // 绿
-        ItemRarity.Ancient => new Color("ff7ad9"),  // 太古
+        ItemRarity.Common => new Color("c8c8c8"),
+        ItemRarity.Magic => new Color("4da6ff"),
+        ItemRarity.Rare => new Color("ffd166"),
+        ItemRarity.Set => new Color("6ee06e"),
+        ItemRarity.Ancient => new Color("ff7ad9"),
         _ => new Color("ffffff")
     };
 

@@ -69,6 +69,35 @@ public class InventoryAndFittingTests
     }
 
     [Fact]
+    public void AutoEquip_ArmorModule_IncreasesShield()
+    {
+        var ship = new ScoutShip(); // 40 护盾
+        var inv = new Inventory();
+        inv.AddModule(new ModuleDrop(ModuleType.Armor, ItemRarity.Common)); // +10
+
+        ShipFitting.AutoEquipBest(ship, inv);
+
+        Assert.Equal(50, ship.Shield);
+    }
+
+    [Fact]
+    public void ResetCombatState_RestoresBaseAndReappliesModules()
+    {
+        var ship = new ScoutShip();
+        var inv = new Inventory();
+        inv.AddModule(new ModuleDrop(ModuleType.Weapon, ItemRarity.Rare));
+        inv.AddModule(new ModuleDrop(ModuleType.Armor, ItemRarity.Magic));
+        ShipFitting.AutoEquipBest(ship, inv); // 火力 10+10=20, 护盾 40+25=65
+
+        ship.TakeHit(100); // 护盾 0，耐久 20
+        ship.ResetCombatState();
+
+        Assert.Equal(120, ship.Hull);
+        Assert.Equal(65, ship.Shield); // 基础 40 + 模块 25
+        Assert.Equal(20f, ship.Firepower);
+    }
+
+    [Fact]
     public void CraftService_Disassemble_ReturnsScrapByRarity()
     {
         var inv = new Inventory();
