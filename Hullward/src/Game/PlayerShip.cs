@@ -22,6 +22,10 @@ public partial class PlayerShip : CharacterBody2D
     /// <summary>玩家船体（域层）：火力/耐久/护盾由装配模块驱动。</summary>
     public ScoutShip ShipStats { get; } = new();
 
+    /// <summary>手动技能（拍板项）：Q 过载炮 / E 护盾充能。</summary>
+    public OverdriveCannon SkillQ { get; } = new();
+    public ShieldBurst SkillE { get; } = new();
+
     private readonly TargetingSystem _targeting = new();
     private readonly List<ITargetable> _targets = new();
     private float _fireCooldown;
@@ -73,6 +77,31 @@ public partial class PlayerShip : CharacterBody2D
             if (_hitFlashTimer <= 0f)
             {
                 Modulate = Colors.White;
+            }
+        }
+
+        // 技能冷却
+        SkillQ.Tick((float)delta);
+        SkillE.Tick((float)delta);
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is InputEventKey key && key.Pressed && !key.Echo)
+        {
+            var context = new PlayerContext
+            {
+                Ship = ShipStats,
+                LockedTarget = _targeting.Acquire(_targets, Position.X, Position.Y)
+            };
+
+            if (key.Keycode == Key.Q && SkillQ.TryUse(context))
+            {
+                GD.Print($"技能 Q 过载炮: {ShipStats.Firepower * OverdriveCannon.DamageMultiplier:0} 伤害");
+            }
+            else if (key.Keycode == Key.E && SkillE.TryUse(context))
+            {
+                GD.Print($"技能 E 护盾充能: {ShipStats.Shield}/{ShipStats.MaxShield}");
             }
         }
     }

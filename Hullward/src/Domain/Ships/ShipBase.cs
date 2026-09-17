@@ -14,6 +14,10 @@ public abstract class ShipBase : IShip
     public string Name { get; protected set; }
     public int Hull { get; set; }
     public int Shield { get; set; }
+
+    /// <summary>护盾上限（装配/重置时同步），技能回盾与 UI 使用。</summary>
+    public int MaxShield { get; private set; }
+
     public int Armor { get; protected set; }
     public float Firepower { get; protected set; }
     public float Speed { get; protected set; }
@@ -31,6 +35,7 @@ public abstract class ShipBase : IShip
         Name = name;
         Hull = hull;
         Shield = shield;
+        MaxShield = shield;
         Armor = armor;
         Firepower = firepower;
         Speed = speed;
@@ -60,6 +65,7 @@ public abstract class ShipBase : IShip
     {
         Hull = _baseHull;
         Shield = _baseShield;
+        MaxShield = _baseShield;
         Firepower = _baseFirepower;
         foreach (var module in Modules)
         {
@@ -69,7 +75,12 @@ public abstract class ShipBase : IShip
 
     // 模块加成入口（internal：同一程序集的模块实现可调用）
     internal void AddFirepower(float bonus) => Firepower += bonus;
-    internal void AddShield(int bonus) => Shield += bonus;
+    internal void AddShield(int bonus)
+    {
+        Shield += bonus;
+        MaxShield += bonus;
+    }
+
     internal void AddArmor(int bonus) => Armor += bonus;
 }
 

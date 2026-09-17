@@ -29,6 +29,7 @@ public partial class Main : Node
     private PlayerShip _player = null!;
     private Node2D _enemies = null!;
     private ColorRect _background = null!;
+    private HUD _hud = null!;
     private bool _waveActive;
     private float _jumpTimer;
     private bool _victory;
@@ -56,8 +57,28 @@ public partial class Main : Node
         _enemies = new Node2D { Name = "Enemies" };
         AddChild(_enemies);
 
+        _hud = new HUD();
+        AddChild(_hud);
+
         SpawnWave();
         GD.Print($"World ready: 1 player ship, {_targets.Count} enemies, zone {ZoneLevel}");
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_hud == null)
+        {
+            return;
+        }
+
+        string qState = _player.SkillQ.IsReady ? "就绪" : $"{_player.SkillQ.Remaining:0.0}s";
+        string eState = _player.SkillE.IsReady ? "就绪" : $"{_player.SkillE.Remaining:0.0}s";
+        string zoneLabel = _victory ? "已通关" : $"星域 {ZoneLevel}/4";
+
+        _hud.UpdateStatus(
+            $"{zoneLabel}  |  耐久 {_player.ShipStats.Hull}  护盾 {_player.ShipStats.Shield}/{_player.ShipStats.MaxShield}" +
+            $"  |  火力 {_player.ShipStats.Firepower:0}  |  Q过载炮[{qState}]  E护盾[{eState}]" +
+            $"  |  合金 {_inventory.Alloy}  模块 {_modulesPicked}  |  F5存 F9读");
     }
 
     public override void _PhysicsProcess(double delta)
