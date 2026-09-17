@@ -31,6 +31,20 @@ public abstract class EnemyShip : ShipBase, ITargetable
     /// <summary>多态行为入口：子类实现各自战术。</summary>
     public abstract void UpdateBehavior(float dt, float playerX, float playerY);
 
+    /// <summary>按星域等级缩放强度（Zone4 = 2.5× 耐久 / 1.75× 火力）。</summary>
+    public void ScaleForZone(int zoneLevel)
+    {
+        if (zoneLevel < 1)
+        {
+            zoneLevel = 1;
+        }
+        float hullMult = 1f + 0.5f * (zoneLevel - 1);
+        float dmgMult = 1f + 0.25f * (zoneLevel - 1);
+        Hull = (int)(Hull * hullMult);
+        Shield = (int)(Shield * hullMult);
+        Firepower *= dmgMult;
+    }
+
     /// <summary>向目标方向移动（子类调用）。</summary>
     protected void MoveToward(float tx, float ty, float speed, float dt)
     {
@@ -134,6 +148,27 @@ public sealed class HeavyFortress : EnemyShip
 
     public HeavyFortress()
         : base("重装堡垒", hull: 220, shield: 80, armor: 18, firepower: 18f)
+    {
+    }
+
+    public override void UpdateBehavior(float dt, float playerX, float playerY)
+    {
+        if (Distance(X, Y, playerX, playerY) > AggroRange)
+        {
+            return;
+        }
+        MoveToward(playerX, playerY, BehaviorSpeed, dt);
+    }
+}
+
+/// <summary>坍缩禁区守卫（Boss）：全图索敌，重甲重火，慢速碾压。</summary>
+public sealed class GuardianBoss : EnemyShip
+{
+    protected override float BehaviorSpeed => 42f;
+    protected override float AggroRange => 950f;
+
+    public GuardianBoss()
+        : base("禁区守卫", hull: 500, shield: 180, armor: 25, firepower: 30f)
     {
     }
 

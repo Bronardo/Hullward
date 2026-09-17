@@ -97,4 +97,29 @@ public class EnemyShipTests
         Assert.Equal(950f, drone.X); // Clamp 到 X 上限
         Assert.InRange(drone.Y, -530f, 530f);
     }
+
+    [Fact]
+    public void GuardianBoss_HasHighHull_AndFullMapAggro()
+    {
+        var boss = new GuardianBoss { X = 800f, Y = 0f };
+
+        // 全图索敌：远处也会逼近
+        boss.UpdateBehavior(1f, 0f, 0f);
+        Assert.True(boss.X < 800f, "Boss 应全图索敌并逼近玩家");
+
+        Assert.Equal(500, boss.Hull);
+        Assert.True(boss.Hull > new HeavyFortress().Hull);
+    }
+
+    [Fact]
+    public void ScaleForZone_HigherZone_Stronger()
+    {
+        var zone1 = new ReconDrone();
+        var zone4 = new ReconDrone();
+        zone1.ScaleForZone(1);
+        zone4.ScaleForZone(4);
+
+        Assert.Equal(zone1.Hull * 2 + zone1.Hull / 2, zone4.Hull); // 2.5×
+        Assert.True(zone4.Firepower > zone1.Firepower);
+    }
 }
