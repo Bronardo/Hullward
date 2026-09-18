@@ -878,6 +878,8 @@ public sealed partial class MothershipPanel : Control
     {
         Texture = ModuleIcon(slot, rarity),
         CustomMinimumSize = new Vector2(20, 20),
+        // 垂直方向不随 HBox 行高拉伸（同行按钮 34-44px 高会把图标拉变形），保持 20×20 居中
+        SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
         MouseFilter = Control.MouseFilterEnum.Ignore
     };
 
