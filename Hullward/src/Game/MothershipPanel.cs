@@ -349,15 +349,21 @@ public sealed partial class MothershipPanel : Control
         {
             affixStats.Add($"反伤 {_ship.ThornsPct * 100f:0}%");
         }
-        var stats = new Label
-        {
-            Text = "属性预览（基础 + 词缀 = 最终）｜ " + string.Join(" ｜ ", affixStats),
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        stats.AddThemeFontSizeOverride("font_size", 16);
-        stats.AddThemeColorOverride("font_color", new Color(TitleColor));
-        box.AddChild(stats);
+        // Sprint 5 迭代 17 C2：属性预览三栏分组（攻击/防御/技能，LD §7）
+        var attackRows = new List<string> { $"火力 {_ship.Firepower:0}", $"攻速 ×{_ship.FireRateMultiplier:0.00}", $"暴击 {_ship.CritChance * 100f:0}%", $"暴伤 ×{_ship.CritDamage:0.00}" };
+        var defenseRows = new List<string> { $"护盾 {_ship.Shield}/{_ship.MaxShield}", $"耐久 {_ship.Hull}/{_ship.MaxHull}", $"抗性 {_ship.Armor}" };
+        if (_ship.DamageReductionPct > 0f) { defenseRows.Add($"减伤 {_ship.DamageReductionPct * 100f:0}%"); }
+        if (_ship.ThornsPct > 0f) { defenseRows.Add($"反伤 {_ship.ThornsPct * 100f:0}%"); }
+        var skillRows = new List<string> { $"能量 {_ship.Energy}/{_ship.MaxEnergy}", $"回复 {_ship.EnergyRegenBonus:0}·s", $"Q耗 {_ship.EffectiveSkillCost(30)} / E耗 {_ship.EffectiveSkillCost(40)}" };
+        if (_ship.SkillCooldownMultiplier < 1f) { skillRows.Add($"冷却 ×{_ship.SkillCooldownMultiplier:0.00}"); }
+        if (_ship.MagicFind > 0) { skillRows.Add($"MF +{_ship.MagicFind}"); }
+
+        var statsRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        statsRow.AddThemeConstantOverride("separation", 8);
+        statsRow.AddChild(StatColumn("⚔ 攻击", attackRows));
+        statsRow.AddChild(StatColumn("🛡 防御", defenseRows));
+        statsRow.AddChild(StatColumn("✦ 技能", skillRows));
+        box.AddChild(statsRow);
 
         // 槽位列表（点击选中/卸下；显示词缀数，LD §4.6 B3）
         var slotRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -501,7 +507,7 @@ public sealed partial class MothershipPanel : Control
             };
             row.AddChild(info);
             row.AddChild(equip);
-            bagBox.AddChild(row);
+            bagBox.AddChild(ModuleCard(row, drop.Rarity));
         }
         box.AddChild(bagBox);
 
@@ -600,7 +606,7 @@ public sealed partial class MothershipPanel : Control
             info.AddThemeFontSizeOverride("font_size", 14);
             info.AddThemeColorOverride("font_color", RarityColor(entry.M.Rarity));
             row.AddChild(info);
-            list.AddChild(row);
+            list.AddChild(ModuleCard(row, entry.M.Rarity));
         }
         box.AddChild(list);
         return MakeScroll(box);
@@ -685,7 +691,7 @@ public sealed partial class MothershipPanel : Control
                 };
                 row.AddChild(reroll);
             }
-            list.AddChild(row);
+            list.AddChild(ModuleCard(row, drop.Rarity));
         }
         box.AddChild(list);
         return MakeScroll(box);
@@ -793,7 +799,7 @@ public sealed partial class MothershipPanel : Control
             };
             row.AddChild(info);
             row.AddChild(buy);
-            list.AddChild(row);
+            list.AddChild(ModuleCard(row, item.Module.Rarity));
         }
         box.AddChild(list);
         return MakeScroll(box);
@@ -825,6 +831,63 @@ public sealed partial class MothershipPanel : Control
         label.AddThemeFontSizeOverride("font_size", 14);
         label.AddThemeColorOverride("font_color", new Color(SubColor));
         return label;
+    }
+
+    /// <summary>Sprint 5 迭代 17 C2：属性三栏列（标题 + 若干"标签 值"行，深色底 + 细边框）。</summary>
+    private static PanelContainer StatColumn(string title, IReadOnlyList<string> rows)
+    {
+        var inner = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        inner.AddThemeConstantOverride("separation", 2);
+        var head = new Label
+        {
+            Text = title,
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        head.AddThemeFontSizeOverride("font_size", 13);
+        head.AddThemeColorOverride("font_color", new Color(TitleColor));
+        inner.AddChild(head);
+        foreach (var r in rows)
+        {
+            var line = new Label
+            {
+                Text = "  " + r,
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            line.AddThemeFontSizeOverride("font_size", 13);
+            line.AddThemeColorOverride("font_color", new Color(TextColor));
+            inner.AddChild(line);
+        }
+        var panel = new PanelContainer
+        {
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = new Color("151a28"),
+            BorderColor = new Color("2a3550"),
+            BorderWidthLeft = 1, BorderWidthTop = 1, BorderWidthRight = 1, BorderWidthBottom = 1,
+            ContentMarginLeft = 10, ContentMarginRight = 10, ContentMarginTop = 8, ContentMarginBottom = 8
+        });
+        panel.AddChild(inner);
+        return panel;
+    }
+
+    /// <summary>Sprint 5 迭代 17 C1：列表项卡片化（深底 + 品质色细边框 + 内容留白）。</summary>
+    private static PanelContainer ModuleCard(Control row, ItemRarity rarity)
+    {
+        var panel = new PanelContainer
+        {
+            MouseFilter = Control.MouseFilterEnum.Stop
+        };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = new Color("151a28"),
+            BorderColor = RarityColor(rarity),
+            BorderWidthLeft = 1, BorderWidthTop = 1, BorderWidthRight = 1, BorderWidthBottom = 1,
+            ContentMarginLeft = 10, ContentMarginRight = 10, ContentMarginTop = 6, ContentMarginBottom = 6
+        });
+        panel.AddChild(row);
+        return panel;
     }
 
     /// <summary>Sprint 5 P0-A2：槽位 16×16 像素图标路径（程序化生成，LD 命名映射 §5）。</summary>

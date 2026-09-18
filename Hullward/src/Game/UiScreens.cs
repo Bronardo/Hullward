@@ -270,7 +270,7 @@ public static class UiScreens
         {
             var btn = new Button
             {
-                Text = node.IsBoss ? (node.GateLabel ?? "☠ BOSS") : $"清剿 ★{node.DangerStars}", // 章节门显示专属名（终章"坍缩禁区 · 遗迹守护"）
+                Text = node.IsBoss ? (node.GateLabel ?? "☠ BOSS") : $"⚔ 清剿 ★{node.DangerStars}", // Sprint5 迭代17：任务类型图标（清剿=剑）；章节门显示专属名
                 CustomMinimumSize = new Vector2(node.IsBoss ? 120 : 96, node.IsBoss ? 56 : 44),
                 MouseFilter = Control.MouseFilterEnum.Stop
             };
