@@ -100,6 +100,29 @@ public sealed class LootTable
         return rolled + Math.Max(0, magicFind);
     }
 
+    /// <summary>
+    /// Boss 必掉奖励（LD Sprint 3 §4.3）：必掉黄+（Rare/Set/Ancient），
+    /// 暗金低概率 1–3%，随打捞增效（MF）提升至封顶 3%。
+    /// </summary>
+    public ModuleDrop RollBossModule(int zoneLevel, Random rng, int magicFind = 0)
+    {
+        if (zoneLevel < 1 || zoneLevel > 4)
+        {
+            throw new ArgumentOutOfRangeException(nameof(zoneLevel), "星域等级 1-4");
+        }
+        float ancientChance = Math.Clamp(0.01f + magicFind * 0.002f, 0.01f, 0.03f);
+        ItemRarity rarity = rng.NextSingle() < ancientChance
+            ? ItemRarity.Ancient
+            : rng.NextSingle() < 0.3f
+                ? ItemRarity.Set
+                : ItemRarity.Rare;
+
+        ModuleType slot = Slots[rng.Next(Slots.Length)];
+        var drop = new ModuleDrop(slot, rarity);
+        ModuleRoller.RollAffixes(drop, rng);
+        return drop;
+    }
+
     private static int WeightedPick(int[] weights, Random rng)
     {
         int total = 0;

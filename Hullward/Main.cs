@@ -41,6 +41,8 @@ public partial class Main : Node
     private bool _waveActive;
     private float _jumpTimer;
     private int _modulesPicked;
+    private bool _paused;
+    private CanvasLayer? _pauseOverlay;
 
     // UI 流程（主菜单 → 命名/选档 → 星图 → 战斗 → 结算）
     private GameState _state = GameState.Menu;
@@ -70,6 +72,8 @@ public partial class Main : Node
     public override void _Ready()
     {
         GD.Print("Hullward bootstrap OK - Godot C# pipeline ready");
+        // 主节点始终处理输入：战斗暂停（Esc）时仍需响应按键恢复
+        ProcessMode = ProcessModeEnum.Always;
         _saveService = new SaveService(ProjectSettings.GlobalizePath("user://saves"));
 
         // 像素星空背景（按章节变色）
@@ -90,7 +94,7 @@ public partial class Main : Node
 
     public override void _Process(double delta)
     {
-        if (_state != GameState.Battle || _hud == null)
+        if (_state != GameState.Battle || _hud == null || _paused)
         {
             return;
         }
@@ -119,7 +123,7 @@ public partial class Main : Node
 
     public override void _PhysicsProcess(double delta)
     {
-        if (_state != GameState.Battle)
+        if (_state != GameState.Battle || _paused)
         {
             return;
         }
@@ -144,7 +148,15 @@ public partial class Main : Node
         }
         if (@event is InputEventKey key && key.Pressed && !key.Echo)
         {
-            if (key.Keycode == Key.F5)
+            if (key.Keycode == Key.Escape)
+            {
+                TogglePause(); // 战斗中 Esc 暂停/继续（截图用）
+            }
+            else if (_paused)
+            {
+                return; // 暂停时仅 Esc 有效
+            }
+            else if (key.Keycode == Key.F5)
             {
                 SaveGame();
             }
@@ -152,6 +164,45 @@ public partial class Main : Node
             {
                 LoadGame();
             }
+        }
+    }
+
+    /// <summary>战斗暂停/恢复：冻结场景全部逻辑（GetTree().Paused），叠加半透明遮罩便于截图。</summary>
+    private void TogglePause()
+    {
+        if (_state != GameState.Battle)
+        {
+            return;
+        }
+        _paused = !_paused;
+        GetTree().Paused = _paused;
+        GD.Print(_paused ? "战斗暂停" : "战斗继续");
+
+        if (_paused)
+        {
+            _pauseOverlay = new CanvasLayer { Layer = 100, ProcessMode = ProcessModeEnum.Always };
+            var shade = new ColorRect
+            {
+                Color = new Color(0f, 0f, 0f, 0.45f),
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            shade.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            shade.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            var label = new Label
+            {
+                Text = "⏸ 已暂停 — 按 Esc 继续",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            _pauseOverlay.AddChild(shade);
+            _pauseOverlay.AddChild(label);
+            AddChild(_pauseOverlay);
+        }
+        else
+        {
+            _pauseOverlay?.QueueFree();
+            _pauseOverlay = null;
         }
     }
 
@@ -433,7 +484,7 @@ public partial class Main : Node
                     AddEnemies(() => new SwarmDrone(), entry.Count, new Color("8dff5a"), new Vector2(14, 14));
                     break;
                 case EnemyKind.Boss:
-                    AddEnemies(() => new GuardianBoss(), entry.Count, new Color("ff3b6b"), new Vector2(64, 64));
+                    AddEnemies(() => new GuardianBoss(), entry.Count, new Color("ff3b6b"), new Vector2(64, 64), isBoss: true);
                     break;
             }
         }
@@ -442,7 +493,7 @@ public partial class Main : Node
         _waveActive = true;
     }
 
-    private void AddEnemies(Func<EnemyShip> factory, int count, Color color, Vector2 size)
+    private void AddEnemies(Func<EnemyShip> factory, int count, Color color, Vector2 size, bool isBoss = false)
     {
         for (int i = 0; i < count; i++)
         {
@@ -453,15 +504,47 @@ public partial class Main : Node
                 Player = _player,
                 Position = RandomSpawnPosition()
             };
+            if (isBoss)
+            {
+                drone.SummonRequested = SpawnSummon; // Boss 召唤（侦察机/突击舰）
+                drone.ToastRequested += _hud != null ? _hud.ShowToast : _ => { }; // 阶段切换/技能提示
+            }
             drone.Setup(ship, color, size);
             drone.Destroyed += d =>
             {
                 _targets.Remove(d);
-                DropLoot(d.Position, _player);
+                DropLoot(d.Position, _player, d.Ship is GuardianBoss); // Boss 必掉黄+ / 暗金
             };
             _enemies.AddChild(drone);
             _targets.Add(drone);
         }
+    }
+
+    /// <summary>Boss 召唤：按种类生成新敌舰（P3 突击舰 / 其余侦察机），接入目标列表与掉落。</summary>
+    private void SpawnSummon(EnemyKind kind, Vector2 position)
+    {
+        var (factory, color, size) = kind switch
+        {
+            EnemyKind.Raider => ((Func<EnemyShip>)(() => new RaiderShip()), new Color("ff6b4a"), new Vector2(34, 18)),
+            _ => (() => new ReconDrone(), new Color("3ec6ff"), new Vector2(24, 24))
+        };
+        var ship = factory();
+        ship.ScaleForZone(ZoneLevel);
+        var drone = new EnemyDrone
+        {
+            Player = _player,
+            Position = position
+        };
+        drone.Setup(ship, color, size);
+        drone.Destroyed += d =>
+        {
+            _targets.Remove(d);
+            DropLoot(d.Position, _player);
+        };
+        _enemies.AddChild(drone);
+        _targets.Add(drone);
+        _player.SetTargets(_targets);
+        GD.Print($"Boss 召唤: {ship.Name} @({position.X:0},{position.Y:0})");
     }
 
     private void ClearEnemies()
@@ -498,8 +581,18 @@ public partial class Main : Node
 
     // ---------- 掉落 / 背包 / 装配 ----------
 
-    private void DropLoot(Vector2 worldPosition, PlayerShip player)
+    private void DropLoot(Vector2 worldPosition, PlayerShip player, bool isBoss = false)
     {
+        if (isBoss)
+        {
+            // LD §4.3 Boss 奖励：必掉黄+（Rare/Set/Ancient），暗金 1-3% 受 MF 加成；合金 ×3
+            ModuleDrop bossDrop = _loot.RollBossModule(ZoneLevel, _rng, _player.ShipStats.MagicFind);
+            SpawnPickup(Pickup.CreateModule(bossDrop, RarityColor(bossDrop.Rarity)), worldPosition, player);
+            int bossAlloy = _loot.RollAlloy(ZoneLevel, _rng, _player.ShipStats.MagicFind) * 3;
+            SpawnPickup(Pickup.CreateAlloy(bossAlloy), worldPosition, player);
+            GD.Print($"Boss 掉落: {RarityLabel(bossDrop.Rarity)} {bossDrop.Name}（{bossDrop.Affixes.Count} 词缀）合金×{bossAlloy}");
+            return;
+        }
         ModuleDrop? drop = _loot.RollModule(ZoneLevel, _rng);
         if (drop != null)
         {
