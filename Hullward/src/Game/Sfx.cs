@@ -22,14 +22,17 @@ public partial class Sfx : Node
 
     public override void _Ready()
     {
+        // 显式 Pausable：Main 为 Always（暂停时收 Esc），Sfx 若不设会继承 Always 导致暂停时 BGM 不停
+        ProcessMode = ProcessModeEnum.Pausable;
+
         _shot1 = Make("res://assets/audio/sfx/shot_1.ogg", 0.35f);
         _shot2 = Make("res://assets/audio/sfx/shot_2.ogg", 0.35f);
         _hit = Make("res://assets/audio/sfx/hit.ogg", 0.4f);
         _explosion = Make("res://assets/audio/sfx/explosion.ogg", 0.5f);
         _pickup = Make("res://assets/audio/sfx/pickup.ogg", 0.3f);
-        _warp = Make("res://assets/audio/sfx/warp.mp3", 0.35f);
+        _warp = Make("res://assets/audio/sfx/warp.mp3", 0.45f);   // 0.35→0.45：进任务瞬间注意力在画面上，需更突出
         _click = Make("res://assets/audio/sfx/click.ogg", 0.25f);
-        _bossWarn = Make("res://assets/audio/sfx/boss_warn.mp3", 0.45f);
+        _bossWarn = Make("res://assets/audio/sfx/boss_warn.mp3", 0.6f); // 0.45→0.6：用户反馈阶段警示不明显
 
         // BGM 循环（0.3 音量；播放完毕自动从头）
         var bgm = Make("res://assets/audio/bgm/theme.ogg", 0.3f);
