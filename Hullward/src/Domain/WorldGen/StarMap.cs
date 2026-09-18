@@ -25,6 +25,9 @@ public sealed class StarMapNode
     /// <summary>章节 Boss 节点（固定生成，非随机）。</summary>
     public bool IsBoss { get; init; }
 
+    /// <summary>章节门标签（非空 = 该节点是章节门，UI 显示专属名；Sprint 4 线 B2：终章"坍缩禁区 · 遗迹守护"）。</summary>
+    public string? GateLabel { get; init; }
+
     /// <summary>平面坐标（母舰居中 (0,0)）。</summary>
     public float X { get; init; }
 

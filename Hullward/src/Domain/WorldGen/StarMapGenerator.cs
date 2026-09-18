@@ -49,6 +49,7 @@ public sealed class StarMapGenerator
                 Strength = (int)MathF.Round(strength),
                 DangerStars = DangerStars((int)MathF.Round(strength)),
                 IsBoss = isBoss,
+                GateLabel = isBoss && chapter == ChapterCatalog.MaxChapter ? "坍缩禁区 · 遗迹守护" : null, // 终章章节门（线 B2）
                 X = MathF.Cos(angle) * radius,
                 Y = MathF.Sin(angle) * radius
             });

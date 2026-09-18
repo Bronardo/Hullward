@@ -11,6 +11,7 @@ public enum EnemyKind
     Heavy,
     Gunboat,
     Swarm,
+    Elite,
     Boss
 }
 
@@ -37,12 +38,18 @@ public static class WaveComposer
 
         if (isBoss)
         {
-            return new[]
+            var bossWave = new List<WaveEntry>
             {
-                new WaveEntry(EnemyKind.Boss, 1),
-                new WaveEntry(EnemyKind.Recon, 2),
-                new WaveEntry(EnemyKind.Raider, 2)
+                new(EnemyKind.Boss, 1),
+                new(EnemyKind.Recon, 2),
+                new(EnemyKind.Raider, 2)
             };
+            // Sprint 4 线 B1：第 3 章起 Boss 带 1 名旗舰护卫（精英）——"遗迹守护"护卫感
+            if (zoneLevel >= 3)
+            {
+                bossWave.Insert(1, new WaveEntry(EnemyKind.Elite, 1));
+            }
+            return bossWave;
         }
 
         var entries = new List<WaveEntry>
@@ -66,6 +73,12 @@ public static class WaveComposer
         if (zoneLevel >= 3)
         {
             entries.Add(new WaveEntry(EnemyKind.Swarm, Math.Max(2, strength / 3)));
+        }
+
+        // 精英（旗舰护卫）：第 3 章起登场（高数值压制，数量少而精）
+        if (zoneLevel >= 3)
+        {
+            entries.Add(new WaveEntry(EnemyKind.Elite, Math.Max(1, strength / 6)));
         }
 
         return entries;

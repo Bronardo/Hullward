@@ -63,6 +63,7 @@ public partial class Main : Node
     private int _taskStartAlloy;
     private int _taskStartModules;
     private bool _taskIsBoss;
+    private string? _taskGateLabel; // 章节门专属名（终章"坍缩禁区 · 遗迹守护"，Sprint 4 线 B2）
 
     // 母舰内部（LD §6：装配槽位 / 配装方案 / 出战船体；船坞 §船坞：四档旗舰切换）
     private ShipBase _mothershipShip = null!;
@@ -108,7 +109,7 @@ public partial class Main : Node
 
         string qState = _player.SkillQ.IsReady ? "就绪" : $"{_player.SkillQ.Remaining:0.0}s";
         string eState = _player.SkillE.IsReady ? "就绪" : $"{_player.SkillE.Remaining:0.0}s";
-        string task = _taskIsBoss ? "BOSS 讨伐" : $"清剿任务（剩余 {_targets.Count}）";
+        string task = _taskIsBoss ? (_taskGateLabel ?? "BOSS 讨伐") : $"清剿任务（剩余 {_targets.Count}）";
 
         var ship = _player.ShipStats;
         string affixHud = ship.CritChance > 0f ? $"  暴击 {ship.CritChance * 100f:0}%" : "";
@@ -357,6 +358,7 @@ public partial class Main : Node
     {
         _currentTask = node;
         _taskIsBoss = node.IsBoss;
+        _taskGateLabel = node.GateLabel; // 章节门专属名（终章"坍缩禁区 · 遗迹守护"）
         StartBattle();
     }
 
@@ -430,7 +432,7 @@ public partial class Main : Node
         int alloyGain = _inventory.Alloy - _taskStartAlloy;
         int moduleGain = _modulesPicked - _taskStartModules;
         string missionSummary = _taskIsBoss
-            ? $"BOSS 讨伐 — 第 {ZoneLevel} 章守关旗舰"
+            ? $"{( _taskGateLabel ?? "BOSS 讨伐" )} — 第 {ZoneLevel} 章守关旗舰"
             : $"清剿任务 — 强度 {_currentTask!.Strength}（危险 ★{_currentTask.DangerStars}）";
 
         string lootText;
@@ -492,6 +494,9 @@ public partial class Main : Node
                     break;
                 case EnemyKind.Swarm:
                     AddEnemies(() => new SwarmDrone(), entry.Count, new Color("8dff5a"), new Vector2(14, 14));
+                    break;
+                case EnemyKind.Elite:
+                    AddEnemies(() => new EliteGuardShip(), entry.Count, new Color("ffd166"), new Vector2(52, 44));
                     break;
                 case EnemyKind.Boss:
                     AddEnemies(() => new GuardianBoss(), entry.Count, new Color("ff3b6b"), new Vector2(64, 64), isBoss: true);

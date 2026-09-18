@@ -96,6 +96,7 @@ public partial class EnemyDrone : Node2D, ITargetable
         RaiderShip => ("res://assets/ships/enemy_raider.png", 104f),
         HeavyFortress => ("res://assets/ships/enemy_fortress.png", 82f),
         GunboatShip => ("res://assets/ships/enemy_gunboat.png", 103f),
+        EliteGuardShip => ("res://assets/ships/enemy_elite.png", 97f),
         GuardianBoss => ("res://assets/ships/boss.png", 97f),
         SwarmDrone => ("res://assets/ships/enemy_swarm.png", 93f),
         _ => ("res://assets/ships/enemy_recon.png", 93f)
