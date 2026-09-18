@@ -19,8 +19,11 @@ public partial class PlayerShip : CharacterBody2D
     [Export] public float WorldHalfWidth = 960f;
     [Export] public float WorldHalfHeight = 540f;
 
-    /// <summary>玩家船体（域层）：火力/耐久/护盾由装配模块驱动。</summary>
-    public ScoutShip ShipStats { get; } = new();
+    /// <summary>玩家船体（域层多态：轻巡/突击舰/战列舰/要塞舰，由 Main 按船坞选择注入）。</summary>
+    public ShipBase ShipStats { get; private set; } = new ScoutShip();
+
+    /// <summary>船坞切换后注入新船体（同一引用贯穿母舰/出战，装配与耐久即时共享）。</summary>
+    public void SetShip(ShipBase ship) => ShipStats = ship;
 
     /// <summary>手动技能（拍板项）：Q 过载炮 / E 护盾充能。</summary>
     public OverdriveCannon SkillQ { get; } = new();

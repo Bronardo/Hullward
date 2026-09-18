@@ -83,6 +83,27 @@ public static class ShipFittingService
 
     /// <summary>已装配模块数。</summary>
     public static int FilledCount(List<ModuleDrop?> slots) => slots.Count(s => s != null);
+
+    /// <summary>
+    /// 换船时槽位重排（船坞切换）：新槽列表长度 = newSlotCount；
+    /// 前 newSlotCount 个旧槽保留，超出的已装模块退回背包，不足的补空槽。
+    /// </summary>
+    public static List<ModuleDrop?> RebaseSlots(Inventory inventory, List<ModuleDrop?> oldSlots, int newSlotCount)
+    {
+        var slots = EmptySlots(newSlotCount);
+        for (int i = 0; i < oldSlots.Count && i < newSlotCount; i++)
+        {
+            slots[i] = oldSlots[i];
+        }
+        for (int i = newSlotCount; i < oldSlots.Count; i++)
+        {
+            if (oldSlots[i] != null)
+            {
+                inventory.AddModule(oldSlots[i]!);
+            }
+        }
+        return slots;
+    }
 }
 
 /// <summary>

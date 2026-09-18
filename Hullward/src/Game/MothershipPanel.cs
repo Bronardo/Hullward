@@ -9,8 +9,8 @@ using Hullward.Domain.Ships;
 namespace Hullward.Game;
 
 /// <summary>
-/// 母舰内部面板（LD UI 规格 v0.2 §6 + 空间站清单 §4）：
-/// 装配（槽位装卸/2 套方案/属性预览）· 仓库（品质筛选）· 工坊（拆解/洗练）· 维修 · 商店。
+/// 母舰内部面板（LD UI 规格 v0.2 §6 + 空间站清单 §4 + 船坞）：
+/// 船坞（四档旗舰选择/解锁）· 装配（槽位装卸/2 套方案/属性预览）· 仓库（品质筛选）· 工坊（拆解/洗练）· 维修 · 商店。
 /// 代码构建；操作即时修改域状态并重建内容区。
 /// </summary>
 public sealed partial class MothershipPanel : Control
@@ -29,8 +29,10 @@ public sealed partial class MothershipPanel : Control
     private readonly Random _rng;
     private readonly Action _onClose;
     private readonly Action _onChanged;
+    private readonly ShipClass _shipClass;
+    private readonly Func<ShipClass, List<ModuleDrop?>?> _onShipChange;
 
-    private int _tab;                 // 0 装配 / 1 仓库 / 2 工坊 / 3 维修 / 4 商店
+    private int _tab = 1;             // 0 船坞 / 1 装配 / 2 仓库 / 3 工坊 / 4 维修 / 5 商店（默认进装配）
     private int _selectedSlot = -1;   // 装配页选中槽位
     private ItemRarity? _rarityFilter;
     private string _status = "";
@@ -44,7 +46,9 @@ public sealed partial class MothershipPanel : Control
         ShipPresets presets,
         Random rng,
         Action onClose,
-        Action onChanged)
+        Action onChanged,
+        ShipClass shipClass,
+        Func<ShipClass, List<ModuleDrop?>?> onShipChange)
     {
         _inventory = inventory;
         _slots = slots;
@@ -55,6 +59,8 @@ public sealed partial class MothershipPanel : Control
         _rng = rng;
         _onClose = onClose;
         _onChanged = onChanged;
+        _shipClass = shipClass;
+        _onShipChange = onShipChange;
     }
 
     public override void _Ready()
@@ -133,7 +139,7 @@ public sealed partial class MothershipPanel : Control
 
     private Control BuildTabs()
     {
-        string[] names = { "装配", "仓库", "工坊", "维修", "商店" };
+        string[] names = { "船坞", "装配", "仓库", "工坊", "维修", "商店" };
         var tabs = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         tabs.AddThemeConstantOverride("separation", 8);
         for (int i = 0; i < names.Length; i++)
@@ -178,10 +184,11 @@ public sealed partial class MothershipPanel : Control
 
     private Control BuildContent() => _tab switch
     {
-        1 => BuildStorageTab(),
-        2 => BuildWorkshopTab(),
-        3 => BuildRepairTab(),
-        4 => BuildShopTab(),
+        0 => BuildDockTab(),
+        2 => BuildStorageTab(),
+        3 => BuildWorkshopTab(),
+        4 => BuildRepairTab(),
+        5 => BuildShopTab(),
         _ => BuildEquipTab()
     };
 
@@ -193,6 +200,104 @@ public sealed partial class MothershipPanel : Control
         box.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         scroll.AddChild(box);
         return scroll;
+    }
+
+    // ---------- 船坞页（舰船选择） ----------
+
+    private Control BuildDockTab()
+    {
+        var box = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        box.AddThemeConstantOverride("separation", 8);
+
+        var hint = new Label
+        {
+            Text = "船坞 —— 旗舰四档船体随母舰等级解锁；切换后装配槽位自动重排，超出模块退回仓库",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        hint.AddThemeFontSizeOverride("font_size", 14);
+        hint.AddThemeColorOverride("font_color", new Color(SubColor));
+        box.AddChild(hint);
+
+        foreach (ShipClass shipClass in ShipCatalog.All())
+        {
+            ShipBase preview = ShipCatalog.Create(shipClass);
+            bool current = shipClass == _shipClass;
+            bool unlocked = ShipCatalog.IsUnlocked(shipClass, _mothershipLevel);
+
+            var card = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            card.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+            {
+                BgColor = current ? new Color("1e3a52") : new Color("151a28"),
+                BorderColor = current ? new Color(TitleColor) : new Color("2a3550"),
+                BorderWidthLeft = 2, BorderWidthRight = 2, BorderWidthTop = 2, BorderWidthBottom = 2,
+                CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6
+            });
+
+            var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            row.AddThemeConstantOverride("separation", 12);
+
+            var info = new Label
+            {
+                Text = $"{ShipCatalog.DisplayName(shipClass)}　{ShipCatalog.Role(shipClass)}" +
+                       (current ? "\n◆ 当前旗舰" : "") +
+                       (unlocked ? "" : $"\n· 母舰 Lv.{(int)shipClass} 解锁"),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            info.AddThemeFontSizeOverride("font_size", 16);
+            info.AddThemeColorOverride("font_color", current ? new Color(TitleColor) : new Color(TextColor));
+
+            var stats = new Label
+            {
+                Text = $"耐久 {preview.MaxHull}｜护盾 {preview.MaxShield}｜火力 {preview.Firepower:0}｜装甲 {preview.Armor}｜速度 {preview.Speed:0}｜槽位 {preview.ModuleSlots}",
+                HorizontalAlignment = HorizontalAlignment.Right,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            stats.AddThemeFontSizeOverride("font_size", 14);
+            stats.AddThemeColorOverride("font_color", new Color(SubColor));
+
+            var switchBtn = new Button
+            {
+                Text = current ? "已启用" : unlocked ? "切换到此舰" : "未解锁",
+                CustomMinimumSize = new Vector2(140, 40),
+                Disabled = current || !unlocked,
+                MouseFilter = Control.MouseFilterEnum.Stop
+            };
+            switchBtn.AddThemeFontSizeOverride("font_size", 14);
+            if (unlocked && !current)
+            {
+                StyleSmall(switchBtn);
+            }
+            else
+            {
+                switchBtn.AddThemeColorOverride("font_color", new Color(SubColor));
+                switchBtn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("1b2233"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+                switchBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+            }
+            switchBtn.Pressed += () =>
+            {
+                List<ModuleDrop?>? newSlots = _onShipChange(shipClass);
+                if (newSlots != null)
+                {
+                    _slots.Clear();
+                    _slots.AddRange(newSlots);
+                    _status = $"已切换旗舰：{ShipCatalog.DisplayName(shipClass)}（装配槽位 {newSlots.Count}）";
+                    _onChanged();
+                    Rebuild();
+                }
+            };
+
+            row.AddChild(info);
+            row.AddChild(stats);
+            row.AddChild(switchBtn);
+            card.AddChild(row);
+            box.AddChild(card);
+        }
+
+        return MakeScroll(box);
     }
 
     // ---------- 装配页 ----------

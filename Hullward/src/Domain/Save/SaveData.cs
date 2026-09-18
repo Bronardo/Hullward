@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Hullward.Domain.Loot;
 using Hullward.Domain.Modules;
+using Hullward.Domain.Ships;
 
 namespace Hullward.Domain.Save;
 
@@ -50,6 +51,9 @@ public sealed class SaveData
 
     /// <summary>当前出战装配（槽位列表，null = 空槽；长度 ≤ 船体槽数）。</summary>
     public List<ModuleDropData?> EquippedSlots { get; set; } = new();
+
+    /// <summary>当前旗舰型号（船坞选择，默认轻巡）。</summary>
+    public ShipClass ShipClass { get; set; } = ShipClass.Scout;
 }
 
 /// <summary>存档 ↔ 域对象转换（词缀/洗练次数/装配槽位）。</summary>

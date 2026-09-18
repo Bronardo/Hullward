@@ -61,10 +61,11 @@ public partial class Main : Node
     private int _taskStartModules;
     private bool _taskIsBoss;
 
-    // 母舰内部（LD §6：装配槽位 / 配装方案 / 出战船体）
+    // 母舰内部（LD §6：装配槽位 / 配装方案 / 出战船体；船坞 §船坞：四档旗舰切换）
     private ShipBase _mothershipShip = null!;
     private List<ModuleDrop?> _equippedSlots = null!;
     private readonly ShipPresets _presets = new();
+    private ShipClass _shipClass = ShipClass.Scout;
 
     public override void _Ready()
     {
@@ -195,7 +196,7 @@ public partial class Main : Node
         GD.Print($"星图就绪: 第{_starMap.Chapter}章 母舰Lv{_mothershipLevel} {_starMap.Nodes.Count} 个任务");
     }
 
-    /// <summary>进入母舰内部（LD §6 仓库/装配/工坊/维修/商店）。</summary>
+    /// <summary>进入母舰内部（LD §6 船坞/仓库/装配/工坊/维修/商店）。</summary>
     private void ShowMothership()
     {
         ClearUi();
@@ -204,8 +205,26 @@ public partial class Main : Node
         _uiLayer.AddChild(new MothershipPanel(
             _inventory, _equippedSlots, _mothershipShip, _mothershipLevel, _mothershipExp, _presets, _rng,
             onClose: ShowStarmap,
-            onChanged: () => { }));
-        GD.Print($"母舰内部: 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
+            onChanged: () => { },
+            shipClass: _shipClass,
+            onShipChange: SwitchShip));
+        GD.Print($"母舰内部: 旗舰 {ShipCatalog.DisplayName(_shipClass)}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
+    }
+
+    /// <summary>船坞切换旗舰：换船体 + 槽位重排（保留前 N、超出退回背包、不足补空）。返回新槽位列表；同船型返回 null。</summary>
+    private List<ModuleDrop?>? SwitchShip(ShipClass shipClass)
+    {
+        if (_shipClass == shipClass)
+        {
+            return null;
+        }
+        ShipBase next = ShipCatalog.Create(shipClass);
+        List<ModuleDrop?> newSlots = ShipFittingService.RebaseSlots(_inventory, _equippedSlots, next.ModuleSlots);
+        _mothershipShip = next;
+        _equippedSlots = newSlots;
+        _shipClass = shipClass;
+        GD.Print($"船坞切换: {ShipCatalog.DisplayName(shipClass)} 槽位 {_equippedSlots.Count}, 背包 {_inventory.Modules.Count}");
+        return newSlots;
     }
 
     private void OnNewGame()
@@ -236,7 +255,8 @@ public partial class Main : Node
         _mothershipLevel = 1;
         _mothershipExp = 0;
         _pendingHull = 0;
-        _mothershipShip = new ScoutShip();
+        _shipClass = ShipClass.Scout;
+        _mothershipShip = ShipCatalog.Create(_shipClass);
         _equippedSlots = ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
         ShowStarmap();
     }
@@ -256,17 +276,19 @@ public partial class Main : Node
         _mothershipLevel = Math.Clamp(data.MothershipLevel, 1, 4);
         _mothershipExp = data.MothershipExp;
         _pendingHull = data.PlayerHull;
-        _mothershipShip = new ScoutShip();
-        _equippedSlots = data.EquippedSlots.Count > 0
-            ? SaveDataMapper.ToDomainSlots(data.EquippedSlots)
-            : ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
+        _shipClass = data.ShipClass;
+        _mothershipShip = ShipCatalog.Create(_shipClass);
         _inventory = new Inventory();
         _inventory.AddAlloy(data.Alloy);
         foreach (var module in data.Modules)
         {
             _inventory.AddModule(SaveDataMapper.ToDomain(module));
         }
-        GD.Print($"已读档: 章节 {ZoneLevel}, 母舰 Lv{_mothershipLevel}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
+        // 读档槽位：旧存档长度可能与当前船型槽数不一致 → RebaseSlots 保留/退回/补空
+        _equippedSlots = data.EquippedSlots.Count > 0
+            ? ShipFittingService.RebaseSlots(_inventory, SaveDataMapper.ToDomainSlots(data.EquippedSlots), _mothershipShip.ModuleSlots)
+            : ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
+        GD.Print($"已读档: 章节 {ZoneLevel}, 母舰 Lv{_mothershipLevel}, 旗舰 {ShipCatalog.DisplayName(_shipClass)}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
         ShowStarmap();
     }
 
@@ -305,6 +327,7 @@ public partial class Main : Node
         _targets.Clear();
 
         _player = new PlayerShip { Position = Vector2.Zero };
+        _player.SetShip(_mothershipShip); // 出战旗舰 = 母舰当前旗舰（同引用：装配/耐久共享）
         _player.Died += () => ShowSettlement(false);
         AddChild(_player);
 
@@ -542,7 +565,8 @@ public partial class Main : Node
             PlayerHull = _player.ShipStats.Hull,
             ModulesPicked = _modulesPicked,
             MothershipLevel = _mothershipLevel,
-            MothershipExp = _mothershipExp
+            MothershipExp = _mothershipExp,
+            ShipClass = _shipClass
         };
         foreach (var module in _inventory.Modules)
         {
