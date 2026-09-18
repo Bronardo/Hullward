@@ -211,8 +211,8 @@ public partial class Main : Node
         GD.Print($"母舰内部: 旗舰 {ShipCatalog.DisplayName(_shipClass)}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
     }
 
-    /// <summary>船坞切换旗舰：换船体 + 槽位重排（保留前 N、超出退回背包、不足补空）。返回新槽位列表；同船型返回 null。</summary>
-    private List<ModuleDrop?>? SwitchShip(ShipClass shipClass)
+    /// <summary>船坞切换旗舰：换船体 + 槽位重排（保留前 N、超出退回背包、不足补空）。返回新船与槽位；同船型返回 null。</summary>
+    private (ShipBase Ship, List<ModuleDrop?> Slots)? SwitchShip(ShipClass shipClass)
     {
         if (_shipClass == shipClass)
         {
@@ -223,8 +223,9 @@ public partial class Main : Node
         _mothershipShip = next;
         _equippedSlots = newSlots;
         _shipClass = shipClass;
+        SaveGame(); // 切换即持久（母舰内无战斗，SaveGame 已兼容取 _mothershipShip.Hull）
         GD.Print($"船坞切换: {ShipCatalog.DisplayName(shipClass)} 槽位 {_equippedSlots.Count}, 背包 {_inventory.Modules.Count}");
-        return newSlots;
+        return (next, newSlots);
     }
 
     private void OnNewGame()
@@ -562,7 +563,7 @@ public partial class Main : Node
         {
             ZoneLevel = ZoneLevel,
             Alloy = _inventory.Alloy,
-            PlayerHull = _player.ShipStats.Hull,
+            PlayerHull = _player != null && IsInstanceValid(_player) ? _player.ShipStats.Hull : _mothershipShip.Hull,
             ModulesPicked = _modulesPicked,
             MothershipLevel = _mothershipLevel,
             MothershipExp = _mothershipExp,

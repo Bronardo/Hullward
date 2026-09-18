@@ -22,15 +22,15 @@ public sealed partial class MothershipPanel : Control
 
     private readonly Inventory _inventory;
     private readonly List<ModuleDrop?> _slots;
-    private readonly ShipBase _ship;
+    private ShipBase _ship;
     private readonly int _mothershipLevel;
     private readonly int _mothershipExp;
     private readonly ShipPresets _presets;
     private readonly Random _rng;
     private readonly Action _onClose;
     private readonly Action _onChanged;
-    private readonly ShipClass _shipClass;
-    private readonly Func<ShipClass, List<ModuleDrop?>?> _onShipChange;
+    private ShipClass _shipClass;
+    private readonly Func<ShipClass, (ShipBase Ship, List<ModuleDrop?> Slots)?> _onShipChange;
 
     private int _tab = 1;             // 0 船坞 / 1 装配 / 2 仓库 / 3 工坊 / 4 维修 / 5 商店（默认进装配）
     private int _selectedSlot = -1;   // 装配页选中槽位
@@ -48,7 +48,7 @@ public sealed partial class MothershipPanel : Control
         Action onClose,
         Action onChanged,
         ShipClass shipClass,
-        Func<ShipClass, List<ModuleDrop?>?> onShipChange)
+        Func<ShipClass, (ShipBase Ship, List<ModuleDrop?> Slots)?> onShipChange)
     {
         _inventory = inventory;
         _slots = slots;
@@ -279,12 +279,14 @@ public sealed partial class MothershipPanel : Control
             }
             switchBtn.Pressed += () =>
             {
-                List<ModuleDrop?>? newSlots = _onShipChange(shipClass);
-                if (newSlots != null)
+                var result = _onShipChange(shipClass);
+                if (result != null)
                 {
+                    _ship = result.Value.Ship;
+                    _shipClass = shipClass;
                     _slots.Clear();
-                    _slots.AddRange(newSlots);
-                    _status = $"已切换旗舰：{ShipCatalog.DisplayName(shipClass)}（装配槽位 {newSlots.Count}）";
+                    _slots.AddRange(result.Value.Slots);
+                    _status = $"已切换旗舰：{ShipCatalog.DisplayName(shipClass)}（装配槽位 {_slots.Count}）";
                     _onChanged();
                     Rebuild();
                 }
