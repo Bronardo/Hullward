@@ -114,28 +114,42 @@ public partial class Main : Node
             return;
         }
 
-        // 技能状态（LD §3.2：冷却就绪但能量不足 = 灰态"能量不足"）
-        string qState = SkillState(_player.SkillQ);
-        string eState = SkillState(_player.SkillE);
+        // Sprint 6 迭代 19：分区战斗 HUD（LD v0.6.0 §3）
         string task = _taskIsBoss ? (_taskGateLabel ?? "BOSS 讨伐") : $"清剿任务（剩余 {_targets.Count}）";
-
         var ship = _player.ShipStats;
-        string affixHud = ship.CritChance > 0f ? $"  暴击 {ship.CritChance * 100f:0}%" : "";
-        if (ship.ThornsPct > 0f)
+
+        var blips = new List<HUD.RadarBlip>();
+        foreach (var n in _enemies.GetChildren())
         {
-            affixHud += $"  反伤 {ship.ThornsPct * 100f:0}%";
-        }
-        if (ship.DamageReductionPct > 0f)
-        {
-            affixHud += $"  减伤 {ship.DamageReductionPct * 100f:0}%";
+            if (n is EnemyDrone ed && IsInstanceValid(ed))
+            {
+                blips.Add(new HUD.RadarBlip(ed.Position, ed.Ship is EliteGuardShip, ed.Ship is GuardianBoss));
+            }
         }
 
-        _hud.UpdateStatus(
-            $"[第{ZoneLevel}章·{task}]  耐久 {ship.Hull}  护盾 {ship.Shield}/{ship.MaxShield}" +
-            $"  能量 {ship.Energy:0}/{ship.MaxEnergy:0}" +
-            $"  |  火力 {ship.Firepower:0}{affixHud}" +
-            $"  |  Q过载炮[{qState}]  E护盾[{eState}]" +
-            $"  |  合金 {_inventory.Alloy}  模块 {_modulesPicked}  |  F5快存 F9读档·结算自动保存");
+        _hud.UpdateBattle(new BattleHudData
+        {
+            TaskTitle = $"第{ZoneLevel}章·{task}",
+            WaveTitle = _taskIsBoss ? "BOSS 讨伐" : "清剿任务",
+            Shield = (int)ship.Shield, MaxShield = ship.MaxShield,
+            Hull = ship.Hull, MaxHull = ship.MaxHull,
+            Energy = ship.Energy, MaxEnergy = ship.MaxEnergy,
+            Alloy = _inventory.Alloy, ModulesPicked = _modulesPicked,
+            EnemiesLeft = _targets.Count,
+            MissionHint = _taskIsBoss ? "击破禁区守卫" : "清剿全部敌舰",
+            SkillQReady = _player.SkillQ.IsReady,
+            SkillQEnough = ship.HasEnergyFor(_player.SkillQ.EnergyCost),
+            SkillQRemain = _player.SkillQ.Remaining,
+            SkillQCooldown = _player.SkillQ.Cooldown,
+            SkillEReady = _player.SkillE.IsReady,
+            SkillEEnough = ship.HasEnergyFor(_player.SkillE.EnergyCost),
+            SkillERemain = _player.SkillE.Remaining,
+            SkillECooldown = _player.SkillE.Cooldown,
+            ShipName = ship.Name, ShipLevel = _mothershipLevel,
+            Firepower = ship.Firepower, FireRate = ship.FireRateMultiplier,
+            PlayerPos = _player.Position,
+            Hostiles = blips
+        });
     }
 
     public override void _PhysicsProcess(double delta)
