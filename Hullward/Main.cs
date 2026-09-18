@@ -630,7 +630,8 @@ public partial class Main : Node
         pickup.Position = worldPosition + new Vector2(_rng.NextSingle() * 30f - 15f, _rng.NextSingle() * 30f - 15f);
         pickup.Collected += OnPickupCollected;
         pickup.ProcessMode = ProcessModeEnum.Pausable; // 战斗暂停时掉落物静止
-        AddChild(pickup);
+        // 挂到战斗容器：StartBattle 重建容器时残留掉落物一并清理（否则上局未拾取道具会遗留到新战斗且无法拾取）
+        _enemies.AddChild(pickup);
     }
 
     private void OnPickupCollected(Pickup pickup)
