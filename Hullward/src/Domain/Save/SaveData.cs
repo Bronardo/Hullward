@@ -22,6 +22,9 @@ public sealed class ModuleDropData
 
     public ItemRarity Rarity { get; set; }
 
+    /// <summary>品类（Sprint5 A3：旧档无此字段反序列化为 0 默认，见 ToDomain 兼容处理）。</summary>
+    public int Category { get; set; } = -1;
+
     public List<AffixData> Affixes { get; set; } = new();
 
     public int RerollCount { get; set; }
@@ -65,7 +68,8 @@ public static class SaveDataMapper
         {
             Slot = module.Slot,
             Rarity = module.Rarity,
-            RerollCount = module.RerollCount
+            RerollCount = module.RerollCount,
+            Category = module.Category is null ? -1 : (int)module.Category
         };
         foreach (var affix in module.Affixes)
         {
@@ -76,7 +80,12 @@ public static class SaveDataMapper
 
     public static ModuleDrop ToDomain(ModuleDropData data)
     {
-        var drop = new ModuleDrop(data.Slot, data.Rarity) { RerollCount = data.RerollCount };
+        var drop = new ModuleDrop(data.Slot, data.Rarity)
+        {
+            RerollCount = data.RerollCount,
+            // 旧档（Category 反序列化为 -1 或 0 默认）→ null，显示名按确定性映射；新档按原品类
+            Category = data.Category < 0 ? null : (ModuleCategory)data.Category
+        };
         foreach (var affix in data.Affixes)
         {
             drop.Affixes.Add(new Affix(affix.Name, affix.Stat, affix.Value));

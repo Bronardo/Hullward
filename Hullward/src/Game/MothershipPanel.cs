@@ -95,6 +95,17 @@ public sealed partial class MothershipPanel : Control
         root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(root);
 
+        // Sprint 5 P0-B：母舰深色金属科技网格底纹（LD §6 色板 #16121F 系），平铺于六页
+        var gridTex = new TextureRect
+        {
+            Texture = GD.Load<Texture2D>("res://assets/background/mothership_grid.png"),
+            StretchMode = TextureRect.StretchModeEnum.Tile,
+            Modulate = new Color(1f, 1f, 1f, 0.45f),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        gridTex.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        root.AddChild(gridTex);
+
         var layout = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         layout.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         layout.OffsetLeft = 24;
@@ -357,12 +368,14 @@ public sealed partial class MothershipPanel : Control
             ModuleDrop? drop = _slots[i];
             string label = drop == null
                 ? $"[{i + 1}] 空槽"
-                : $"[{i + 1}] {drop.Name}" + (drop.Affixes.Count > 0 ? $"（{drop.Affixes.Count}词缀）" : "");
+                : $"[{i + 1}] {drop.DisplayName}" + (drop.Affixes.Count > 0 ? $"（{drop.Affixes.Count}词缀）" : "");
             var btn = new Button
             {
                 Text = label,
                 CustomMinimumSize = new Vector2(230, 44),
-                MouseFilter = Control.MouseFilterEnum.Stop
+                MouseFilter = Control.MouseFilterEnum.Stop,
+                Icon = drop == null ? null : ModuleIcon(drop.Slot, drop.Rarity),
+                IconAlignment = HorizontalAlignment.Left
             };
             btn.AddThemeFontSizeOverride("font_size", 14);
             bool selected = i == _selectedSlot;
@@ -428,7 +441,7 @@ public sealed partial class MothershipPanel : Control
             ModuleDrop selected = _slots[_selectedSlot]!;
             var detail = new Label
             {
-                Text = $"◆ 槽位 {_selectedSlot + 1}：{selected.Name}\n{selected.AffixSummary()}",
+                Text = $"◆ 槽位 {_selectedSlot + 1}：{selected.DisplayName}\n{selected.AffixSummary()}",
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
@@ -451,9 +464,10 @@ public sealed partial class MothershipPanel : Control
             int moduleIndex = i;
             ModuleDrop drop = _inventory.Modules[i];
             var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            row.AddChild(IconBox(drop.Slot, drop.Rarity));
             var info = new Label
             {
-                Text = $"▸ {drop.Name}  {drop.AffixSummary().Replace("\n", " ｜ ")}",
+                Text = $"{drop.DisplayName}  {drop.AffixSummary().Replace("\n", " ｜ ")}",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
@@ -566,15 +580,18 @@ public sealed partial class MothershipPanel : Control
         }
         foreach (var entry in filtered)
         {
-            var row = new Label
+            var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            row.AddChild(IconBox(entry.M.Slot, entry.M.Rarity));
+            var info = new Label
             {
-                Text = $"▸ {entry.M.Name}　{entry.M.AffixSummary().Replace("\n", " ｜ ")}" +
+                Text = $"{entry.M.DisplayName}　{entry.M.AffixSummary().Replace("\n", " ｜ ")}" +
                        (entry.M.Rarity == ItemRarity.Rare || entry.M.Rarity == ItemRarity.Set ? $"　（洗练费用 {entry.M.RerollCost}）" : ""),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
-            row.AddThemeFontSizeOverride("font_size", 14);
-            row.AddThemeColorOverride("font_color", RarityColor(entry.M.Rarity));
+            info.AddThemeFontSizeOverride("font_size", 14);
+            info.AddThemeColorOverride("font_color", RarityColor(entry.M.Rarity));
+            row.AddChild(info);
             list.AddChild(row);
         }
         box.AddChild(list);
@@ -607,9 +624,10 @@ public sealed partial class MothershipPanel : Control
             int moduleIndex = i;
             ModuleDrop drop = _inventory.Modules[i];
             var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            row.AddChild(IconBox(drop.Slot, drop.Rarity));
             var info = new Label
             {
-                Text = $"▸ {drop.Name}　{drop.AffixSummary().Replace("\n", " ｜ ")}",
+                Text = $"{drop.DisplayName}　{drop.AffixSummary().Replace("\n", " ｜ ")}",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
@@ -739,9 +757,10 @@ public sealed partial class MothershipPanel : Control
             int itemIndex = i;
             var item = shop.Items[i];
             var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            row.AddChild(IconBox(item.Module.Slot, item.Module.Rarity));
             var info = new Label
             {
-                Text = $"▸ {item.Module.Name}　{item.Module.AffixSummary().Replace("\n", " ｜ ")}",
+                Text = $"{item.Module.DisplayName}　{item.Module.AffixSummary().Replace("\n", " ｜ ")}",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
@@ -754,7 +773,7 @@ public sealed partial class MothershipPanel : Control
             {
                 if (shop.TryBuy(_inventory, itemIndex))
                 {
-                    _status = $"已购得 {item.Module.Name}";
+                    _status = $"已购得 {item.Module.DisplayName}";
                     _onChanged();
                     Rebuild();
                 }
@@ -799,6 +818,60 @@ public sealed partial class MothershipPanel : Control
         label.AddThemeColorOverride("font_color", new Color(SubColor));
         return label;
     }
+
+    /// <summary>Sprint 5 P0-A2：槽位 16×16 像素图标路径（程序化生成，LD 命名映射 §5）。</summary>
+    private static string SlotIconPath(ModuleType slot) => slot switch
+    {
+        ModuleType.Weapon => "res://assets/icons/weapon.png",
+        ModuleType.Armor => "res://assets/icons/armor.png",
+        ModuleType.Power => "res://assets/icons/power.png",
+        _ => "res://assets/icons/special.png"
+    };
+
+    private static readonly Dictionary<int, Texture2D> IconCache = new();
+
+    /// <summary>槽位图标 + 品质色边框（20×20：16 图标居中 + 2px 品质边框，LD §5 图标规格）。</summary>
+    private static Texture2D ModuleIcon(ModuleType slot, ItemRarity rarity)
+    {
+        int key = (int)slot * 10 + (int)rarity;
+        if (IconCache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var src = GD.Load<Texture2D>(SlotIconPath(slot)).GetImage();
+        var img = Image.CreateEmpty(20, 20, false, Image.Format.Rgba8);
+        img.Fill(new Color(0, 0, 0, 0));
+        for (int y = 0; y < 16; y++)
+        {
+            for (int x = 0; x < 16; x++)
+            {
+                img.SetPixel(x + 2, y + 2, src.GetPixel(x, y));
+            }
+        }
+        var border = RarityColor(rarity);
+        for (int x = 0; x < 20; x++)
+        {
+            img.SetPixel(x, 0, border);
+            img.SetPixel(x, 19, border);
+        }
+        for (int y = 0; y < 20; y++)
+        {
+            img.SetPixel(0, y, border);
+            img.SetPixel(19, y, border);
+        }
+        var tex = ImageTexture.CreateFromImage(img);
+        IconCache[key] = tex;
+        return tex;
+    }
+
+    /// <summary>列表项左侧槽位图标（品质色边框），20×20 固定尺寸。</summary>
+    private static TextureRect IconBox(ModuleType slot, ItemRarity rarity) => new()
+    {
+        Texture = ModuleIcon(slot, rarity),
+        CustomMinimumSize = new Vector2(20, 20),
+        MouseFilter = Control.MouseFilterEnum.Ignore
+    };
 
     private static Color RarityColor(ItemRarity rarity) => rarity switch
     {

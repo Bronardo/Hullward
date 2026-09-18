@@ -196,6 +196,17 @@ public static class UiScreens
     {
         Control root = Fullscreen();
 
+        // Sprint 5 P0-B：星图章节星云背景（zone1-4，冷蓝/青绿/紫红/暗红），叠加于深色底
+        var nebula = new TextureRect
+        {
+            Texture = GD.Load<Texture2D>($"res://assets/background/zone{Math.Clamp(map.Chapter, 1, 4)}.png"),
+            StretchMode = TextureRect.StretchModeEnum.Tile,
+            Modulate = new Color(1f, 1f, 1f, 0.55f),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        nebula.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        root.AddChild(nebula);
+
         // 标题区
         var header = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         header.SetAnchorsPreset(Control.LayoutPreset.TopWide);

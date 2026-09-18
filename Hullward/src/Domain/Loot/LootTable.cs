@@ -22,6 +22,12 @@ public sealed class ModuleDrop
     public ItemRarity Rarity { get; }
     public string Name { get; }
 
+    /// <summary>品类（LD Sprint5 §2：掉落时随机分配，与词缀 roll 正交）；旧档 null → 确定性映射显示名。</summary>
+    public ModuleCategory? Category { get; set; }
+
+    /// <summary>玩家可读显示名（品质前缀 + 品类名，LD §3-4；弃用代码类名）。</summary>
+    public string DisplayName => ModuleNames.DisplayName(this);
+
     /// <summary>词缀列表（白装为空）。</summary>
     public List<Affix> Affixes { get; } = new();
 
@@ -77,7 +83,7 @@ public sealed class LootTable
         }
 
         ModuleType slot = Slots[rng.Next(Slots.Length)];
-        var drop = new ModuleDrop(slot, rarity);
+        var drop = new ModuleDrop(slot, rarity) { Category = ModuleNames.RandomCategory(slot, rng) };
         ModuleRoller.RollAffixes(drop, rng);
         return drop;
     }
@@ -118,7 +124,7 @@ public sealed class LootTable
                 : ItemRarity.Rare;
 
         ModuleType slot = Slots[rng.Next(Slots.Length)];
-        var drop = new ModuleDrop(slot, rarity);
+        var drop = new ModuleDrop(slot, rarity) { Category = ModuleNames.RandomCategory(slot, rng) };
         ModuleRoller.RollAffixes(drop, rng);
         return drop;
     }

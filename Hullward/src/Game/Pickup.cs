@@ -31,7 +31,7 @@ public partial class Pickup : Node2D
         var pickup = new Pickup
         {
             Kind = PickupKind.Module,
-            Label = drop.Name,
+            Label = drop.DisplayName,
             Tint = color,
             ModuleData = drop
         };

@@ -37,6 +37,7 @@ public partial class Main : Node
     private PlayerShip _player = null!;
     private Node2D _enemies = null!;
     private ColorRect _background = null!;
+    private TextureRect _nebula = null!;
     private Sfx _sfx = null!;
     private HUD _hud = null!;
     private bool _waveActive;
@@ -375,6 +376,10 @@ public partial class Main : Node
         ClearUi();
         _state = GameState.Battle;
         _jumpTimer = 0f;
+
+        // Sprint 5 P0-B：战斗背景按章节换星云 + 底色
+        _background.Color = ZoneColor(ZoneLevel);
+        _nebula.Texture = GD.Load<Texture2D>(ZoneNebulaPath(ZoneLevel));
 
         // 清理上一场战斗节点（防重入累积多艘玩家船：现象=多船同步移动、仅最新一艘有索敌开火）
         if (_player != null && IsInstanceValid(_player))
@@ -741,19 +746,22 @@ public partial class Main : Node
         _ => new Color("ffffff")
     };
 
+    /// <summary>章节星云纹理（Sprint 5 P0-B：zone1-4 平铺，四章配色 冷蓝/青绿/紫红/暗红）。</summary>
+    private static string ZoneNebulaPath(int zone) => $"res://assets/background/zone{Math.Clamp(zone, 1, 4)}.png";
+
     private void SpawnNebula()
     {
-        // CC0 星云纹理平铺（LD §2.3 深紫黑基调），叠加在章节底色之上
-        var nebula = new TextureRect
+        // LD §2.3 章节星云纹理平铺，叠加在章节底色之上（StarMap 背景亦复用该素材）
+        _nebula = new TextureRect
         {
-            Texture = GD.Load<Texture2D>("res://assets/background/starfield.png"),
+            Texture = GD.Load<Texture2D>(ZoneNebulaPath(ZoneLevel)),
             Size = new Vector2(5000, 5000),
             Position = new Vector2(-2500, -2500),
             StretchMode = TextureRect.StretchModeEnum.Tile,
-            Modulate = new Color(1f, 1f, 1f, 0.55f),
+            Modulate = new Color(1f, 1f, 1f, 0.6f),
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
-        AddChild(nebula);
+        AddChild(_nebula);
     }
 
     /// <summary>击毁爆炸特效（CC0 fire 帧序列，播放一次自毁）。</summary>
