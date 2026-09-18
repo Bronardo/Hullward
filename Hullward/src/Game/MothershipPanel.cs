@@ -377,6 +377,8 @@ public sealed partial class MothershipPanel : Control
                 Icon = drop == null ? null : ModuleIcon(drop.Slot, drop.Rarity),
                 IconAlignment = HorizontalAlignment.Left
             };
+            // 槽位按钮图标锁 20×20（与列表项一致；Godot Button.Icon 默认按按钮高度拉伸）
+            btn.AddThemeConstantOverride("icon_max_width", 20);
             btn.AddThemeFontSizeOverride("font_size", 14);
             bool selected = i == _selectedSlot;
             btn.AddThemeColorOverride("font_color", selected ? new Color("10131f") : new Color(TextColor));
