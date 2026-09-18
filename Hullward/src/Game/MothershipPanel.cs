@@ -61,6 +61,12 @@ public sealed partial class MothershipPanel : Control
         _onChanged = onChanged;
         _shipClass = shipClass;
         _onShipChange = onShipChange;
+
+        // 关键：面板挂到 CanvasLayer（非 Control 父），锚点相对视口。
+        // 必须在进树（_Ready）之前设好 FullRect——与 UiScreens.Fullscreen() 的
+        // "构造时 SetAnchorsPreset" 模式一致；若拖到 _Ready 才设，进树首帧布局
+        // 已按默认锚点算过 rect（0x0），内容塌缩到左上角 min size 区。
+        SetAnchorsPreset(Control.LayoutPreset.FullRect);
     }
 
     public override void _Ready()
