@@ -369,16 +369,20 @@ public sealed partial class MothershipPanel : Control
             string label = drop == null
                 ? $"[{i + 1}] 空槽"
                 : $"[{i + 1}] {drop.DisplayName}" + (drop.Affixes.Count > 0 ? $"（{drop.Affixes.Count}词缀）" : "");
+            // 槽位行：IconBox 固定 20×20（与列表项一致，不使用 Button.Icon 避免拉伸）+ 文字按钮
+            var slotBox = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            slotBox.AddThemeConstantOverride("separation", 6);
+            if (drop != null)
+            {
+                slotBox.AddChild(IconBox(drop.Slot, drop.Rarity));
+            }
             var btn = new Button
             {
                 Text = label,
-                CustomMinimumSize = new Vector2(230, 44),
-                MouseFilter = Control.MouseFilterEnum.Stop,
-                Icon = drop == null ? null : ModuleIcon(drop.Slot, drop.Rarity),
-                IconAlignment = HorizontalAlignment.Left
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                CustomMinimumSize = new Vector2(210, 44),
+                MouseFilter = Control.MouseFilterEnum.Stop
             };
-            // 槽位按钮图标锁 20×20（与列表项一致；Godot Button.Icon 默认按按钮高度拉伸）
-            btn.AddThemeConstantOverride("icon_max_width", 20);
             btn.AddThemeFontSizeOverride("font_size", 14);
             bool selected = i == _selectedSlot;
             btn.AddThemeColorOverride("font_color", selected ? new Color("10131f") : new Color(TextColor));
@@ -392,7 +396,8 @@ public sealed partial class MothershipPanel : Control
                 _selectedSlot = _selectedSlot == slotIndex ? -1 : slotIndex;
                 Rebuild();
             };
-            slotRow.AddChild(btn);
+            slotBox.AddChild(btn);
+            slotRow.AddChild(slotBox);
         }
 
         // 卸下选中槽
