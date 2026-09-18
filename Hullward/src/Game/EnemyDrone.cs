@@ -172,7 +172,8 @@ public partial class EnemyDrone : Node2D, ITargetable
                     {
                         Position = Position + new Vector2(i * 24f, 0f),
                         Player = Player,
-                        Damage = Math.Max(2, (int)(Ship.Firepower * 1.6f)) // AOE 重击
+                        Damage = Math.Max(2, (int)(Ship.Firepower * 1.6f)), // AOE 重击
+                        ProcessMode = ProcessModeEnum.Pausable // 战斗暂停时脉冲冻结
                     };
                     GetTree().CurrentScene.AddChild(pulse);
                 }
@@ -195,7 +196,8 @@ public partial class EnemyDrone : Node2D, ITargetable
             Player = Player,
             Attacker = this,
             Direction = dir,
-            Damage = Math.Max(1, (int)Ship.Firepower)
+            Damage = Math.Max(1, (int)Ship.Firepower),
+            ProcessMode = ProcessModeEnum.Pausable // 战斗暂停时敌方弹丸冻结
         };
         GetTree().CurrentScene.AddChild(proj);
     }

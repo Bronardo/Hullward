@@ -378,15 +378,15 @@ public partial class Main : Node
         }
         _targets.Clear();
 
-        _player = new PlayerShip { Position = Vector2.Zero };
+        _player = new PlayerShip { Position = Vector2.Zero, ProcessMode = ProcessModeEnum.Pausable };
         _player.SetShip(_mothershipShip); // 出战旗舰 = 母舰当前旗舰（同引用：装配/耐久共享）
         _player.Died += () => ShowSettlement(false);
         AddChild(_player);
 
-        _enemies = new Node2D { Name = "Enemies" };
+        _enemies = new Node2D { Name = "Enemies", ProcessMode = ProcessModeEnum.Pausable };
         AddChild(_enemies);
 
-        _hud = new HUD();
+        _hud = new HUD { ProcessMode = ProcessModeEnum.Pausable };
         AddChild(_hud);
 
         // 应用读档耐久
@@ -607,6 +607,7 @@ public partial class Main : Node
         pickup.Player = player;
         pickup.Position = worldPosition + new Vector2(_rng.NextSingle() * 30f - 15f, _rng.NextSingle() * 30f - 15f);
         pickup.Collected += OnPickupCollected;
+        pickup.ProcessMode = ProcessModeEnum.Pausable; // 战斗暂停时掉落物静止
         AddChild(pickup);
     }
 

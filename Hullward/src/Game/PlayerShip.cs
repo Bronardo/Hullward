@@ -156,7 +156,8 @@ public partial class PlayerShip : CharacterBody2D
             Target = target,
             Speed = ProjectileSpeed,
             Damage = damage,
-            IsCritical = isCritical // 表现层标注（暴击弹丸更大/更亮）
+            IsCritical = isCritical, // 表现层标注（暴击弹丸更大/更亮）
+            ProcessMode = ProcessModeEnum.Pausable, // 战斗暂停时弹丸冻结
         };
         GetTree().CurrentScene.AddChild(projectile);
     }
