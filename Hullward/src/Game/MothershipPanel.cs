@@ -586,6 +586,7 @@ public sealed partial class MothershipPanel : Control
             {
                 Text = $"{entry.M.DisplayName}　{entry.M.AffixSummary().Replace("\n", " ｜ ")}" +
                        (entry.M.Rarity == ItemRarity.Rare || entry.M.Rarity == ItemRarity.Set ? $"　（洗练费用 {entry.M.RerollCost}）" : ""),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
