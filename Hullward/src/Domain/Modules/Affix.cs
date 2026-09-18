@@ -90,17 +90,22 @@ public sealed class AffixPool
         public AffixStat Stat { get; }
         public float Min { get; }
         public float Max { get; }
+        /// <summary>黄/绿（Rare/Set）专属区间；-1 = 未设置，回退普通区间（蓝）。</summary>
+        public float RareMin { get; }
+        public float RareMax { get; }
         public float AncientMin { get; }
         public float AncientMax { get; }
         public int Weight { get; }
         public ItemRarity MinRarity { get; }
 
-        public AffixEntry(string name, AffixStat stat, float min, float max, float ancientMin, float ancientMax, int weight, ItemRarity minRarity)
+        public AffixEntry(string name, AffixStat stat, float min, float max, float ancientMin, float ancientMax, int weight, ItemRarity minRarity, float rareMin = -1f, float rareMax = -1f)
         {
             Name = name;
             Stat = stat;
             Min = min;
             Max = max;
+            RareMin = rareMin;
+            RareMax = rareMax;
             AncientMin = ancientMin;
             AncientMax = ancientMax;
             Weight = weight;
@@ -112,7 +117,7 @@ public sealed class AffixPool
     {
         new("强化炮击", AffixStat.FirepowerPercent, 5, 8, 15, 20, 20, ItemRarity.Magic),
         new("急速供弹", AffixStat.AttackSpeedPercent, 4, 7, 12, 15, 18, ItemRarity.Magic),
-        new("致命一击", AffixStat.CritChance, 3, 5, 10, 12, 15, ItemRarity.Magic),
+        new("致命一击", AffixStat.CritChance, 5, 8, 15, 18, 15, ItemRarity.Magic, 8, 12),
         new("暴击增幅", AffixStat.CritDamage, 10, 15, 30, 40, 12, ItemRarity.Magic),
         new("护盾穿透", AffixStat.ShieldPierce, 5, 10, 20, 25, 10, ItemRarity.Magic),
         new("减速磁场", AffixStat.SlowOnHit, 10, 15, 30, 30, 10, ItemRarity.Magic),
@@ -222,9 +227,23 @@ public static class ModuleRoller
     /// <summary>按品质区间均匀随机数值。</summary>
     private static float RollValue(AffixPool.AffixEntry entry, ItemRarity rarity, Random rng)
     {
-        bool ancient = rarity == ItemRarity.Ancient;
-        float min = ancient ? entry.AncientMin : entry.Min;
-        float max = ancient ? entry.AncientMax : entry.Max;
+        float min, max;
+        if (rarity == ItemRarity.Ancient)
+        {
+            min = entry.AncientMin;
+            max = entry.AncientMax;
+        }
+        else if ((rarity is ItemRarity.Rare or ItemRarity.Set) && entry.RareMin >= 0f)
+        {
+            // 黄/绿专属区间（LD 线 C C2：致命一击蓝 5-8 / 黄 8-12 / 暗金 15-18）
+            min = entry.RareMin;
+            max = entry.RareMax;
+        }
+        else
+        {
+            min = entry.Min;
+            max = entry.Max;
+        }
         if (min == 0f && max == 0f)
         {
             // 无暗金列的词缀：黄+ 才可 roll，取非暗金区间
