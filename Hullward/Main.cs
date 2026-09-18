@@ -100,6 +100,12 @@ public partial class Main : Node
         GD.Print("UI ready: 主菜单");
     }
 
+    /// <summary>技能状态文本：冷却中 → 剩余秒；冷却就绪但能量不足 → "能量不足"（灰态）；否则"就绪"。</summary>
+    private string SkillState(Domain.Combat.ActiveSkill skill)
+        => !skill.IsReady
+            ? $"{skill.Remaining:0.0}s"
+            : _player.ShipStats.HasEnergyFor(skill.EnergyCost) ? "就绪" : "能量不足";
+
     public override void _Process(double delta)
     {
         if (_state != GameState.Battle || _hud == null || _paused)
@@ -107,8 +113,9 @@ public partial class Main : Node
             return;
         }
 
-        string qState = _player.SkillQ.IsReady ? "就绪" : $"{_player.SkillQ.Remaining:0.0}s";
-        string eState = _player.SkillE.IsReady ? "就绪" : $"{_player.SkillE.Remaining:0.0}s";
+        // 技能状态（LD §3.2：冷却就绪但能量不足 = 灰态"能量不足"）
+        string qState = SkillState(_player.SkillQ);
+        string eState = SkillState(_player.SkillE);
         string task = _taskIsBoss ? (_taskGateLabel ?? "BOSS 讨伐") : $"清剿任务（剩余 {_targets.Count}）";
 
         var ship = _player.ShipStats;
@@ -124,6 +131,7 @@ public partial class Main : Node
 
         _hud.UpdateStatus(
             $"[第{ZoneLevel}章·{task}]  耐久 {ship.Hull}  护盾 {ship.Shield}/{ship.MaxShield}" +
+            $"  能量 {ship.Energy:0}/{ship.MaxEnergy:0}" +
             $"  |  火力 {ship.Firepower:0}{affixHud}" +
             $"  |  Q过载炮[{qState}]  E护盾[{eState}]" +
             $"  |  合金 {_inventory.Alloy}  模块 {_modulesPicked}  |  F5快存 F9读档·结算自动保存");

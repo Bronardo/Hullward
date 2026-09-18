@@ -94,6 +94,18 @@ public partial class PlayerShip : CharacterBody2D
             }
         }
 
+        // 能量回复（LD Sprint4 §3.2：战斗中 8/s、脱战 12/s；索敌列表有存活目标即战斗）
+        bool inCombat = false;
+        foreach (var t in _targets)
+        {
+            if (t.Hull > 0)
+            {
+                inCombat = true;
+                break;
+            }
+        }
+        ShipStats.RegenEnergy((float)delta, inCombat);
+
         // 技能冷却
         SkillQ.Tick((float)delta);
         SkillE.Tick((float)delta);

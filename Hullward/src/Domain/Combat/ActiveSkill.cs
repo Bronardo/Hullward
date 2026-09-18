@@ -18,24 +18,35 @@ public abstract class ActiveSkill
 {
     public string Name { get; }
     public float Cooldown { get; }
+    /// <summary>基础能耗（LD Sprint4 §3.2：Q 过载炮 30 / E 护盾充能 40；词缀"节能模块"减免）。</summary>
+    public float EnergyCost { get; }
     public float Remaining { get; private set; }
     public bool IsReady => Remaining <= 0f;
 
-    protected ActiveSkill(string name, float cooldown)
+    protected ActiveSkill(string name, float cooldown, float energyCost)
     {
         Name = name;
         Cooldown = cooldown;
+        EnergyCost = energyCost;
     }
 
-    /// <summary>尝试施放：就绪 + 条件满足则生效并进入冷却。</summary>
+    /// <summary>
+    /// 尝试施放：冷却就绪 + 条件满足 + 能量充足则生效并进入冷却（冷却受"冷却缩减"词缀缩放）。
+    /// 能量不足拒绝施放（LD §3.2：技能不可用 + 不扣费不重置冷却）。
+    /// </summary>
     public bool TryUse(PlayerContext context)
     {
         if (!IsReady || !CanUse(context))
         {
             return false;
         }
+        if (!context.Ship.HasEnergyFor(EnergyCost))
+        {
+            return false; // 能量不足：技能不可用
+        }
         Apply(context);
-        Remaining = Cooldown;
+        context.Ship.SpendEnergy(context.Ship.EffectiveSkillCost(EnergyCost));
+        Remaining = Cooldown * context.Ship.SkillCooldownMultiplier;
         return true;
     }
 
@@ -57,7 +68,7 @@ public sealed class OverdriveCannon : ActiveSkill
     public const float DamageMultiplier = 3f;
 
     public OverdriveCannon()
-        : base("过载炮", cooldown: 6f)
+        : base("过载炮", cooldown: 6f, energyCost: 30f) // LD §3.2：Q 能耗 30
     {
     }
 
@@ -75,7 +86,7 @@ public sealed class OverdriveCannon : ActiveSkill
 public sealed class ShieldBurst : ActiveSkill
 {
     public ShieldBurst()
-        : base("护盾充能", cooldown: 10f)
+        : base("护盾充能", cooldown: 10f, energyCost: 40f) // LD §3.2：E 能耗 40
     {
     }
 

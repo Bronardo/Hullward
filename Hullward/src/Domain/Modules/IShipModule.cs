@@ -97,21 +97,49 @@ public sealed class ArmorModule : IShipModule
     }
 }
 
-/// <summary>能源模块：能源/技能系加成（词缀"过载缓冲"生效；能源池数值预留）。</summary>
+/// <summary>能源模块：能量条/技能系加成（LD Sprint4 §3.2：能源扩容/快速充能/节能模块/冷却缩减；过载缓冲由技能侧消费）。</summary>
 public sealed class PowerModule : IShipModule
 {
     public ModuleType Type => ModuleType.Power;
     public string Name { get; }
     public float OverdriveBonus { get; }
+    /// <summary>能源扩容：能量上限 +%（LD：8-12 / 暗金 25-30）。</summary>
+    public float MaxEnergyPercent { get; }
+    /// <summary>快速充能：能量回复 +%（LD：8-12 / 暗金 25-30）。</summary>
+    public float EnergyRegenPercent { get; }
+    /// <summary>节能模块：Q/E 技能能耗 -%（LD：5-8 / 暗金 15-20）。</summary>
+    public float SkillCostPercent { get; }
+    /// <summary>冷却缩减：技能冷却 -%（LD：5-8 / 暗金 15-20）。</summary>
+    public float CooldownPercent { get; }
 
-    public PowerModule(string name, float overdriveBonus = 0f)
+    public PowerModule(string name, float overdriveBonus = 0f, float maxEnergyPercent = 0f, float energyRegenPercent = 0f, float skillCostPercent = 0f, float cooldownPercent = 0f)
     {
         Name = name;
         OverdriveBonus = overdriveBonus;
+        MaxEnergyPercent = maxEnergyPercent;
+        EnergyRegenPercent = energyRegenPercent;
+        SkillCostPercent = skillCostPercent;
+        CooldownPercent = cooldownPercent;
     }
 
     public void ApplyEffect(ShipBase ship)
     {
+        if (MaxEnergyPercent > 0f)
+        {
+            ship.AddMaxEnergyPercent(MaxEnergyPercent);
+        }
+        if (EnergyRegenPercent > 0f)
+        {
+            ship.AddEnergyRegen(EnergyRegenPercent);
+        }
+        if (SkillCostPercent > 0f)
+        {
+            ship.AddSkillCostReduction(SkillCostPercent);
+        }
+        if (CooldownPercent > 0f)
+        {
+            ship.AddCooldownReduction(CooldownPercent);
+        }
         // 过载缓冲：过载炮伤害加成由技能侧读取（OverdriveBonus 在 ActiveSkill 层消费）
     }
 }

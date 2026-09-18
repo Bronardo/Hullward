@@ -75,6 +75,11 @@ public static class ShipFitting
         float critDamage = 0f;
         float damageReduction = 0f;
         float thorns = 0f;
+        float maxEnergy = 0f;
+        float energyRegen = 0f;
+        float skillCost = 0f;
+        float cooldown = 0f;
+        float overdrive = 0f;
 
         foreach (var affix in drop.Affixes)
         {
@@ -110,13 +115,28 @@ public static class ShipFitting
                 case AffixStat.Thorns:
                     thorns += affix.Value / 100f;
                     break;
+                case AffixStat.MaxEnergyPercent:
+                    maxEnergy += affix.Value; // % 直接传（ShipBase 按当前上限复合扩容）
+                    break;
+                case AffixStat.EnergyRegenPercent:
+                    energyRegen += affix.Value;
+                    break;
+                case AffixStat.SkillCostPercent:
+                    skillCost += affix.Value;
+                    break;
+                case AffixStat.CooldownPercent:
+                    cooldown += affix.Value;
+                    break;
+                case AffixStat.OverdrivePercent:
+                    overdrive += affix.Value;
+                    break;
             }
         }
 
         return drop.Slot switch
         {
             ModuleType.Armor => new ArmorModule(drop.Name, shield, armor, hull, damageReduction, thorns),
-            ModuleType.Power => new PowerModule(drop.Name),
+            ModuleType.Power => new PowerModule(drop.Name, overdrive, maxEnergy, energyRegen, skillCost, cooldown),
             ModuleType.Special => new SpecialModule(drop.Name, magicFind),
             _ => new WeaponModule(drop.Name, fp, fr, critChance, critDamage)
         };

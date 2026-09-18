@@ -39,6 +39,48 @@ public abstract class ShipBase : IShip
     /// <summary>反弹近身伤害 %（词缀"反伤镀层"）。</summary>
     public float ThornsPct { get; private set; }
 
+    // ---------- 能量系统（LD Sprint4 §3.2 拍板：轻量能量条） ----------
+
+    /// <summary>能量基础上限（LD：100，初始满）。</summary>
+    public const float EnergyCapacityBase = 100f;
+
+    /// <summary>战斗中自然回复（LD：8/s）。</summary>
+    public const float EnergyRegenCombat = 8f;
+
+    /// <summary>脱战自然回复（LD：12/s）。</summary>
+    public const float EnergyRegenOutOfCombat = 12f;
+
+    /// <summary>能量上限（词缀"能源扩容"扩容）。</summary>
+    public float MaxEnergy { get; private set; }
+
+    /// <summary>当前能量（0..MaxEnergy，技能消耗；战斗/脱战回复）。</summary>
+    public float Energy { get; private set; }
+
+    /// <summary>能量回复加成 %（词缀"快速充能"，战斗/脱战两速率同乘）。</summary>
+    public float EnergyRegenBonus { get; private set; }
+
+    /// <summary>技能能耗倍率（词缀"节能模块"：1.0 = 无减免，乘法复合，下限 0.2）。</summary>
+    public float SkillCostMultiplier { get; private set; } = 1f;
+
+    /// <summary>技能冷却倍率（词缀"冷却缩减"：1.0 = 无缩减，乘法复合，下限 0.2）。</summary>
+    public float SkillCooldownMultiplier { get; private set; } = 1f;
+
+    /// <summary>技能实际能耗（能耗 × 节能倍率）。</summary>
+    public float EffectiveSkillCost(float baseCost) => baseCost * SkillCostMultiplier;
+
+    /// <summary>技能是否能量充足（冷却就绪判定由 ActiveSkill 层负责）。</summary>
+    public bool HasEnergyFor(float baseCost) => Energy >= EffectiveSkillCost(baseCost) - 0.001f;
+
+    /// <summary>消耗能量（不降为负）。</summary>
+    public void SpendEnergy(float cost) => Energy = Math.Max(0f, Energy - cost);
+
+    /// <summary>自然回复（战斗中 8/s、脱战 12/s，均乘快速充能加成；不超上限）。</summary>
+    public void RegenEnergy(float dt, bool inCombat)
+    {
+        float rate = (inCombat ? EnergyRegenCombat : EnergyRegenOutOfCombat) * (1f + EnergyRegenBonus / 100f);
+        Energy = Math.Min(MaxEnergy, Energy + rate * dt);
+    }
+
     private float _mitigationTimer;
 
     /// <summary>减伤窗口是否生效（受击后 2s）。</summary>
@@ -82,6 +124,8 @@ public abstract class ShipBase : IShip
         Firepower = firepower;
         Speed = speed;
         ModuleSlots = moduleSlots;
+        MaxEnergy = EnergyCapacityBase;
+        Energy = EnergyCapacityBase;
         _baseHull = hull;
         _baseShield = shield;
         _baseFirepower = firepower;
@@ -115,6 +159,11 @@ public abstract class ShipBase : IShip
         CritDamage = 2f;
         DamageReductionPct = 0f;
         ThornsPct = 0f;
+        MaxEnergy = EnergyCapacityBase;
+        Energy = EnergyCapacityBase;
+        EnergyRegenBonus = 0f;
+        SkillCostMultiplier = 1f;
+        SkillCooldownMultiplier = 1f;
         _mitigationTimer = 0f;
         Firepower = _baseFirepower;
         foreach (var module in Modules)
@@ -150,6 +199,22 @@ public abstract class ShipBase : IShip
     internal void AddThorns(float bonus) => ThornsPct += bonus;
 
     internal void AddArmor(int bonus) => Armor += bonus;
+
+    /// <summary>能源扩容：上限按当前值复合扩容，当前能量同步抬升（出战即满）。</summary>
+    internal void AddMaxEnergyPercent(float bonus)
+    {
+        float extra = MaxEnergy * bonus / 100f;
+        MaxEnergy += extra;
+        Energy += extra;
+    }
+
+    internal void AddEnergyRegen(float bonusPercent) => EnergyRegenBonus += bonusPercent;
+
+    internal void AddSkillCostReduction(float bonusPercent)
+        => SkillCostMultiplier = Math.Clamp(SkillCostMultiplier * (1f - bonusPercent / 100f), 0.2f, 1f);
+
+    internal void AddCooldownReduction(float bonusPercent)
+        => SkillCooldownMultiplier = Math.Clamp(SkillCooldownMultiplier * (1f - bonusPercent / 100f), 0.2f, 1f);
 }
 
 /// <summary>轻巡：均衡机动，槽位最少。</summary>
