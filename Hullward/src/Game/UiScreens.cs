@@ -18,6 +18,9 @@ public static class UiScreens
     private const string TextColor = "e8ecf4";
     private const string PanelColor = "10131f";
 
+    /// <summary>UI 点击音效钩子（Main 在 _Ready 注入 Sfx.PlayClick；未注入时静默）。</summary>
+    public static Action? ClickSound { get; set; }
+
     /// <summary>全屏遮罩容器（每屏复用，调用方负责切换）。</summary>
     public static Control Fullscreen()
     {
@@ -91,6 +94,7 @@ public static class UiScreens
         btn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = color.Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         btn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         btn.Pressed += onPressed;
+        btn.Pressed += () => ClickSound?.Invoke();
         return btn;
     }
 
@@ -173,6 +177,7 @@ public static class UiScreens
                 item.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
                 string picked = name;
                 item.Pressed += () => onPick(picked);
+                item.Pressed += () => ClickSound?.Invoke();
                 list.AddChild(item);
             }
             box.AddChild(list);
@@ -228,6 +233,7 @@ public static class UiScreens
         mothershipBtn.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
         mothershipBtn.Position = new Vector2(-180, -64);
         mothershipBtn.Pressed += onMothership;
+        mothershipBtn.Pressed += () => ClickSound?.Invoke();
         root.AddChild(mothershipBtn);
 
         root.AddChild(header);
@@ -279,6 +285,7 @@ public static class UiScreens
 
             StarMapNode picked = node;
             btn.Pressed += () => onPick(picked);
+            btn.Pressed += () => ClickSound?.Invoke();
             root.AddChild(info);
             root.AddChild(btn);
         }

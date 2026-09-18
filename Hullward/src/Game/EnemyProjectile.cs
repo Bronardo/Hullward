@@ -23,14 +23,17 @@ public partial class EnemyProjectile : Area2D
 
     public override void _Ready()
     {
-        // 敌方弹丸：亮红
-        var dot = new ColorRect
+        // Sprint 4 线 A：CC0 敌方激光精灵，旋转指向飞行方向（纹理长轴沿 Y）
+        var sprite = new Sprite2D
         {
-            Size = new Vector2(8, 8),
-            Color = new Color("ff4d4d"),
-            Position = new Vector2(-4, -4)
+            Texture = GD.Load<Texture2D>("res://assets/lasers/laser_enemy.png"),
+            Centered = true
         };
-        AddChild(dot);
+        AddChild(sprite);
+        if (Direction.LengthSquared() > 0.0001f)
+        {
+            Rotation = Direction.Angle() - Mathf.Pi / 2f;
+        }
     }
 
     public override void _PhysicsProcess(double delta)

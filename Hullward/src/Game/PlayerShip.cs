@@ -10,6 +10,7 @@ namespace Hullward.Game;
 /// 玩家舰船（表现层）：WASD/方向键移动，主炮自动索敌开火（域层 TargetingSystem）。
 /// 船体属性来自域层 ShipBase（ScoutShip）：耐久/护盾/火力受模块装配影响。
 /// 技能位（迭代 4 接入 ActiveSkill）。
+/// Sprint 4 线 A：视觉由方块占位替换为 CC0 像素船（Kenney Space Shooter Redux，按船型选纹理）。
 /// </summary>
 public partial class PlayerShip : CharacterBody2D
 {
@@ -41,10 +42,16 @@ public partial class PlayerShip : CharacterBody2D
     /// <summary>舰船被击毁（任务失败判定，由 Main 接管结算）。</summary>
     public event Action? Died;
 
+    /// <summary>主炮开火（音效：射击轮换）。</summary>
+    public event Action? Fired;
+
+    /// <summary>玩家受击（音效：受击）。</summary>
+    public event Action? Damaged;
+
     public override void _Ready()
     {
         AddChild(MakeCamera());
-        AddChild(MakeShipVisual());
+        AddChild(MakeShipVisual(ShipStats));
         GD.Print($"PlayerShip ready - speed {MoveSpeed}, dmg {ShipStats.Firepower}, hull {ShipStats.Hull}");
     }
 
@@ -130,6 +137,7 @@ public partial class PlayerShip : CharacterBody2D
         ShipStats.TakeHit(damage);
         Modulate = new Color("ff6b6b");
         _hitFlashTimer = 0.12f;
+        Damaged?.Invoke();
         GD.Print($"PlayerShip hit -{damage}, hull {ShipStats.Hull}, shield {ShipStats.Shield}");
         if (ShipStats.IsDestroyed)
         {
@@ -160,6 +168,7 @@ public partial class PlayerShip : CharacterBody2D
             ProcessMode = ProcessModeEnum.Pausable, // 战斗暂停时弹丸冻结
         };
         GetTree().CurrentScene.AddChild(projectile);
+        Fired?.Invoke();
     }
 
     private static Camera2D MakeCamera()
@@ -173,36 +182,28 @@ public partial class PlayerShip : CharacterBody2D
         return camera;
     }
 
-    /// <summary>像素风玩家舰船视觉（开发期占位：主舰体 + 核心 + 炮口指示）。</summary>
-    private static Node2D MakeShipVisual()
+    /// <summary>
+    /// 玩家舰船视觉（Sprint 4 线 A）：CC0 像素船纹理按船型替换方块占位。
+    /// 画布为紧凑船体（99-112px 宽），按档位缩放控制显示尺寸：
+    /// 轻巡 33×25 / 突击 39×26 / 战列 44×34 / 要塞 54×41（档位越大体积差越明显）。
+    /// </summary>
+    private static Node2D MakeShipVisual(ShipBase ship)
     {
-        var ship = new Node2D();
-
-        var hull = new ColorRect
+        var (path, scale) = ship switch
         {
-            Size = new Vector2(30, 22),
-            Color = new Color("7fd8be"),
-            Position = new Vector2(-15, -11)
+            AssaultShip => ("res://assets/ships/player_assault.png", 0.35f),
+            Battleship => ("res://assets/ships/player_battleship.png", 0.45f),
+            FortressShip => ("res://assets/ships/player_fortress.png", 0.55f),
+            _ => ("res://assets/ships/player_scout.png", 0.33f)
         };
-        ship.AddChild(hull);
-
-        var core = new ColorRect
+        var sprite = new Sprite2D
         {
-            Size = new Vector2(10, 10),
-            Color = new Color("ffe08a"),
-            Position = new Vector2(-5, -5)
+            Texture = GD.Load<Texture2D>(path),
+            Scale = new Vector2(scale, scale),
+            Centered = true
         };
-        ship.AddChild(core);
-
-        // 炮口方向指示（朝右）
-        var barrel = new ColorRect
-        {
-            Size = new Vector2(10, 4),
-            Color = new Color("ffffff"),
-            Position = new Vector2(15, -2)
-        };
-        ship.AddChild(barrel);
-
-        return ship;
+        var node = new Node2D();
+        node.AddChild(sprite);
+        return node;
     }
 }

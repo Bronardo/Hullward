@@ -37,6 +37,7 @@ public partial class Main : Node
     private PlayerShip _player = null!;
     private Node2D _enemies = null!;
     private ColorRect _background = null!;
+    private Sfx _sfx = null!;
     private HUD _hud = null!;
     private bool _waveActive;
     private float _jumpTimer;
@@ -84,7 +85,13 @@ public partial class Main : Node
             Position = new Vector2(-2500, -2500)
         };
         AddChild(_background);
+        SpawnNebula();
         SpawnStars();
+
+        // Sprint 4 线 A：音效/BGM 管理器 + UI 点击音效钩子（UiScreens.ActionButton 统一触发）
+        _sfx = new Sfx { Name = "Sfx" };
+        AddChild(_sfx);
+        UiScreens.ClickSound = () => _sfx.PlayClick();
 
         _uiLayer = new CanvasLayer { Name = "UILayer" };
         AddChild(_uiLayer);
@@ -381,6 +388,8 @@ public partial class Main : Node
         _player = new PlayerShip { Position = Vector2.Zero, ProcessMode = ProcessModeEnum.Pausable };
         _player.SetShip(_mothershipShip); // 出战旗舰 = 母舰当前旗舰（同引用：装配/耐久共享）
         _player.Died += () => ShowSettlement(false);
+        _player.Fired += _sfx.PlayShot;      // 主炮射击（双资源轮换）
+        _player.Damaged += _sfx.PlayHit;     // 玩家受击
         AddChild(_player);
 
         _enemies = new Node2D { Name = "Enemies", ProcessMode = ProcessModeEnum.Pausable };
@@ -402,6 +411,7 @@ public partial class Main : Node
 
         _taskStartAlloy = _inventory.Alloy;
         _taskStartModules = _modulesPicked;
+        _sfx.PlayWarp(); // 跃迁进入任务区
         SpawnWave();
         GD.Print($"任务开始: 章节{ZoneLevel} 强度{_currentTask!.Strength} Boss={_taskIsBoss} 敌舰 {_targets.Count}");
     }
@@ -508,11 +518,15 @@ public partial class Main : Node
             {
                 drone.SummonRequested = SpawnSummon; // Boss 召唤（侦察机/突击舰）
                 drone.ToastRequested += _hud != null ? _hud.ShowToast : _ => { }; // 阶段切换/技能提示
+                drone.BossWarnRequested += _sfx.PlayBossWarn; // Boss 阶段 2/3 警示音
             }
             drone.Setup(ship, color, size);
+            drone.HitTaken += _sfx.PlayHit; // 敌舰受击
             drone.Destroyed += d =>
             {
                 _targets.Remove(d);
+                _sfx.PlayExplosion(); // 击毁爆炸音
+                SpawnExplosionFx(d.Position);
                 DropLoot(d.Position, _player, d.Ship is GuardianBoss); // Boss 必掉黄+ / 暗金
             };
             _enemies.AddChild(drone);
@@ -536,9 +550,12 @@ public partial class Main : Node
             Position = position
         };
         drone.Setup(ship, color, size);
+        drone.HitTaken += _sfx.PlayHit;
         drone.Destroyed += d =>
         {
             _targets.Remove(d);
+            _sfx.PlayExplosion();
+            SpawnExplosionFx(d.Position);
             DropLoot(d.Position, _player);
         };
         _enemies.AddChild(drone);
@@ -613,6 +630,7 @@ public partial class Main : Node
 
     private void OnPickupCollected(Pickup pickup)
     {
+        _sfx.PlayPickup(); // 拾取音效（模块/合金统一）
         if (pickup.Kind == Pickup.PickupKind.Module && pickup.ModuleData != null)
         {
             _modulesPicked++;
@@ -709,16 +727,46 @@ public partial class Main : Node
         _ => new Color("ffffff")
     };
 
+    private void SpawnNebula()
+    {
+        // CC0 星云纹理平铺（LD §2.3 深紫黑基调），叠加在章节底色之上
+        var nebula = new TextureRect
+        {
+            Texture = GD.Load<Texture2D>("res://assets/background/starfield.png"),
+            Size = new Vector2(5000, 5000),
+            Position = new Vector2(-2500, -2500),
+            StretchMode = TextureRect.StretchModeEnum.Tile,
+            Modulate = new Color(1f, 1f, 1f, 0.55f),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        AddChild(nebula);
+    }
+
+    /// <summary>击毁爆炸特效（CC0 fire 帧序列，播放一次自毁）。</summary>
+    private void SpawnExplosionFx(Vector2 worldPosition)
+    {
+        var fx = new ExplosionFx
+        {
+            Position = worldPosition,
+            ProcessMode = ProcessModeEnum.Pausable // 暂停时爆炸动画冻结
+        };
+        AddChild(fx);
+    }
+
     private void SpawnStars()
     {
         var rng = new RandomNumberGenerator();
         rng.Randomize();
+        // Sprint 4 线 A：CC0 星点纹理（25×24，随机缩放出大小层次），叠加在星云之上
+        var tex = GD.Load<Texture2D>("res://assets/effects/star.png");
         for (int i = 0; i < 120; i++)
         {
-            var star = new ColorRect
+            float s = rng.RandfRange(0.06f, 0.16f);
+            var star = new Sprite2D
             {
-                Color = new Color(0.6f, 0.85f, 1f, 0.7f),
-                Size = new Vector2(2, 2),
+                Texture = tex,
+                Scale = new Vector2(s, s),
+                Modulate = new Color(0.75f, 0.9f, 1f, rng.RandfRange(0.5f, 0.9f)),
                 Position = new Vector2(rng.RandfRange(-960, 960), rng.RandfRange(-540, 540))
             };
             AddChild(star);

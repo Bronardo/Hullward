@@ -51,22 +51,18 @@ public partial class Pickup : Node2D
 
     public override void _Ready()
     {
-        // 品质色边 + 深色底：模块/合金方块
-        var frame = new ColorRect
+        // Sprint 4 线 A：CC0 掉落图标——模块=蓝色菱形 powerupBlue、合金=金色螺栓 bolt_gold
+        var (path, scale) = Kind == PickupKind.Module
+            ? ("res://assets/effects/powerupBlue.png", 0.5f)
+            : ("res://assets/effects/bolt_gold.png", 0.8f);
+        var icon = new Sprite2D
         {
-            Size = new Vector2(16, 16),
-            Color = Tint,
-            Position = new Vector2(-8, -8)
+            Texture = GD.Load<Texture2D>(path),
+            Scale = new Vector2(scale, scale),
+            SelfModulate = Tint,
+            Centered = true
         };
-        AddChild(frame);
-
-        var inner = new ColorRect
-        {
-            Size = new Vector2(8, 8),
-            Color = new Color("1a1a2e"),
-            Position = new Vector2(-4, -4)
-        };
-        AddChild(inner);
+        AddChild(icon);
     }
 
     public override void _PhysicsProcess(double delta)

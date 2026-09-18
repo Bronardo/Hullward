@@ -18,17 +18,33 @@ public partial class Projectile : Area2D
     public bool IsCritical { get; set; }
 
     private float _lifetime;
+    private Sprite2D _sprite = null!;
 
     public override void _Ready()
     {
-        // 像素弹丸（暴击更大更亮）
-        var dot = new ColorRect
+        // Sprint 4 线 A：CC0 激光精灵（13×37 竖直弹体）；暴击更大更亮（金色提亮）
+        _sprite = new Sprite2D
         {
-            Size = IsCritical ? new Vector2(10, 10) : new Vector2(6, 6),
-            Color = IsCritical ? new Color("ffd166") : new Color("ffd166"),
-            Position = IsCritical ? new Vector2(-5, -5) : new Vector2(-3, -3)
+            Texture = GD.Load<Texture2D>("res://assets/lasers/laser_player.png"),
+            Scale = IsCritical ? new Vector2(1.5f, 1.5f) : Vector2.One,
+            SelfModulate = IsCritical ? new Color(2.2f, 1.6f, 0.8f) : Colors.White,
+            Centered = true
         };
-        AddChild(dot);
+        AddChild(_sprite);
+        RotateToTarget();
+    }
+
+    private void RotateToTarget()
+    {
+        // 竖直弹体指向目标方向（纹理长轴沿 Y）
+        if (Target != null)
+        {
+            var dir = new Vector2(Target.X, Target.Y) - Position;
+            if (dir.LengthSquared() > 0.0001f)
+            {
+                Rotation = dir.Angle() - Mathf.Pi / 2f;
+            }
+        }
     }
 
     public override void _PhysicsProcess(double delta)

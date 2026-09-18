@@ -11,6 +11,7 @@ namespace Hullward.Game;
 /// 持有域层 EnemyShip 对象（多态行为在域层），每帧调用 UpdateBehavior 并同步位置。
 /// Boss（GuardianBoss）额外执行域层技能意图（召唤/点射/湮灭脉冲/冲锋碰撞），
 /// 视觉/受击反馈留在表现层；逻辑全部走域层（ULO2/ULO3 证据）。
+/// Sprint 4 线 A：视觉由方块占位替换为 CC0 像素船（Kenney Space Shooter Redux，按船型选纹理）。
 /// </summary>
 public partial class EnemyDrone : Node2D, ITargetable
 {
@@ -24,10 +25,15 @@ public partial class EnemyDrone : Node2D, ITargetable
     /// <summary>HUD 提示请求（Main 订阅，转发 _hud.ShowToast）。</summary>
     public event Action<string>? ToastRequested;
 
-    private Color _baseColor;
+    /// <summary>受击音效请求（Main 订阅）。</summary>
+    public event Action? HitTaken;
+
+    /// <summary>Boss 阶段切换音效请求（Main 订阅，阶段 2/3 警示）。</summary>
+    public event Action? BossWarnRequested;
+
     private float _flashTimer;
     private float _attackCooldown;
-    private ColorRect _visual = null!;
+    private Sprite2D _visual = null!;
 
     // Boss 点射 3 连（salvo 状态机：每 0.16s 一发）
     private int _salvoLeft;
@@ -43,35 +49,57 @@ public partial class EnemyDrone : Node2D, ITargetable
     public float Y => Ship.Y;
     public int Hull => Ship.Hull;
 
-    /// <summary>注入域层敌舰 + 视觉配色（按船型由 Main 决定尺寸）。</summary>
+    /// <summary>注入域层敌舰 + 视觉（船型决定纹理，visualSize 决定显示尺寸）。</summary>
     public void Setup(EnemyShip ship, Color color, Vector2 visualSize)
     {
         Ship = ship;
-        _baseColor = color;
 
         // 域对象是行为真源：用节点出生点初始化域位置，避免首帧被覆盖回原点
         ship.X = Position.X;
         ship.Y = Position.Y;
 
-        _visual = new ColorRect
+        var (path, canvasW) = TextureFor(ship);
+        float scale = canvasW > 0f ? visualSize.X / canvasW : 1f;
+        // 纹理本色显示（CC0 红紫系敌船），Main 传入的方块占位色不再参与渲染
+        _ = color;
+        _visual = new Sprite2D
         {
-            Size = visualSize,
-            Color = color,
-            Position = -visualSize / 2f
+            Texture = GD.Load<Texture2D>(path),
+            Scale = new Vector2(scale, scale),
+            SelfModulate = Colors.White,
+            Centered = true
         };
         AddChild(_visual);
 
         // Boss：阶段切换提示
         if (ship is GuardianBoss boss)
         {
-            boss.PhaseChanged += phase => ToastRequested?.Invoke(phase switch
+            boss.PhaseChanged += phase =>
             {
-                BossPhase.Phase2 => "禁区守卫进入阶段 2：湮灭脉冲！",
-                BossPhase.Phase3 => "禁区守卫狂暴：湮灭脉冲双发，召唤突击舰！",
-                _ => "禁区守卫：三阶段技能启动"
-            });
+                ToastRequested?.Invoke(phase switch
+                {
+                    BossPhase.Phase2 => "禁区守卫进入阶段 2：湮灭脉冲！",
+                    BossPhase.Phase3 => "禁区守卫狂暴：湮灭脉冲双发，召唤突击舰！",
+                    _ => "禁区守卫：三阶段技能启动"
+                });
+                if (phase != BossPhase.Phase1)
+                {
+                    BossWarnRequested?.Invoke();
+                }
+            };
         }
     }
+
+    /// <summary>船型 → 精灵纹理与画布宽（等比缩放基准）。</summary>
+    private static (string Path, float CanvasWidth) TextureFor(EnemyShip ship) => ship switch
+    {
+        RaiderShip => ("res://assets/ships/enemy_raider.png", 104f),
+        HeavyFortress => ("res://assets/ships/enemy_fortress.png", 82f),
+        GunboatShip => ("res://assets/ships/enemy_gunboat.png", 103f),
+        GuardianBoss => ("res://assets/ships/boss.png", 97f),
+        SwarmDrone => ("res://assets/ships/enemy_swarm.png", 93f),
+        _ => ("res://assets/ships/enemy_recon.png", 93f)
+    };
 
     public override void _PhysicsProcess(double delta)
     {
@@ -86,7 +114,7 @@ public partial class EnemyDrone : Node2D, ITargetable
             _flashTimer -= (float)delta;
             if (_flashTimer <= 0f)
             {
-                _visual.Color = _baseColor;
+                _visual.SelfModulate = Colors.White;
             }
         }
 
@@ -142,7 +170,7 @@ public partial class EnemyDrone : Node2D, ITargetable
         {
             case BossSkillKind.PhaseCharge:
                 // 冲锋视觉：高亮
-                _visual.Color = new Color("ff9aa8");
+                _visual.SelfModulate = new Color("ff9aa8");
                 _flashTimer = 0.12f;
                 break;
             case BossSkillKind.SummonScouts:
@@ -206,8 +234,9 @@ public partial class EnemyDrone : Node2D, ITargetable
     {
         Ship.TakeHit(damage);
         GD.Print($"{Ship.Name} hit -{damage}, hull {Ship.Hull}");
-        // 受击反馈：闪白
-        _visual.Color = new Color("ffffff");
+        // 受击反馈：提亮闪烁（>1 分量让 Sprite2D 超白高亮，方块占位时是闪白）
+        _visual.SelfModulate = new Color(2.6f, 2.6f, 2.6f);
         _flashTimer = 0.1f;
+        HitTaken?.Invoke();
     }
 }
