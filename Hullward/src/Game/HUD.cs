@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -255,6 +256,8 @@ public partial class HUD : CanvasLayer
         private readonly Label _icon;
         private readonly Label _key;
         private readonly Label _cd;
+        private bool _readyPulse;
+        private double _t;
 
         public SkillSlot(string icon, string key, string name)
         {
@@ -288,25 +291,36 @@ public partial class HUD : CanvasLayer
             });
         }
 
+        public override void _Process(double delta)
+        {
+            if (!_readyPulse) return;
+            _t += delta;
+            float a = 0.55f + 0.45f * (float)(0.5 + 0.5 * Math.Sin(_t * 4.0));
+            var sb = (StyleBoxFlat)GetThemeStylebox("panel");
+            sb.BorderColor = new Color(new Color("#ffd24d"), a);
+        }
+
         public void SetState(bool ready, bool enoughEnergy, float remain, float cooldown)
         {
             if (!ready)
             {
                 Modulate = new Color(0.5f, 0.5f, 0.55f, 1f);
                 _cd.Text = $"{remain:0.0}s";
+                _readyPulse = false;
                 SetBox(new Color("#555a68"));
             }
             else if (!enoughEnergy)
             {
                 Modulate = new Color(0.6f, 0.4f, 0.4f, 1f);
                 _cd.Text = "能量";
+                _readyPulse = false;
                 SetBox(new Color("#ff5555"));
             }
             else
             {
                 Modulate = Colors.White;
                 _cd.Text = "";
-                SetBox(new Color("#ffd24d")); // 就绪：金色边框
+                _readyPulse = true; // 就绪：金边呼吸
             }
         }
     }
