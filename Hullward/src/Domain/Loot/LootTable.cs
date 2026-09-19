@@ -41,7 +41,7 @@ public sealed class ModuleDrop
     {
         Slot = slot;
         Rarity = rarity;
-        Name = $"{rarity}{slot}模块";
+        Name = $"{rarity}{slot} Module";
     }
 
     /// <summary>词缀摘要（多行，用于 UI/存档显示）。</summary>

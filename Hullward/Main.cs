@@ -702,7 +702,7 @@ public partial class Main : Node
             AutoFit.AutoEquipIntoSlots(_inventory, _equippedSlots);
             ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
             // 掉落反馈（LD Sprint 3 §4.6 B4）：品质 + 模块名 + 词缀数
-            _hud.ShowToast($"Dropped {RarityLabel(pickup.ModuleData.Rarity)} {pickup.ModuleData.Name} ({pickup.ModuleData.Affixes.Count} affixes)");
+            _hud.ShowToast($"Dropped {RarityLabel(pickup.ModuleData.Rarity)} {pickup.ModuleData.DisplayName} ({pickup.ModuleData.Affixes.Count} affixes)");
             GD.Print($"拾取模块: {pickup.ModuleData.Name} | 装配后火力 {_player.ShipStats.Firepower}, 护盾 {_player.ShipStats.Shield}");
         }
         else
