@@ -127,7 +127,7 @@ public static class UiScreens
         {
             PlaceholderText = "Enter commander name…",
             MaxLength = SaveNameValidator.MaxLength,
-            CustomMinimumSize = new Vector2(520, 48),
+            CustomMinimumSize = new Vector2(200, 48),
             MouseFilter = Control.MouseFilterEnum.Stop
         };
         edit.AddThemeFontSizeOverride("font_size", 22);
@@ -249,8 +249,8 @@ public static class UiScreens
 
         var mothershipBtn = new Button
         {
-            Text = "⚙ Enter Starship (Dock/Equip/Workshop/Repair/Shop)",
-            CustomMinimumSize = new Vector2(520, 48),
+            Text = "⚙ Enter Starship",
+            CustomMinimumSize = new Vector2(200, 48),
             MouseFilter = Control.MouseFilterEnum.Stop
         };
         mothershipBtn.AddThemeFontSizeOverride("font_size", 18);
@@ -260,7 +260,7 @@ public static class UiScreens
         mothershipBtn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = new Color("ffe08a").Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         mothershipBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         mothershipBtn.SetAnchorsPreset(Control.LayoutPreset.BottomRight);
-        mothershipBtn.Position = new Vector2(-544, -72);
+        mothershipBtn.Position = new Vector2(-224, -72);
         mothershipBtn.Pressed += onMothership;
         mothershipBtn.Pressed += () => ClickSound?.Invoke();
         root.AddChild(mothershipBtn);

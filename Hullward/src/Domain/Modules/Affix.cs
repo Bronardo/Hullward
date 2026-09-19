@@ -53,11 +53,30 @@ public sealed class Affix
         Value = value;
     }
 
+    private static readonly Dictionary<string, string> LegacyNameMap = new()
+    {
+        ["强化炮击"] = "Powered Cannons", ["急速供弹"] = "Rapid Loading",
+        ["致命一击"] = "Critical Hit", ["暴击增幅"] = "Critical Amp",
+        ["护盾穿透"] = "Shield Pierce", ["减速磁场"] = "Slow Field",
+        ["能量反馈"] = "Energy Feedback", ["范围爆破"] = "Aoe Blast",
+        ["护盾扩容"] = "Shield Capacitor", ["船体加固"] = "Hull Reinforcement",
+        ["全向抗性"] = "All-Resist", ["纳米修复"] = "Nano Repair",
+        ["受击减伤"] = "Damage Reduction", ["反伤镀层"] = "Thorns Plating",
+        ["能源扩容"] = "Energy Capacitor", ["快速充能"] = "Fast Recharge",
+        ["节能模块"] = "Skill Cost Down", ["冷却缩减"] = "Cooldown Reduction",
+        ["过载缓冲"] = "Overdrive Amp",
+        ["跃迁加速"] = "Warp Speed", ["广域扫描"] = "Wide Scanner",
+        ["打捞增效"] = "Magic Find", ["干扰强化"] = "EMP Amp",
+        ["应急护盾"] = "Emergency Shield",
+    };
+
+    private string DisplayName => LegacyNameMap.TryGetValue(Name, out var en) ? en : Name;
+
     /// <summary>显示文本：词缀名 + 数值（百分比统一四舍五入；触发型词缀无数值只显名）。</summary>
     public string Describe()
     {
         bool triggered = Stat is AffixStat.AoeBlast or AffixStat.EmergencyShield;
-        return triggered ? Name : $"{Name} {FormatValue(Stat, Value)}";
+        return triggered ? DisplayName : $"{DisplayName} {FormatValue(Stat, Value)}";
     }
 
     public static string FormatValue(AffixStat stat, float value)
