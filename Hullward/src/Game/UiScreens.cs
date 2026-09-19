@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using Hullward.Domain.Save;
 using Hullward.Domain.WorldGen;
@@ -242,7 +243,7 @@ public static class UiScreens
         mothershipBtn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = new Color("ffe08a").Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         mothershipBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         mothershipBtn.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
-        mothershipBtn.Position = new Vector2(-180, -64);
+        mothershipBtn.Position = new Vector2(-180, -24);
         mothershipBtn.Pressed += onMothership;
         mothershipBtn.Pressed += () => ClickSound?.Invoke();
         root.AddChild(mothershipBtn);
@@ -258,16 +259,13 @@ public static class UiScreens
         menuBtn.AddThemeColorOverride("font_color", new Color("#d8ecff"));
         menuBtn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("#2a3550"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         menuBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("#3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
-        menuBtn.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
-        menuBtn.Position = new Vector2(-80, -110);
+        menuBtn.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
+        menuBtn.Position = new Vector2(24, -24);
         menuBtn.Pressed += onMenu;
         menuBtn.Pressed += () => ClickSound?.Invoke();
         root.AddChild(menuBtn);
 
         root.AddChild(header);
-
-        // 节点半径带映射缩放（相对窗口中心）
-        const float scale = 0.55f;
 
         // 母舰居中（锚定窗口中心）
         var mothership = new Label
@@ -279,27 +277,37 @@ public static class UiScreens
         mothership.AddThemeFontSizeOverride("font_size", 18);
         mothership.AddThemeColorOverride("font_color", new Color("ffe08a"));
         mothership.SetAnchorsPreset(Control.LayoutPreset.Center);
-        mothership.Position = new Vector2(-30, -18);
+        mothership.Position = new Vector2(-40, -18);
         root.AddChild(mothership);
 
-        // 任务节点（相对窗口中心偏移，resize 自动跟随）
-        foreach (StarMapNode node in map.Nodes)
+        // 任务节点：普通节点绕母舰环形均匀分布，Boss 固定右侧（迭代 27.1 UI 重排）
+        var normalNodes = map.Nodes.Where(n => !n.IsBoss).ToList();
+        var bossNode = map.Nodes.FirstOrDefault(n => n.IsBoss);
+        const float ringRx = 360f;
+        const float ringRy = 220f;
+        const float bossX = 480f;
+        const float bossY = 0f;
+        for (int i = 0; i < normalNodes.Count; i++)
         {
+            var node = normalNodes[i];
+            double ang = -Math.PI / 2 + (Math.PI * 2 * i / normalNodes.Count);
+            float nx = (float)(Math.Cos(ang) * ringRx);
+            float ny = (float)(Math.Sin(ang) * ringRy);
             var btn = new Button
             {
-                Text = node.IsBoss ? (node.GateLabel ?? "☠ BOSS") : $"⚔ Cleansing ★{node.DangerStars}", // Sprint5 迭代17：任务类型图标（清剿=剑）；章节门显示专属名
-                CustomMinimumSize = new Vector2(node.IsBoss ? 120 : 96, node.IsBoss ? 56 : 44),
+                Text = $"⚔ Cleansing ★{node.DangerStars}",
+                CustomMinimumSize = new Vector2(96, 44),
                 MouseFilter = Control.MouseFilterEnum.Stop
             };
-            btn.AddThemeFontSizeOverride("font_size", node.IsBoss ? 18 : 15);
-            Color c = node.IsBoss ? new Color("ff3b6b") : new Color(node.DangerStars >= 4 ? "ff6b4a" : "4da6ff");
-            btn.AddThemeColorOverride("font_color", node.IsBoss ? new Color("ffffff") : new Color("10131f"));
+            btn.AddThemeFontSizeOverride("font_size", 15);
+            Color c = node.DangerStars >= 4 ? new Color("ff6b4a") : new Color("4da6ff");
+            btn.AddThemeColorOverride("font_color", new Color("10131f"));
             btn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = c, CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
             btn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = c.Lightened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
             btn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = c.Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
             btn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
             btn.SetAnchorsPreset(Control.LayoutPreset.Center);
-            btn.Position = new Vector2(node.X * scale - 48, node.Y * scale - 22);
+            btn.Position = new Vector2(nx - 48, ny - 22);
 
             var info = new Label
             {
@@ -309,9 +317,42 @@ public static class UiScreens
             info.AddThemeFontSizeOverride("font_size", 12);
             info.AddThemeColorOverride("font_color", new Color(SubColor));
             info.SetAnchorsPreset(Control.LayoutPreset.Center);
-            info.Position = new Vector2(node.X * scale - 30, node.Y * scale + (node.IsBoss ? 34 : 24));
+            info.Position = new Vector2(nx - 30, ny + 24);
 
             StarMapNode picked = node;
+            btn.Pressed += () => onPick(picked);
+            btn.Pressed += () => ClickSound?.Invoke();
+            root.AddChild(info);
+            root.AddChild(btn);
+        }
+        if (bossNode != null)
+        {
+            var btn = new Button
+            {
+                Text = bossNode.GateLabel ?? "☠ BOSS",
+                CustomMinimumSize = new Vector2(140, 56),
+                MouseFilter = Control.MouseFilterEnum.Stop
+            };
+            btn.AddThemeFontSizeOverride("font_size", 17);
+            btn.AddThemeColorOverride("font_color", new Color("ffffff"));
+            btn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("ff3b6b"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            btn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("ff3b6b").Lightened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            btn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = new Color("ff3b6b").Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            btn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+            btn.SetAnchorsPreset(Control.LayoutPreset.Center);
+            btn.Position = new Vector2(bossX - 70, bossY - 28);
+
+            var info = new Label
+            {
+                Text = $"Power {bossNode.Strength}",
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            info.AddThemeFontSizeOverride("font_size", 12);
+            info.AddThemeColorOverride("font_color", new Color(SubColor));
+            info.SetAnchorsPreset(Control.LayoutPreset.Center);
+            info.Position = new Vector2(bossX - 30, bossY + 34);
+
+            StarMapNode picked = bossNode;
             btn.Pressed += () => onPick(picked);
             btn.Pressed += () => ClickSound?.Invoke();
             root.AddChild(info);
