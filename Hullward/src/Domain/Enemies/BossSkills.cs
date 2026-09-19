@@ -12,10 +12,10 @@ public enum BossPhase
 public enum BossSkillKind
 {
     None,
-    PhaseCharge,          // 相位冲锋（直线冲撞，路径持续伤害）
-    SummonScouts,         // 召唤 2 艘侦察机（P3 狂暴改召唤突击舰）
-    PointFire,            // 点射炮（远程 3 连弹幕）
-    AnnihilationPulse     // 湮灭脉冲（范围 AOE，预兆后闪避）
+    PhaseCharge,          // 相位charge（直线冲撞，pathdurationdamage）
+    SummonScouts,         // spawn 2 艘recon（P3 enrage改spawnassault ship）
+    PointFire,            // burst炮（remote 3 连弹幕）
+    AnnihilationPulse     // 湮灭pulse（range AOE，预兆后闪避）
 }
 
 /// <summary>

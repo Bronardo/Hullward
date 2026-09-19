@@ -41,7 +41,7 @@ public sealed class StarMapGenerator
             float radius = minRadius + rng.NextSingle() * (maxRadius - minRadius);
             float strength = baseStrength * (0.8f + rng.NextSingle() * 0.6f); // [0.8, 1.4]
 
-            bool isBoss = i == 0; // 章节 Boss 节点固定 1 个（首节点）
+            bool isBoss = i == 0; // sector Boss nodefixed 1 个（首node）
             nodes.Add(new StarMapNode
             {
                 Index = i,
@@ -49,7 +49,7 @@ public sealed class StarMapGenerator
                 Strength = (int)MathF.Round(strength),
                 DangerStars = DangerStars((int)MathF.Round(strength)),
                 IsBoss = isBoss,
-                GateLabel = isBoss && chapter == ChapterCatalog.MaxChapter ? "Collapse Zone: Relic Guardian" : null, // 终章章节门（线 B2）
+                GateLabel = isBoss && chapter == ChapterCatalog.MaxChapter ? "Collapse Zone: Relic Guardian" : null, // 终章sector门（线 B2）
                 X = MathF.Cos(angle) * radius,
                 Y = MathF.Sin(angle) * radius
             });

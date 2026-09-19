@@ -81,7 +81,7 @@ public partial class PlayerShip : CharacterBody2D
         if (target != null && _fireCooldown <= 0f)
         {
             FireAt(target);
-            _fireCooldown = FireInterval / Math.Max(0.2f, ShipStats.FireRateMultiplier); // 词缀"急速供弹"
+            _fireCooldown = FireInterval / Math.Max(0.2f, ShipStats.FireRateMultiplier); // affix"急速供弹"
         }
 
         // 受击闪红recovery
@@ -176,8 +176,8 @@ public partial class PlayerShip : CharacterBody2D
             Target = target,
             Speed = ProjectileSpeed,
             Damage = damage,
-            IsCritical = isCritical, // 表现层标注（暴击弹丸更大/更亮）
-            ProcessMode = ProcessModeEnum.Pausable, // 战斗暂停时弹丸冻结
+            IsCritical = isCritical, // presentation标注（crit弹丸更大/更亮）
+            ProcessMode = ProcessModeEnum.Pausable, // combatpause时弹丸冻结
         };
         GetTree().CurrentScene.AddChild(projectile);
         Fired?.Invoke();

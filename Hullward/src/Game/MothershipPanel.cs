@@ -33,8 +33,8 @@ public sealed partial class MothershipPanel : Control
     private ShipClass _shipClass;
     private readonly Func<ShipClass, (ShipBase Ship, List<ModuleDrop?> Slots)?> _onShipChange;
 
-    private int _tab = 1;             // 0 船坞 / 1 装配 / 2 仓库 / 3 工坊 / 4 维修 / 5 商店（默认进装配）
-    private int _selectedSlot = -1;   // 装配页选中槽位
+    private int _tab = 1;             // 0 dock / 1 fit / 2 inventory / 3 workshop / 4 repair / 5 shop（default进fit）
+    private int _selectedSlot = -1;   // fit页选mediumslot
     private ItemRarity? _rarityFilter;
     private string _status = "";
 
@@ -77,7 +77,7 @@ public sealed partial class MothershipPanel : Control
         // panel自身满屏（与 UiScreens.Fullscreen 一致）：挂到 CanvasLayer 时若无锚点，
         // rect 保持 0x0，FullRect 子node随之塌缩 → content区空白（LD B5 复现fix）。
         SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        ShipFittingService.ApplyToShip(_ship, _slots); // 进入母舰即同步属性（维修/预览口径一致）
+        ShipFittingService.ApplyToShip(_ship, _slots); // entermothership即syncattribute（repair/预览口径一致）
         Rebuild();
     }
 
@@ -125,7 +125,7 @@ public sealed partial class MothershipPanel : Control
         var contentHost = new PanelContainer
         {
             MouseFilter = Control.MouseFilterEnum.Stop,
-            CustomMinimumSize = new Vector2(0, 200) // 保证内容区最小可见高度（防容器分配 0 高度）
+            CustomMinimumSize = new Vector2(0, 200) // 保证content区min可见high度（防container分配 0 high度）
         };
         contentHost.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color("151a28"), CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6 });
         contentHost.SizeFlagsVertical = Control.SizeFlags.ExpandFill;

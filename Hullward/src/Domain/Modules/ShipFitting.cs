@@ -52,7 +52,7 @@ public static class ShipFitting
 
             if (bestIndex < 0)
             {
-                return; // 背包为空
+                return; // inventory为空
             }
 
             if (inventory.TryRemoveModule(bestIndex, out ModuleDrop? drop) && drop != null)
@@ -95,7 +95,7 @@ public static class ShipFitting
                     shield += (int)(shield * affix.Value / 100f);
                     break;
                 case AffixStat.MaxHullPercent:
-                    hull += (int)(shield * affix.Value / 100f); // 以品质护盾为基数（口径见设计文档）
+                    hull += (int)(shield * affix.Value / 100f); // 以rarityshield为基数（口径见designdoc）
                     break;
                 case AffixStat.ResistancePercent:
                     armor += (int)(armor * affix.Value / 100f);
@@ -116,7 +116,7 @@ public static class ShipFitting
                     thorns += affix.Value / 100f;
                     break;
                 case AffixStat.MaxEnergyPercent:
-                    maxEnergy += affix.Value; // % 直接传（ShipBase 按当前上限复合扩容）
+                    maxEnergy += affix.Value; // % 直接传（ShipBase 按currentmax复合scale out）
                     break;
                 case AffixStat.EnergyRegenPercent:
                     energyRegen += affix.Value;

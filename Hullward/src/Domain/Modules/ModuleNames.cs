@@ -10,25 +10,25 @@ namespace Hullward.Domain.Modules;
 public enum ModuleCategory
 {
     // weapon slot（§2 品类表）
-    PulseCannon,   // 脉冲炮：均衡射速
-    RailGun,       // 磁轨炮：高单发
-    LaserArray,    // 激光阵列：持续输出
+    PulseCannon,   // pulse炮：balance射速
+    RailGun,       // 磁轨炮：high单发
+    LaserArray,    // 激光阵column：durationoutput
     Gatling,       // 速射机炮：多发快攻
     // armor slot
-    Composite,     // 复合装甲：均衡耐久
-    Reactive,      // 反应装甲：格挡减伤
-    NanoCoating,   // 纳米镀层：自修复感
-    Phase,         // 相位装甲：闪避感
+    Composite,     // 复合armor：balancehull
+    Reactive,      // 反应armor：格挡damage reduction
+    NanoCoating,   // 纳米镀层：自fix感
+    Phase,         // 相位armor：闪避感
     // power slot
-    FusionCore,    // 聚变核心：能量上限
-    Capacitor,     // 电容电池：能量回复
-    Reactor,       // 反应炉：能耗效率
-    EnergyNode,    // 能源节点：冷却缩减
+    FusionCore,    // 聚变核心：max energy
+    Capacitor,     // 电容电池：energy regen
+    Reactor,       // 反应炉：energy cost效率
+    EnergyNode,    // 能源node：cooldown缩减
     // special slot
     Scanner,       // 扫描器：索敌 / MF
-    Jammer,        // 干扰器：敌方 debuff
-    WarpEngine,    // 跃迁引擎：跃迁 / 速度
-    EmergencyShield // 应急护盾：濒死触发
+    Jammer,        // 干扰器：enemy debuff
+    WarpEngine,    // 跃迁引擎：跃迁 / speed
+    EmergencyShield // contingencyshield：濒死trigger
 }
 
 /// <summary>

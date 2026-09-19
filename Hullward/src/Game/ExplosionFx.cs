@@ -27,9 +27,9 @@ public partial class ExplosionFx : Node2D
             Amount = 30,
             Lifetime = 0.45f,
             OneShot = true,          // 只爆发一次
-            Explosiveness = 1f,      // 全部粒子同时爆开
+            Explosiveness = 1f,      // 全部particlealso爆开
             Direction = Vector2.Up,
-            Spread = 180f,           // 全方向
+            Spread = 180f,           // 全direction
             InitialVelocityMin = 70f,
             InitialVelocityMax = 240f,
             Gravity = new Vector2(0f, 80f),

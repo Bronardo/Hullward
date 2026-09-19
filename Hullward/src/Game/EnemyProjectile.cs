@@ -49,7 +49,7 @@ public partial class EnemyProjectile : Area2D
 
         if (Position.DistanceTo(Player.Position) < 12f)
         {
-            Player.TakeDamage(Damage, Attacker); // 反伤经 TakeDamage 反弹给发射者
+            Player.TakeDamage(Damage, Attacker); // thorns经 TakeDamage 反弹给发射者
             QueueFree();
         }
     }

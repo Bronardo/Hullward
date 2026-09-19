@@ -183,7 +183,7 @@ public abstract class ShipBase : IShip
     internal void AddMaxHull(int bonus)
     {
         MaxHull += bonus;
-        Hull += bonus; // 扩容同时抬升当前耐久（出战即满）
+        Hull += bonus; // scale outalso抬升currenthull（出战即满）
     }
 
     internal void AddFireRate(float multiplierBonus) => FireRateMultiplier += multiplierBonus;

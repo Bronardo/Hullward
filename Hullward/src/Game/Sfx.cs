@@ -32,9 +32,9 @@ public partial class Sfx : Node
         _hit = Make("res://assets/audio/sfx/hit.ogg", 0.4f);
         _explosion = Make("res://assets/audio/sfx/explosion.ogg", 0.5f);
         _pickup = Make("res://assets/audio/sfx/pickup.ogg", 0.3f);
-        _warp = Make("res://assets/audio/sfx/warp.mp3", 0.45f);   // 0.35→0.45：进任务瞬间注意力在画面上，需更突出
+        _warp = Make("res://assets/audio/sfx/warp.mp3", 0.45f);   // 0.35→0.45：进mission瞬间noteforce在画面上，需更突出
         _click = Make("res://assets/audio/sfx/click.ogg", 0.25f);
-        _bossWarn = Make("res://assets/audio/sfx/boss_warn.mp3", 0.6f); // 0.45→0.6：用户反馈阶段警示不明显
+        _bossWarn = Make("res://assets/audio/sfx/boss_warn.mp3", 0.6f); // 0.45→0.6：用户反馈phase警示不明显
 
         // 双 BGM：休闲（main menu/starmap/mothership）与combat（iteration 26 v0.6.26）
         // 0.2 音量；播放完毕auto从头

@@ -325,7 +325,7 @@ public partial class HUD : CanvasLayer
             {
                 Modulate = Colors.White;
                 _cd.Text = "";
-                _readyPulse = true; // 就绪：金边呼吸
+                _readyPulse = true; // ready：金边呼吸
             }
         }
     }

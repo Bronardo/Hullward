@@ -100,7 +100,7 @@ public sealed class ReconDrone : EnemyShip
     {
         if (Distance(X, Y, playerX, playerY) > AggroRange)
         {
-            return; // 未进入索敌范围：待机
+            return; // 未enter索敌range：待机
         }
         MoveToward(playerX, playerY, BehaviorSpeed, dt);
     }
@@ -114,7 +114,7 @@ public sealed class RaiderShip : EnemyShip
 
     private const float DesiredDistance = 300f;
     private const float Deadband = 40f;
-    private int _orbitDir = 1; // 环形方向
+    private int _orbitDir = 1; // 环形direction
 
     public RaiderShip()
         : base("劫掠舰", hull: 70, shield: 20, armor: 5, firepower: 8f)
@@ -337,8 +337,8 @@ public sealed class GuardianBoss : EnemyShip
         UpdatePhase();
         float freqMult = _phase switch
         {
-            BossPhase.Phase2 => 1.2f, // LD：技能频率 +20%
-            BossPhase.Phase3 => 1.6f, // LD：狂暴（冲锋频率提升、脉冲双发）
+            BossPhase.Phase2 => 1.2f, // LD：skillrate +20%
+            BossPhase.Phase3 => 1.6f, // LD：enrage（chargerate提升、pulse双发）
             _ => 1f
         };
 
@@ -373,7 +373,7 @@ public sealed class GuardianBoss : EnemyShip
             }
             _charging = true;
             _chargeTimer = 1.1f;
-            _chargeSpeed = _phase == BossPhase.Phase3 ? 640f : 480f; // P3 冲锋更快
+            _chargeSpeed = _phase == BossPhase.Phase3 ? 640f : 480f; // P3 charge更快
             _chargeCd = _phase == BossPhase.Phase3 ? 3f : 5f;
             return new BossIntent(BossSkillKind.PhaseCharge, 0);
         }

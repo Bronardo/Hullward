@@ -42,7 +42,7 @@ public partial class EnemyDrone : Node2D, ITargetable
 
     private const float AttackRange = 45f;
     private const float AttackInterval = 0.8f;
-    private const float ChargeHitRange = 62f;  // 冲锋路径伤害判定半径
+    private const float ChargeHitRange = 62f;  // chargepathdamage判定半径
     private const float ChargeHitInterval = 0.2f;
 
     public float X => Ship.X;
@@ -134,7 +134,7 @@ public partial class EnemyDrone : Node2D, ITargetable
             float dy = Player.Position.Y - Position.Y;
             if (dx * dx + dy * dy < range * range)
             {
-                Player.TakeDamage(Math.Max(1, (int)Ship.Firepower), this); // 反伤镀层经 TakeDamage 反弹
+                Player.TakeDamage(Math.Max(1, (int)Ship.Firepower), this); // thorns镀层经 TakeDamage 反弹
                 _attackCooldown = charging ? ChargeHitInterval : AttackInterval;
             }
         }
@@ -202,7 +202,7 @@ public partial class EnemyDrone : Node2D, ITargetable
                         Position = Position + new Vector2(i * 24f, 0f),
                         Player = Player,
                         Damage = Math.Max(2, (int)(Ship.Firepower * 1.6f)), // AOE 重击
-                        ProcessMode = ProcessModeEnum.Pausable // 战斗暂停时脉冲冻结
+                        ProcessMode = ProcessModeEnum.Pausable // combatpause时pulse冻结
                     };
                     GetTree().CurrentScene.AddChild(pulse);
                 }
@@ -226,7 +226,7 @@ public partial class EnemyDrone : Node2D, ITargetable
             Attacker = this,
             Direction = dir,
             Damage = Math.Max(1, (int)Ship.Firepower),
-            ProcessMode = ProcessModeEnum.Pausable // 战斗暂停时敌方弹丸冻结
+            ProcessMode = ProcessModeEnum.Pausable // combatpause时enemy弹丸冻结
         };
         GetTree().CurrentScene.AddChild(proj);
     }

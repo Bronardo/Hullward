@@ -8,33 +8,33 @@ namespace Hullward.Domain.Modules;
 public enum AffixStat
 {
     // weapon slot
-    FirepowerPercent,      // 强化炮击：武器伤害 +%
-    AttackSpeedPercent,    // 急速供弹：攻击速度 +%
-    CritChance,            // 致命一击：暴击概率 +%
-    CritDamage,            // 暴击增幅：暴击伤害 +%
-    ShieldPierce,          // 护盾穿透：忽略目标护盾 %
-    SlowOnHit,             // 减速磁场：命中减速 %（2s）
-    EnergyOnKill,          // 能量反馈：击杀回复能源
-    AoeBlast,              // 范围爆破：命中范围爆炸（黄+）
+    FirepowerPercent,      // reinforcement炮击：weapondamage +%
+    AttackSpeedPercent,    // 急速供弹：攻击speed +%
+    CritChance,            // fatal一击：critchance +%
+    CritDamage,            // crit增幅：crit damage +%
+    ShieldPierce,          // shieldpierce：忽略targetshield %
+    SlowOnHit,             // slow磁场：hitslow %（2s）
+    EnergyOnKill,          // energy反馈：击杀回复能源
+    AoeBlast,              // range爆破：hitrange爆炸（黄+）
     // armor slot
-    MaxShieldPercent,      // 护盾扩容：最大护盾 +%
-    MaxHullPercent,        // 船体加固：船体耐久 +%
+    MaxShieldPercent,      // shieldscale out：maxshield +%
+    MaxHullPercent,        // hull加固：hull +%
     ResistancePercent,     // 全向抗性：全抗性 +%
-    ShieldRegen,           // 纳米修复：护盾每秒恢复 +
-    DamageReduction,       // 受击减伤：受击后减伤 %
-    Thorns,                // 反伤镀层：反弹近身伤害 %（黄+）
+    ShieldRegen,           // 纳米fix：shield每秒recovery +
+    DamageReduction,       // 受击damage reduction：受击后damage reduction %
+    Thorns,                // thorns镀层：反弹近身damage %（黄+）
     // power slot
-    MaxEnergyPercent,      // 能源扩容：能源上限 +%
-    EnergyRegenPercent,    // 快速充能：能源回复 +%
-    SkillCostPercent,      // 节能模块：技能能耗 -%
-    CooldownPercent,       // 冷却缩减：技能冷却 -%
-    OverdrivePercent,      // 过载缓冲：过载炮伤害 +%（黄+）
+    MaxEnergyPercent,      // 能源scale out：能源max +%
+    EnergyRegenPercent,    // 快速charge：能源回复 +%
+    SkillCostPercent,      // 节能module：skillenergy cost -%
+    CooldownPercent,       // cooldown缩减：skillcooldown -%
+    OverdrivePercent,      // 过载缓冲：过载炮damage +%（黄+）
     // special slot
-    WarpCooldownPercent,   // 跃迁加速：跃迁冷却 -%
-    TargetingRangePercent, // 广域扫描：索敌范围 +%
+    WarpCooldownPercent,   // 跃迁加速：跃迁cooldown -%
+    TargetingRangePercent, // 广域扫描：索敌range +%
     MagicFind,             // 打捞增效：MF 寻宝值 +
-    EmpDuration,           // 干扰强化：EMP/减速时长 +%
-    EmergencyShield        // 应急护盾：濒死触发小护盾（黄+）
+    EmpDuration,           // 干扰reinforcement：EMP/slow时长 +%
+    EmergencyShield        // contingencyshield：濒死trigger小shield（黄+）
 }
 
 /// <summary>
@@ -194,8 +194,8 @@ public static class ModuleRoller
         ItemRarity.Common => (0, 0),
         ItemRarity.Magic => (1, 2),
         ItemRarity.Rare => (2, 3),
-        ItemRarity.Set => (3, 3),        // 绿：固定套件 + 1（套件未落表，近似 3 随机）
-        ItemRarity.Ancient => (2, 2),    // 太古：固定强力（取暗金区间）
+        ItemRarity.Set => (3, 3),        // 绿：fixed套件 + 1（套件未落表，approximate 3 random）
+        ItemRarity.Ancient => (2, 2),    // 太古：fixed强force（取暗金range）
         _ => (0, 0)
     };
 
@@ -229,7 +229,7 @@ public static class ModuleRoller
         {
             int pick = rng.Next(candidates.Count);
             AffixPool.AffixEntry entry = candidates[pick];
-            candidates.RemoveAll(e => e.Stat == entry.Stat); // 同模块不重复
+            candidates.RemoveAll(e => e.Stat == entry.Stat); // 同module不重复
             float value = RollValue(entry, drop.Rarity, rng);
             drop.Affixes.Add(new Affix(entry.Name, entry.Stat, value));
         }

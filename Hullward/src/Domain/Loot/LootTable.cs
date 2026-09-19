@@ -57,10 +57,10 @@ public sealed class LootTable
     /// <summary>按星域level（1-4）的modulerarityweight：Safe/Contested/DeepVoid/CollapseZone。</summary>
     private static readonly int[][] ZoneRarityWeights =
     {
-        new[] { 60, 25, 12, 3, 0 },  // 安全
+        new[] { 60, 25, 12, 3, 0 },  // safe
         new[] { 35, 35, 22, 7, 1 },  // 争议
-        new[] { 15, 30, 32, 18, 5 }, // 无人深空
-        new[] { 0, 15, 30, 35, 20 }  // 坍缩禁区
+        new[] { 15, 30, 32, 18, 5 }, // 无人deep space
+        new[] { 0, 15, 30, 35, 20 }  // collapse禁区
     };
 
     private static readonly ModuleType[] Slots =

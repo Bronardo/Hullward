@@ -12,8 +12,8 @@ public sealed class TargetingSystem
 {
     public enum TargetPriority
     {
-        Nearest,   // 最近优先（默认）
-        LowestHull // 最低耐久优先
+        Nearest,   // 最近优先（default）
+        LowestHull // 最lowhull优先
     }
 
     public TargetPriority Priority { get; set; } = TargetPriority.Nearest;
@@ -33,7 +33,7 @@ public sealed class TargetingSystem
         {
             if (candidate.Hull <= 0)
             {
-                continue; // 已击毁目标不索敌
+                continue; // 已击毁target不索敌
             }
 
             float score = Priority switch

@@ -42,7 +42,7 @@ public abstract class ActiveSkill
         }
         if (!context.Ship.HasEnergyFor(EnergyCost))
         {
-            return false; // 能量不足：技能不可用
+            return false; // energy不足：skill不可用
         }
         Apply(context);
         context.Ship.SpendEnergy(context.Ship.EffectiveSkillCost(EnergyCost));
@@ -68,7 +68,7 @@ public sealed class OverdriveCannon : ActiveSkill
     public const float DamageMultiplier = 3f;
 
     public OverdriveCannon()
-        : base("过载炮", cooldown: 6f, energyCost: 30f) // LD §3.2：Q 能耗 30
+        : base("过载炮", cooldown: 6f, energyCost: 30f) // LD §3.2：Q energy cost 30
     {
     }
 
@@ -86,7 +86,7 @@ public sealed class OverdriveCannon : ActiveSkill
 public sealed class ShieldBurst : ActiveSkill
 {
     public ShieldBurst()
-        : base("护盾充能", cooldown: 10f, energyCost: 40f) // LD §3.2：E 能耗 40
+        : base("护盾充能", cooldown: 10f, energyCost: 40f) // LD §3.2：E energy cost 40
     {
     }
 

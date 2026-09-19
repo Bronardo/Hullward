@@ -16,7 +16,7 @@ public partial class BossPulse : Node2D
     private const float WarnTime = 0.9f;
     private float _life = WarnTime;
     private bool _exploded;
-    private float _grow; // 半径绘制进度 0-1
+    private float _grow; // 半径draw进度 0-1
 
     public override void _Ready()
     {

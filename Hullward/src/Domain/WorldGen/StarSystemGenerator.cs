@@ -6,10 +6,10 @@ namespace Hullward.Domain.WorldGen;
 /// <summary>星域类型：risk递进，产出与爆船惩罚对应策划 §3.4。</summary>
 public enum StarSystemType
 {
-    Safe,        // 安全星域：白/蓝、少量黄；拾取保留
-    Contested,   // 争议星域：稀有/套装主要产出；拾取概率掉落
-    DeepVoid,    // 无人深空：黄/绿高概率；拾取概率遗失
-    CollapseZone // 坍缩禁区：太古唯一产出；拾取全丢
+    Safe,        // safe星域：白/蓝、少量黄；pickup保留
+    Contested,   // 争议星域：稀有/套装major产出；pickupchancedrop
+    DeepVoid,    // 无人deep space：黄/绿highchance；pickupchance遗失
+    CollapseZone // collapse禁区：太古唯一产出；pickup全丢
 }
 
 /// <summary>单个星域node：类型、feature点（空间站/矿点）、跃迁门connection。</summary>
