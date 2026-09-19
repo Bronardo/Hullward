@@ -35,7 +35,7 @@ public partial class Sfx : Node
         _bossWarn = Make("res://assets/audio/sfx/boss_warn.mp3", 0.6f); // 0.45→0.6：用户反馈阶段警示不明显
 
         // BGM 循环（0.2 音量，用户反馈 0.3 偏大；播放完毕自动从头）
-        var bgm = Make("res://assets/audio/bgm/theme.ogg", 0.2f);
+        var bgm = Make("res://assets/audio/bgm/theme.mp3", 0.2f);
         bgm.Finished += () => bgm.Play();
         bgm.Play();
     }
