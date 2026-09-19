@@ -1,6 +1,6 @@
 # Hullward (《深空暗骸》 / Deep Space Relics)
 
-![Combat screenshot](docs/screenshots/combat-sector4.png)
+![Combat HUD](docs/screenshots/04_combat_hud.png)
 
 A space-ship ARPG loot game — Deakin SIT771 "Something Awesome" 7.4H project.
 Tech stack: **Godot 4.7.2 (.NET build) + C# / .NET 8**.
@@ -100,6 +100,16 @@ Hullward/
 ```
 
 Design rationale in `docs/design.md`; process evidence in `docs/ULO-evidence.md` and the engineering log.
+
+## Screenshots
+
+| Main Menu | Star Map |
+|---|---|
+| ![Main menu](docs/screenshots/01_main_menu.png) | ![Star map](docs/screenshots/02_star_map.png) |
+
+| Equip Screen | Combat HUD |
+|---|---|
+| ![Equip](docs/screenshots/03_equip_screen.png) | ![Combat](docs/screenshots/04_combat_hud.png) |
 
 ## Assets
 
