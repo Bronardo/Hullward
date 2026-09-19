@@ -20,3 +20,4 @@ Desktop.ini
 
 # Release build (delivered separately, too large for git)
 Hullward/build/
+Hullward_v*.zip
