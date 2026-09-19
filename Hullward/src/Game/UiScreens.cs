@@ -229,7 +229,33 @@ public static class UiScreens
         hint.AddThemeColorOverride("font_color", new Color(SubColor));
         header.AddChild(hint);
 
-        // 进入母舰仓库（底部按钮，锚定底部居中）
+        // 底部按钮栏：MarginContainer 锚定底部，HBox 左右分布（迭代 27.2：避免小窗口裁切）
+        var bottomBar = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        bottomBar.SetAnchorsPreset(Control.LayoutPreset.BottomWide);
+        bottomBar.AddThemeConstantOverride("margin_left", 24);
+        bottomBar.AddThemeConstantOverride("margin_right", 24);
+        bottomBar.AddThemeConstantOverride("margin_bottom", 16);
+        bottomBar.AddThemeConstantOverride("margin_top", 0);
+        var bottomRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Stop };
+        bottomRow.AddThemeConstantOverride("spacing", 16);
+        bottomBar.AddChild(bottomRow);
+
+        var menuBtn = new Button
+        {
+            Text = "⌂ Main Menu",
+            CustomMinimumSize = new Vector2(160, 36),
+            SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.ShrinkBegin,
+            MouseFilter = Control.MouseFilterEnum.Stop
+        };
+        menuBtn.AddThemeFontSizeOverride("font_size", 15);
+        menuBtn.AddThemeColorOverride("font_color", new Color("#d8ecff"));
+        menuBtn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("#2a3550"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        menuBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("#3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        menuBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        menuBtn.Pressed += onMenu;
+        menuBtn.Pressed += () => ClickSound?.Invoke();
+        bottomRow.AddChild(menuBtn);
+
         var mothershipBtn = new Button
         {
             Text = "⚙ Enter Starship (Dock/Equip/Workshop/Repair/Shop)",
@@ -242,28 +268,11 @@ public static class UiScreens
         mothershipBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("ffe08a").Lightened(0.15f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         mothershipBtn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = new Color("ffe08a").Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         mothershipBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
-        mothershipBtn.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
-        mothershipBtn.Position = new Vector2(-180, -24);
         mothershipBtn.Pressed += onMothership;
         mothershipBtn.Pressed += () => ClickSound?.Invoke();
-        root.AddChild(mothershipBtn);
+        bottomRow.AddChild(mothershipBtn);
 
-        // 迭代 22：主菜单按钮（进入母舰按钮下方）
-        var menuBtn = new Button
-        {
-            Text = "⌂ Main Menu",
-            CustomMinimumSize = new Vector2(160, 36),
-            MouseFilter = Control.MouseFilterEnum.Stop
-        };
-        menuBtn.AddThemeFontSizeOverride("font_size", 15);
-        menuBtn.AddThemeColorOverride("font_color", new Color("#d8ecff"));
-        menuBtn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("#2a3550"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
-        menuBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("#3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
-        menuBtn.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
-        menuBtn.Position = new Vector2(24, -24);
-        menuBtn.Pressed += onMenu;
-        menuBtn.Pressed += () => ClickSound?.Invoke();
-        root.AddChild(menuBtn);
+        root.AddChild(bottomBar);
 
         root.AddChild(header);
 
@@ -283,10 +292,10 @@ public static class UiScreens
         // 任务节点：普通节点绕母舰环形均匀分布，Boss 固定右侧（迭代 27.1 UI 重排）
         var normalNodes = map.Nodes.Where(n => !n.IsBoss).ToList();
         var bossNode = map.Nodes.FirstOrDefault(n => n.IsBoss);
-        const float ringRx = 360f;
-        const float ringRy = 220f;
-        const float bossX = 480f;
-        const float bossY = 0f;
+        const float ringRx = 300f;
+        const float ringRy = 180f;
+        const float bossX = 560f;
+        const float bossY = 160f;
         for (int i = 0; i < normalNodes.Count; i++)
         {
             var node = normalNodes[i];
