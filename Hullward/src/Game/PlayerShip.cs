@@ -7,10 +7,10 @@ using Hullward.Domain.Ships;
 namespace Hullward.Game;
 
 /// <summary>
-/// 玩家ship（presentation）：WASD/direction键移动，主炮auto索敌开火（域层 TargetingSystem）。
-/// hullattribute来自域层 ShipBase（ScoutShip）：hull/shield/firepower受modulefitimpact。
-/// skill位（iteration 4 接入 ActiveSkill）。
-/// Sprint 4 线 A：视觉由方块占位替换为 CC0 像素船（Kenney Space Shooter Redux，按船型选纹理）。
+/// Player ship (presentation): WASD/arrow movement, main gun auto-targets and fires (domain TargetingSystem)。
+/// Hull stats from domain ShipBase (ScoutShip): hull/shield/firepower affected by fitted modules。
+/// Skill slot (ActiveSkill integrated in iteration 4)。
+/// Sprint 4 line A: visuals replaced from placeholder blocks with CC0 pixel ships (Kenney Space Shooter Redux; texture by ship class)。
 /// </summary>
 public partial class PlayerShip : CharacterBody2D
 {
@@ -20,13 +20,13 @@ public partial class PlayerShip : CharacterBody2D
     [Export] public float WorldHalfWidth = 960f;
     [Export] public float WorldHalfHeight = 540f;
 
-    /// <summary>玩家hull（域层polymorphism：轻巡/assault ship/battleship/fortress，由 Main 按dockselect注入）。</summary>
+    /// <summary>Player hull (domain polymorphism: Scout/Assault/Battleship/Fortress; injected by Main per dock selection)。</summary>
     public ShipBase ShipStats { get; private set; } = new ScoutShip();
 
-    /// <summary>dockswitch后注入新hull（同一引用贯穿mothership/出战，fit与hull即时共享）。</summary>
+    /// <summary>New hull injected on dock switch (same reference across mothership/sortie; fit and hull share immediately)。</summary>
     public void SetShip(ShipBase ship) => ShipStats = ship;
 
-    /// <summary>manualskill（拍板项）：Q 过载炮 / E shield boost。</summary>
+    /// <summary>Manual skills (decision): Q overload cannon / E shield boost。</summary>
     public OverdriveCannon SkillQ { get; } = new();
     public ShieldBurst SkillE { get; } = new();
 
@@ -36,16 +36,16 @@ public partial class PlayerShip : CharacterBody2D
     private float _fireCooldown;
     private float _hitFlashTimer;
 
-    /// <summary>currenthull（域层data）。</summary>
+    /// <summary>Current hull (domain data)。</summary>
     public int Hull => ShipStats.Hull;
 
-    /// <summary>ship被击毁（missionfail判定，由 Main 接管结算）。</summary>
+    /// <summary>Ship destroyed (mission fail determination; Main takes over settlement)。</summary>
     public event Action? Died;
 
-    /// <summary>主炮开火（sfx：射击rotate）。</summary>
+    /// <summary>Main gun fired (sfx: shoot)。</summary>
     public event Action? Fired;
 
-    /// <summary>玩家受击（sfx：受击）。</summary>
+    /// <summary>Player hit (sfx: hit)。</summary>
     public event Action? Damaged;
 
     public override void _Ready()
@@ -57,10 +57,10 @@ public partial class PlayerShip : CharacterBody2D
 
     public override void _PhysicsProcess(double delta)
     {
-        // 清理已击毁/释放的target，avoidance访问 disposed object
+        // Clear destroyed/released targets to avoid accessing disposed objects
         _targets.RemoveAll(t => t is GodotObject go && !GodotObject.IsInstanceValid(go));
 
-        // direction键/WASD 移动（MVP 直接read键，avoidance input map configrisk）
+        // Arrow keys/WASD movement (MVP reads keys directly; avoids input map config risk)
         Vector2 input = Vector2.Zero;
         if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left)) input.X -= 1f;
         if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right)) input.X += 1f;
@@ -69,22 +69,22 @@ public partial class PlayerShip : CharacterBody2D
         Velocity = input.Normalized() * MoveSpeed;
         MoveAndSlide();
 
-        // 世界boundary（开发期像素prototype：Clamp 到世界矩形）
+        // World boundary (dev pixel prototype: clamp to world rect)
         Position = new Vector2(
             Mathf.Clamp(Position.X, -WorldHalfWidth, WorldHalfWidth),
             Mathf.Clamp(Position.Y, -WorldHalfHeight, WorldHalfHeight));
 
         _fireCooldown -= (float)delta;
 
-        // 主炮auto索敌开火
+        // Main gun auto-target fire
         ITargetable? target = _targeting.Acquire(_targets, Position.X, Position.Y);
         if (target != null && _fireCooldown <= 0f)
         {
             FireAt(target);
-            _fireCooldown = FireInterval / Math.Max(0.2f, ShipStats.FireRateMultiplier); // affix"急速供弹"
+            _fireCooldown = FireInterval / Math.Max(0.2f, ShipStats.FireRateMultiplier); // "Rapid Loading" affix
         }
 
-        // 受击闪红recovery
+        // Flash red on hit recovery
         if (_hitFlashTimer > 0f)
         {
             _hitFlashTimer -= (float)delta;
@@ -94,7 +94,7 @@ public partial class PlayerShip : CharacterBody2D
             }
         }
 
-        // energy regen（LD Sprint4 §3.2：combatmedium 8/s、脱战 12/s；索敌list有alivetarget即combat）
+        // Energy regen (LD Sprint 4 §3.2: combat 8/s, out of combat 12/s; considered in combat if any live target in target list)
         bool inCombat = false;
         foreach (var t in _targets)
         {
@@ -110,7 +110,7 @@ public partial class PlayerShip : CharacterBody2D
         SkillQ.Tick((float)delta);
         SkillE.Tick((float)delta);
 
-        // 受击damage reductionwindow递减（affix"受击damage reduction"：受击后 2s）
+        // Tick down on-hit damage reduction window ("Damage Reduction" affix: 2s after being hit)
         ShipStats.TickTimers((float)delta);
     }
 
@@ -135,10 +135,10 @@ public partial class PlayerShip : CharacterBody2D
         }
     }
 
-    /// <summary>enemy ship攻击入口：扣hull（shield先吸收）+ 闪红反馈；thorns镀层反弹近身damage；归零重生。</summary>
+    /// <summary>Enemy attack entry: subtract hull (shield absorbs first) + flash red; "Thorns Plating" reflects melee damage; respawn at zero。</summary>
     public void TakeDamage(int damage, ITargetable? attacker = null)
     {
-        // affix"thorns镀层"：反弹近身damage % 给攻击者
+        // "Thorns Plating" affix: reflect melee damage % back to attacker
         if (attacker != null && ShipStats.ThornsPct > 0f)
         {
             int thorns = Math.Max(1, (int)(damage * ShipStats.ThornsPct));
@@ -159,7 +159,7 @@ public partial class PlayerShip : CharacterBody2D
         }
     }
 
-    /// <summary>由 Main 注入current星域内的可索敌target。</summary>
+    /// <summary>Injected by Main with targetable enemies in current sector。</summary>
     public void SetTargets(IEnumerable<ITargetable> targets)
     {
         _targets.Clear();
@@ -168,7 +168,7 @@ public partial class PlayerShip : CharacterBody2D
 
     private void FireAt(ITargetable target)
     {
-        // affix"fatal一击/crit增幅"：开火按crit chance判定，crit damage = firepower × 暴伤倍率
+        // "Critical Hit / Critical Amp" affixes: fire rolls crit chance; crit damage = firepower x crit multiplier
         int damage = CombatCalculator.RollAttackDamage(ShipStats, _rng, out bool isCritical);
         var projectile = new Projectile
         {
@@ -176,8 +176,8 @@ public partial class PlayerShip : CharacterBody2D
             Target = target,
             Speed = ProjectileSpeed,
             Damage = damage,
-            IsCritical = isCritical, // presentation标注（crit弹丸更大/更亮）
-            ProcessMode = ProcessModeEnum.Pausable, // combatpause时弹丸冻结
+            IsCritical = isCritical, // Presentation flag (crit projectile bigger/brighter)
+            ProcessMode = ProcessModeEnum.Pausable, // Projectile freezes when combat paused
         };
         GetTree().CurrentScene.AddChild(projectile);
         Fired?.Invoke();
@@ -195,9 +195,9 @@ public partial class PlayerShip : CharacterBody2D
     }
 
     /// <summary>
-    /// 玩家ship视觉（Sprint 4 线 A）：CC0 像素船纹理按船型替换方块占位。
-    /// canvas为紧凑hull（99-112px 宽），按档位缩放控制show尺寸：
-    /// 轻巡 33×25 / 突击 39×26 / 战column 44×34 / 要塞 54×41（档位越大体积差越明显）。
+    /// Player ship visuals (Sprint 4 line A): CC0 pixel ship texture replaces placeholder block by ship class。
+    /// Canvas is tight hull (99-112px wide); scaled by tier to control display size：
+    /// Scout 33x25 / Assault 39x26 / Battleship 44x34 / Fortress 54x41 (larger tiers show bigger size difference)。
     /// </summary>
     private static Node2D MakeShipVisual(ShipBase ship)
     {

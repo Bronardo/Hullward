@@ -5,19 +5,19 @@ using Hullward.Domain.Ships;
 namespace Hullward.Domain.Enemies;
 
 /// <summary>
-/// 暗骸enemy shipabstraction基类（ULO2 polymorphism核心：row为差异由子类 UpdateBehavior 提供，杜绝 if-else branch）。
-/// position与hull均为纯 C# 域data，presentationnode仅做renderbridge。
+/// Hullward enemy ship base class (ULO2 polymorphism: per-ship differences provided by subclass UpdateBehavior, no if-else branches)。
+/// Position and hull are pure C# domain data; presentation node is just a render bridge。
 /// </summary>
 public abstract class EnemyShip : ShipBase, ITargetable
 {
-    /// <summary>域层position（世界position，presentation每帧sync到node）。</summary>
+    /// <summary>Domain-layer position (world position; presentation syncs to node every frame)。</summary>
     public float X { get; set; }
     public float Y { get; set; }
 
-    /// <summary>row为speedmax（子类定）。</summary>
+    /// <summary>Speed max per subclass。</summary>
     protected abstract float BehaviorSpeed { get; }
 
-    /// <summary>索敌triggerdistance（玩家enter后start追击/攻击）。</summary>
+    /// <summary>Targeting trigger distance (start chasing/attacking when player enters)。</summary>
     protected abstract float AggroRange { get; }
 
     public const float WorldHalfWidth = 950f;
@@ -28,12 +28,12 @@ public abstract class EnemyShip : ShipBase, ITargetable
     {
     }
 
-    /// <summary>polymorphismrow为入口：子类implement各自战术。</summary>
+    /// <summary>Polymorphism entry point: subclasses implement their own tactics。</summary>
     public abstract void UpdateBehavior(float dt, float playerX, float playerY);
 
     /// <summary>
-    /// remote开火入口（LD Sprint 3 §4.2：gunboat弹幕）。
-    /// 基类default不开火（近战enemy ship）；子类覆write：cooldown到且射程内back true 并给出弹道target点。
+    /// Ranged fire entry (LD Sprint 3 §4.2: gunboat barrage)。
+    /// Base class does not fire by default (melee enemies); subclasses override: return true when cooldown ready and in range, and provide projectile target point。
     /// </summary>
     public virtual bool TryFire(float dt, float playerX, float playerY, out float targetX, out float targetY)
     {
@@ -42,7 +42,7 @@ public abstract class EnemyShip : ShipBase, ITargetable
         return false;
     }
 
-    /// <summary>按星域level缩放强度（Zone4 = 2.5× hull / 1.75× firepower）。</summary>
+    /// <summary>Scale stats by sector level (Zone 4 = 2.5x hull / 1.75x firepower)。</summary>
     public void ScaleForZone(int zoneLevel)
     {
         if (zoneLevel < 1)
@@ -56,7 +56,7 @@ public abstract class EnemyShip : ShipBase, ITargetable
         Firepower *= dmgMult;
     }
 
-    /// <summary>向targetdirection移动（子类call）。</summary>
+    /// <summary>Move toward target direction (called by subclasses)。</summary>
     protected void MoveToward(float tx, float ty, float speed, float dt)
     {
         float dx = tx - X;
@@ -85,14 +85,14 @@ public abstract class EnemyShip : ShipBase, ITargetable
     }
 }
 
-/// <summary>recon：high速直线追击，轻甲轻火。</summary>
+/// <summary>Recon: fast straight chase, light armor/weapons。</summary>
 public sealed class ReconDrone : EnemyShip
 {
     protected override float BehaviorSpeed => 190f;
     protected override float AggroRange => 600f;
 
     public ReconDrone()
-        : base("侦察机", hull: 30, shield: 0, armor: 0, firepower: 4f)
+        : base("Recon", hull: 30, shield: 0, armor: 0, firepower: 4f)
     {
     }
 
@@ -100,13 +100,13 @@ public sealed class ReconDrone : EnemyShip
     {
         if (Distance(X, Y, playerX, playerY) > AggroRange)
         {
-            return; // 未enter索敌range：待机
+            return; // Player not in targeting range: idle
         }
         MoveToward(playerX, playerY, BehaviorSpeed, dt);
     }
 }
 
-/// <summary>劫掠舰：保持medium距环形游走，medium等firepower。</summary>
+/// <summary>Raider: orbits at medium range, medium firepower。</summary>
 public sealed class RaiderShip : EnemyShip
 {
     protected override float BehaviorSpeed => 130f;
@@ -114,10 +114,10 @@ public sealed class RaiderShip : EnemyShip
 
     private const float DesiredDistance = 300f;
     private const float Deadband = 40f;
-    private int _orbitDir = 1; // 环形direction
+    private int _orbitDir = 1; // Orbit direction
 
     public RaiderShip()
-        : base("劫掠舰", hull: 70, shield: 20, armor: 5, firepower: 8f)
+        : base("Raider", hull: 70, shield: 20, armor: 5, firepower: 8f)
     {
     }
 
@@ -131,17 +131,17 @@ public sealed class RaiderShip : EnemyShip
 
         if (dist > DesiredDistance + Deadband)
         {
-            // 太远：逼近
+            // Too far: approach
             MoveToward(playerX, playerY, BehaviorSpeed, dt);
         }
         else if (dist < DesiredDistance - Deadband)
         {
-            // 太近：后退
+            // Too close: back off
             MoveToward(X - (playerX - X), Y - (playerY - Y), BehaviorSpeed, dt);
         }
         else
         {
-            // distance合适：切向环绕
+            // Good distance: orbit tangentially
             float tangentX = -(playerY - Y) * _orbitDir;
             float tangentY = (playerX - X) * _orbitDir;
             X += tangentX / dist * BehaviorSpeed * dt;
@@ -151,14 +151,14 @@ public sealed class RaiderShip : EnemyShip
     }
 }
 
-/// <summary>重装堡垒：慢速逼近，重甲重火，正面威胁核心。</summary>
+/// <summary>Heavy Bastion: slow approach, heavy armor/weapons, frontline threat。</summary>
 public sealed class HeavyFortress : EnemyShip
 {
     protected override float BehaviorSpeed => 55f;
     protected override float AggroRange => 500f;
 
     public HeavyFortress()
-        : base("重装堡垒", hull: 220, shield: 80, armor: 18, firepower: 18f)
+        : base("Heavy Bastion", hull: 220, shield: 80, armor: 18, firepower: 18f)
     {
     }
 
@@ -173,8 +173,8 @@ public sealed class HeavyFortress : EnemyShip
 }
 
 /// <summary>
-/// gunboat（LD Sprint 3 §4.2 第 2 章新enemy）：保持medium距环形游走，射程内周期性弹幕。
-/// row为差异 = polymorphismextension（TryFire 覆write），近战enemy ship不受impact。
+/// Gunboat (LD Sprint 3 §4.2, new in sector 2): orbits at medium range, periodic barrage when in range。
+/// Per-ship difference = polymorphism extension (TryFire override); melee enemies unaffected。
 /// </summary>
 public sealed class GunboatShip : EnemyShip
 {
@@ -239,11 +239,11 @@ public sealed class GunboatShip : EnemyShip
 }
 
 /// <summary>
-/// collapse禁区守卫（Boss，LD Sprint 3 §4.3 三phaseskill）：
-/// phase 1（100%–60%）相位charge + spawn 2 recon + burst 3 连；
-/// phase 2（60%–30%）new湮灭pulse AOE，skillrate +20%；
-/// phase 3（30%–0%）enrage：chargerate提升、湮灭pulse双发、spawnassault ship。
-/// state machine与skillschedule全在域层（可单测phaseswitch血量条件）；presentation执rowentity/视觉。
+/// Collapse Zone Guardian (Boss, LD Sprint 3 §4.3, 3-phase skill set)：
+/// Phase 1 (100%-60%): phase charge + spawn 2 recon + burst of 3；
+/// Phase 2 (60%-30%): new annihilation pulse AOE, skill rate +20%；
+/// Phase 3 (30%-0%): enrage: charge rate up, annihilation pulse doubled, spawn assault ships。
+/// State machine and skill scheduler are pure domain (phase-switch HP conditions unit-testable); presentation executes visuals。
 /// </summary>
 public sealed class GuardianBoss : EnemyShip
 {
@@ -256,13 +256,13 @@ public sealed class GuardianBoss : EnemyShip
 
     private BossPhase _phase = BossPhase.Phase1;
 
-    // skillcooldown（秒）
+    // Skill cooldown (seconds)
     private float _chargeCd = 5f;
     private float _summonCd = 14f;
     private float _pointCd = 3f;
     private float _pulseCd = 8f;
 
-    // chargestate（域层移动，presentationcollision判定pathdamage）
+    // Charge state (domain movement; presentation collision determines path damage)
     private bool _charging;
     private float _chargeTimer;
     private float _chargeDirX;
@@ -270,23 +270,23 @@ public sealed class GuardianBoss : EnemyShip
     private float _chargeSpeed;
 
     public GuardianBoss()
-        : base("禁区守卫", hull: 500, shield: 180, armor: 25, firepower: 30f)
+        : base("Collapse Guardian", hull: 500, shield: 180, armor: 25, firepower: 30f)
     {
     }
 
-    /// <summary>currentphase（按hull比例real-time判定）。</summary>
+    /// <summary>Current phase (real-time by hull ratio)。</summary>
     public BossPhase Phase => _phase;
 
-    /// <summary>是否处于相位chargemedium（presentation据此做pathcollisiondamage与视觉）。</summary>
+    /// <summary>Is in phase charge (presentation uses this for path collision damage and visuals)。</summary>
     public bool IsCharging => _charging;
 
-    /// <summary>hull比例（0-1）。</summary>
+    /// <summary>Hull ratio (0-1)。</summary>
     public float HullPct => MaxHull > 0 ? (float)Hull / MaxHull : 0f;
 
-    /// <summary>phaseswitchevent（presentation弹提示/变色；单测verifythreshold）。</summary>
+    /// <summary>Phase switch event (presentation shows popup/color change; unit test verifies threshold)。</summary>
     public event Action<BossPhase>? PhaseChanged;
 
-    /// <summary>phase判定并triggerswitchevent（每次callidempotent，仅跨threshold时trigger一次）。</summary>
+    /// <summary>Evaluate phase and trigger switch event (idempotent per call; fires once when crossing threshold)。</summary>
     public BossPhase UpdatePhase()
     {
         BossPhase next = HullPct > Phase2Threshold
@@ -312,7 +312,7 @@ public sealed class GuardianBoss : EnemyShip
 
         if (_charging)
         {
-            // 相位charge：沿lock定directionhigh速直线冲撞，pathdurationdamage由presentation按 IsCharging 判定
+            // Phase charge: high-speed straight dash along locked direction; path damage duration determined by presentation via IsCharging
             _chargeTimer -= dt;
             X += _chargeDirX * _chargeSpeed * dt;
             Y += _chargeDirY * _chargeSpeed * dt;
@@ -328,9 +328,9 @@ public sealed class GuardianBoss : EnemyShip
     }
 
     /// <summary>
-    /// skillschedule器（每帧call，至多back一个意图）：
-    /// priority pulse &gt; charge &gt; spawn &gt; burst；cooldown按phaseratecorrection（P2 ×1.2，P3 ×1.6）。
-    /// 纯域层逻辑，意图由presentation执row。
+    /// Skill scheduler (called every frame; returns at most one intent)：
+    /// Priority: pulse > charge > spawn > burst; cooldowns scaled by phase rate (P2 x1.2, P3 x1.6)。
+    /// Pure domain logic; intents executed by presentation。
     /// </summary>
     public BossIntent TickSkills(float dt, float playerX, float playerY)
     {
@@ -338,7 +338,7 @@ public sealed class GuardianBoss : EnemyShip
         float freqMult = _phase switch
         {
             BossPhase.Phase2 => 1.2f, // LD：skillrate +20%
-            BossPhase.Phase3 => 1.6f, // LD：enrage（chargerate提升、pulse双发）
+            BossPhase.Phase3 => 1.6f, // LD: enrage (charge rate up, pulse doubled)
             _ => 1f
         };
 
@@ -347,7 +347,7 @@ public sealed class GuardianBoss : EnemyShip
         _pointCd -= dt * freqMult;
         _pulseCd -= dt * freqMult;
 
-        // phase 2 起：湮灭pulse（P3 双发）
+        // From phase 2: annihilation pulse (doubled in P3)
         if (_phase >= BossPhase.Phase2 && _pulseCd <= 0f)
         {
             int bursts = _phase == BossPhase.Phase3 ? 2 : 1;
@@ -355,7 +355,7 @@ public sealed class GuardianBoss : EnemyShip
             return new BossIntent(BossSkillKind.AnnihilationPulse, bursts);
         }
 
-        // 相位charge（P3 cooldown更短 → rate提升）
+        // Phase charge (P3 shorter cooldown -> faster rate)
         if (_chargeCd <= 0f)
         {
             float dx = playerX - X;
@@ -373,19 +373,19 @@ public sealed class GuardianBoss : EnemyShip
             }
             _charging = true;
             _chargeTimer = 1.1f;
-            _chargeSpeed = _phase == BossPhase.Phase3 ? 640f : 480f; // P3 charge更快
+            _chargeSpeed = _phase == BossPhase.Phase3 ? 640f : 480f; // P3 faster charge
             _chargeCd = _phase == BossPhase.Phase3 ? 3f : 5f;
             return new BossIntent(BossSkillKind.PhaseCharge, 0);
         }
 
-        // spawn（P1/P2 recon ×2，P3 assault ship，由presentation按 Phase 决定种类）
+        // Spawn (P1/P2 recon x2, P3 assault ships; presentation picks type by phase)
         if (_summonCd <= 0f)
         {
             _summonCd = _phase == BossPhase.Phase3 ? 12f : 14f;
             return new BossIntent(BossSkillKind.SummonScouts, 2);
         }
 
-        // burst 3 连弹幕
+        // Burst of 3-projectile barrage
         if (_pointCd <= 0f)
         {
             _pointCd = 3f;

@@ -9,9 +9,9 @@ using Hullward.Domain.Ships;
 namespace Hullward.Game;
 
 /// <summary>
-/// mothershippanel（LD UI spec v0.2 §6 + 空间站清单 §4 + dock）：
-/// dock（四档flagshipselect/unlock）· fit（slot装卸/2 套方案/attribute预览）· inventory（rarityfilter）· workshop（disassemble/reroll）· repair · shop。
-/// codebuild；操作即时修改域state并重建content区。
+/// Mothership panel (LD UI spec v0.2 §6 + station checklist §4 + dock)：
+/// Dock (4-tier flagship select/unlock) - Fit (slot equip/unequip / 2 loadouts / stat preview) - Inventory (rarity filter) - Workshop (disassemble/reroll) - Repair - Shop。
+/// Code-built; operations mutate domain state immediately and rebuild content area。
 /// </summary>
 public sealed partial class MothershipPanel : Control
 {
@@ -33,8 +33,8 @@ public sealed partial class MothershipPanel : Control
     private ShipClass _shipClass;
     private readonly Func<ShipClass, (ShipBase Ship, List<ModuleDrop?> Slots)?> _onShipChange;
 
-    private int _tab = 1;             // 0 dock / 1 fit / 2 inventory / 3 workshop / 4 repair / 5 shop（default进fit）
-    private int _selectedSlot = -1;   // fit页选mediumslot
+    private int _tab = 1;             // 0 Dock / 1 Fit / 2 Inventory / 3 Workshop / 4 Repair / 5 Shop (default Fit)
+    private int _selectedSlot = -1;   // Fit page: currently selected slot
     private ItemRarity? _rarityFilter;
     private string _status = "";
 
@@ -65,19 +65,19 @@ public sealed partial class MothershipPanel : Control
         _shipClass = shipClass;
         _onShipChange = onShipChange;
 
-        // 关键：panel挂到 CanvasLayer（非 Control 父），锚点相对视口。
-        // 必须在进树（_Ready）之前设好 FullRect——与 UiScreens.Fullscreen() 的
-        // "构造时 SetAnchorsPreset" patterns一致；若拖到 _Ready 才设，进树首帧布局
-        // 已按default锚点算过 rect（0x0），content塌缩到左上角 min size 区。
+        // Critical: panel is attached to CanvasLayer (not a Control parent); anchors are relative to viewport。
+        // Must set FullRect before entering tree (_Ready); matches UiScreens.Fullscreen() pattern of
+        // "set anchors in constructor" pattern; if deferred to _Ready, first-frame layout
+        // already used default anchors (0x0 rect), collapsing content to top-left min-size area。
         SetAnchorsPreset(Control.LayoutPreset.FullRect);
     }
 
     public override void _Ready()
     {
-        // panel自身满屏（与 UiScreens.Fullscreen 一致）：挂到 CanvasLayer 时若无锚点，
-        // rect 保持 0x0，FullRect 子node随之塌缩 → content区空白（LD B5 复现fix）。
+        // Panel itself is fullscreen (same as UiScreens.Fullscreen): when attached to CanvasLayer without anchors,，
+        // rect stays 0x0 and FullRect children collapse -> blank content (LD B5 reproduction fix)。
         SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        ShipFittingService.ApplyToShip(_ship, _slots); // entermothership即syncattribute（repair/预览口径一致）
+        ShipFittingService.ApplyToShip(_ship, _slots); // Sync stats on entering mothership (consistent with repair/preview)
         Rebuild();
     }
 
@@ -98,7 +98,7 @@ public sealed partial class MothershipPanel : Control
         root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(root);
 
-        // Sprint 5 P0-B：mothership深色金属科技grid底纹（LD §6 色板 #16121F 系），平铺于六页
+        // Sprint 5 P0-B: dark metallic tech-grid background (LD §6 palette #16121F), tiled across all six tabs
         var gridTex = new TextureRect
         {
             Texture = GD.Load<Texture2D>("res://assets/background/mothership_grid.png"),
@@ -125,7 +125,7 @@ public sealed partial class MothershipPanel : Control
         var contentHost = new PanelContainer
         {
             MouseFilter = Control.MouseFilterEnum.Stop,
-            CustomMinimumSize = new Vector2(0, 200) // 保证content区min可见high度（防container分配 0 high度）
+            CustomMinimumSize = new Vector2(0, 200) // Ensure content has visible min height (prevent container allocating 0 height)
         };
         contentHost.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color("151a28"), CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6 });
         contentHost.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
@@ -155,7 +155,7 @@ public sealed partial class MothershipPanel : Control
         close.Pressed += _onClose;
         header.AddChild(close);
 
-        // iteration 22：main menubutton（backstarmap旁）
+        // Iteration 22: main menu button (next to back-to-starmap)
         var menu = new Button { Text = "⌂ Main Menu", CustomMinimumSize = new Vector2(120, 40) };
         menu.AddThemeFontSizeOverride("font_size", 16);
         menu.AddThemeColorOverride("font_color", new Color("#d8ecff"));
@@ -232,7 +232,7 @@ public sealed partial class MothershipPanel : Control
         return scroll;
     }
 
-    // ---------- dock页（shipselect） ----------
+    // ---------- Dock tab (ship select) ----------
 
     private Control BuildDockTab()
     {
@@ -332,14 +332,14 @@ public sealed partial class MothershipPanel : Control
         return MakeScroll(box);
     }
 
-    // ---------- fit页 ----------
+    // ---------- Fit tab ----------
 
     private Control BuildEquipTab()
     {
         var box = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         box.AddThemeConstantOverride("separation", 8);
 
-        // attribute预览（含affixbonusattribute，LD Sprint 3 §4.6 B3：affix明细可见）
+        // Stat preview (including affix bonuses; LD Sprint 3 §4.6 B3: affix details visible)
         ShipFittingService.ApplyToShip(_ship, _slots);
         var affixStats = new List<string> { $"Firepower {_ship.Firepower:0}", $"Shield {_ship.Shield}/{_ship.MaxShield}", $"Hull {_ship.Hull}/{_ship.MaxHull}", $"Atk Speed ×{_ship.FireRateMultiplier:0.00}", $"Resist {_ship.Armor}" };
         if (_ship.MagicFind > 0)
@@ -362,7 +362,7 @@ public sealed partial class MothershipPanel : Control
         {
             affixStats.Add($"Thorns {_ship.ThornsPct * 100f:0}%");
         }
-        // Sprint 5 iteration 17 C2：attribute预览三栏分组（攻击/防御/skill，LD §7）
+        // Sprint 5 iteration 17 C2: stat preview in 3-column groups (offense/defense/skill; LD §7)
         var attackRows = new List<string> { $"Firepower {_ship.Firepower:0}", $"Atk Speed ×{_ship.FireRateMultiplier:0.00}", $"Crit {_ship.CritChance * 100f:0}%", $"Crit Dmg ×{_ship.CritDamage:0.00}" };
         var defenseRows = new List<string> { $"Shield {_ship.Shield}/{_ship.MaxShield}", $"Hull {_ship.Hull}/{_ship.MaxHull}", $"Resist {_ship.Armor}" };
         if (_ship.DamageReductionPct > 0f) { defenseRows.Add($"DR {_ship.DamageReductionPct * 100f:0}%"); }
@@ -378,7 +378,7 @@ public sealed partial class MothershipPanel : Control
         statsRow.AddChild(StatColumn("✦ Skills", skillRows));
         box.AddChild(statsRow);
 
-        // slotlist（点击选medium/卸下；showaffix count，LD §4.6 B3）
+        // Slot list (click to select/unequip; show affix count; LD §4.6 B3)
         var slotRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         slotRow.AddThemeConstantOverride("separation", 8);
         for (int i = 0; i < _slots.Count; i++)
@@ -388,7 +388,7 @@ public sealed partial class MothershipPanel : Control
             string label = drop == null
                 ? $"[{i + 1}] Empty Slot"
                 : $"[{i + 1}] {drop.DisplayName}" + (drop.Affixes.Count > 0 ? $" ({drop.Affixes.Count} affixes)" : "");
-            // slotrow：IconBox fixed 20×20（与list项一致，不using Button.Icon avoidance拉伸）+ 文字button
+            // Slot row: fixed 20x20 IconBox (same as list items, avoids Button icon stretching) + text button
             var slotBox = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
             slotBox.AddThemeConstantOverride("separation", 6);
             if (drop != null)
@@ -419,7 +419,7 @@ public sealed partial class MothershipPanel : Control
             slotRow.AddChild(slotBox);
         }
 
-        // 卸下选medium槽
+        // Unequip selected slot
         var unequip = new Button { Text = "Unequip Slot", CustomMinimumSize = new Vector2(140, 44) };
         unequip.AddThemeFontSizeOverride("font_size", 15);
         unequip.AddThemeColorOverride("font_color", new Color(TextColor));
@@ -444,7 +444,7 @@ public sealed partial class MothershipPanel : Control
         };
         slotRow.AddChild(unequip);
 
-        // 配装方案
+        // Loadouts
         var presetRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         presetRow.AddThemeConstantOverride("separation", 8);
         var saveA = new Button { Text = _presets.IsSaved('A') ? $"Loadout A（{_presets.NameOf('A')}）" : "Save as Loadout A", CustomMinimumSize = new Vector2(200, 40) };
@@ -461,7 +461,7 @@ public sealed partial class MothershipPanel : Control
         box.AddChild(slotRow);
         box.AddChild(presetRow);
 
-        // 选mediumslotaffix明细（LD §4.6 B3：fitUI可见affix name称+stat）
+        // Selected slot affix details (LD §4.6 B3: fit UI shows affix name + stat)
         if (_selectedSlot >= 0 && _slots[_selectedSlot] != null)
         {
             ModuleDrop selected = _slots[_selectedSlot]!;
@@ -478,7 +478,7 @@ public sealed partial class MothershipPanel : Control
 
         box.AddChild(new Label { Text = "Click a slot to select, then click a module below to equip it (auto-fills first empty slot if none selected)", HorizontalAlignment = HorizontalAlignment.Left, MouseFilter = Control.MouseFilterEnum.Ignore });
 
-        // inventorymodulelist（点击装入）
+        // Inventory module list (click to equip)
         var bagBox = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         bagBox.AddThemeConstantOverride("separation", 6);
         if (_inventory.Modules.Count == 0)
@@ -554,7 +554,7 @@ public sealed partial class MothershipPanel : Control
         return -1;
     }
 
-    // ---------- inventory页 ----------
+    // ---------- Inventory tab ----------
 
     private Control BuildStorageTab()
     {
@@ -625,7 +625,7 @@ public sealed partial class MothershipPanel : Control
         return MakeScroll(box);
     }
 
-    // ---------- workshop页 ----------
+    // ---------- Workshop tab ----------
 
     private Control BuildWorkshopTab()
     {
@@ -710,7 +710,7 @@ public sealed partial class MothershipPanel : Control
         return MakeScroll(box);
     }
 
-    // ---------- repair页 ----------
+    // ---------- Repair tab ----------
 
     private Control BuildRepairTab()
     {
@@ -760,7 +760,7 @@ public sealed partial class MothershipPanel : Control
         return MakeScroll(box);
     }
 
-    // ---------- shop页 ----------
+    // ---------- Shop tab ----------
 
     private Control BuildShopTab()
     {
@@ -826,7 +826,7 @@ public sealed partial class MothershipPanel : Control
         return _shop;
     }
 
-    // ---------- 样式辅助 ----------
+    // ---------- Style helpers ----------
 
     private static void StyleSmall(Button btn)
     {
@@ -846,7 +846,7 @@ public sealed partial class MothershipPanel : Control
         return label;
     }
 
-    /// <summary>Sprint 5 iteration 17 C2：attribute三栏column（title + 若干"tab 值"row，深色底 + 细边框）。</summary>
+    /// <summary>Sprint 5 iteration 17 C2: 3-column stat group (title + several "label value" rows, dark bg + thin border)。</summary>
     private static PanelContainer StatColumn(string title, IReadOnlyList<string> rows)
     {
         var inner = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -885,7 +885,7 @@ public sealed partial class MothershipPanel : Control
         return panel;
     }
 
-    /// <summary>Sprint 5 iteration 17 C1：list项卡片化（深底 + rarity color细边框 + content留白）。</summary>
+    /// <summary>Sprint 5 iteration 17 C1: list items as cards (dark bg + rarity-colored thin border + content padding)。</summary>
     private static PanelContainer ModuleCard(Control row, ItemRarity rarity)
     {
         var panel = new PanelContainer
@@ -903,7 +903,7 @@ public sealed partial class MothershipPanel : Control
         return panel;
     }
 
-    /// <summary>Sprint 5 P0-A2：slot 16×16 像素图标path（program化生成，LD 命名map §5）。</summary>
+    /// <summary>Sprint 5 P0-A2: slot 16x16 pixel icon path (procedurally generated; LD name map §5)。</summary>
     private static string SlotIconPath(ModuleType slot) => slot switch
     {
         ModuleType.Weapon => "res://assets/icons/weapon.png",
@@ -914,7 +914,7 @@ public sealed partial class MothershipPanel : Control
 
     private static readonly Dictionary<int, Texture2D> IconCache = new();
 
-    /// <summary>slot图标 + rarity color边框（20×20：16 图标居medium + 2px rarity边框，LD §5 图标spec）。</summary>
+    /// <summary>Slot icon + rarity border (20x20: 16 icon centered + 2px rarity border; LD §5 icon spec)。</summary>
     private static Texture2D ModuleIcon(ModuleType slot, ItemRarity rarity)
     {
         int key = (int)slot * 10 + (int)rarity;
@@ -949,12 +949,12 @@ public sealed partial class MothershipPanel : Control
         return tex;
     }
 
-    /// <summary>list项左侧slot图标（rarity color边框），20×20 fixed尺寸。</summary>
+    /// <summary>Left-side slot icon (rarity border) in list items; fixed 20x20。</summary>
     private static TextureRect IconBox(ModuleType slot, ItemRarity rarity) => new()
     {
         Texture = ModuleIcon(slot, rarity),
         CustomMinimumSize = new Vector2(20, 20),
-        // 垂直direction不随 HBox rowhigh拉伸（同rowbutton 34-44px high会把图标拉变形），保持 20×20 居medium
+        // Vertical direction does not stretch with HBox row height (34-44px row buttons would distort the icon); keeps 20x20 centered
         SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
         MouseFilter = Control.MouseFilterEnum.Ignore
     };

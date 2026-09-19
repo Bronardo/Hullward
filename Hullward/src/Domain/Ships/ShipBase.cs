@@ -6,8 +6,8 @@ using Hullward.Domain.Modules;
 namespace Hullward.Domain.Ships;
 
 /// <summary>
-/// shipabstraction基类（ULO2：abstraction + inheritance + polymorphism锚点）。
-/// 四型hull派生：ScoutShip / AssaultShip / Battleship / FortressShip。
+/// Ship abstraction base class (ULO2: abstraction + inheritance + polymorphism anchor)。
+/// Four hull subclasses: ScoutShip / AssaultShip / Battleship / FortressShip。
 /// </summary>
 public abstract class ShipBase : IShip
 {
@@ -15,66 +15,66 @@ public abstract class ShipBase : IShip
     public int Hull { get; set; }
     public int Shield { get; set; }
 
-    /// <summary>shieldmax（fit/reset时sync），skill回盾与 UI using。</summary>
+    /// <summary>Max shield (synced on fit/reset); used by shield-boost skill and UI。</summary>
     public int MaxShield { get; private set; }
 
-    /// <summary>hullmax（affix"hull加固"scale out）。</summary>
+    /// <summary>Max hull (scaled up by "Hull Reinforcement" affix)。</summary>
     public int MaxHull { get; private set; }
 
-    /// <summary>attack speed倍率（affix"急速供弹"：1.0 = 无bonus，presentation攻击间隔按此缩放）。</summary>
+    /// <summary>Attack speed multiplier ("Rapid Loading" affix; 1.0 = no bonus; presentation scales fire interval by this)。</summary>
     public float FireRateMultiplier { get; private set; } = 1f;
 
-    /// <summary>寻宝值（affix"打捞增效"，alloydropbonus）。</summary>
+    /// <summary>Magic Find ("Magic Find" affix; alloy drop bonus)。</summary>
     public int MagicFind { get; private set; }
 
-    /// <summary>critchance 0-1（affix"fatal一击"）。</summary>
+    /// <summary>Crit chance 0-1 ("Critical Hit" affix)。</summary>
     public float CritChance { get; private set; }
 
-    /// <summary>crit damage倍率（affix"crit增幅"，default 2.0）。</summary>
+    /// <summary>Crit damage multiplier ("Critical Amp" affix; default 2.0)。</summary>
     public float CritDamage { get; private set; } = 2f;
 
-    /// <summary>受击damage reduction %（affix"受击damage reduction"：受击后 2s window内生效）。</summary>
+    /// <summary>On-hit damage reduction % ("Damage Reduction" affix; active 2s window after being hit)。</summary>
     public float DamageReductionPct { get; private set; }
 
-    /// <summary>反弹近身damage %（affix"thorns镀层"）。</summary>
+    /// <summary>Reflect melee damage % ("Thorns Plating" affix)。</summary>
     public float ThornsPct { get; private set; }
 
-    // ---------- energysystem（LD Sprint4 §3.2 拍板：轻量energy条） ----------
+    // ---------- energy system (LD Sprint 4 §3.2: lightweight energy bar) ----------
 
-    /// <summary>energy基础max（LD：100，initial满）。</summary>
+    /// <summary>Base max energy (LD: 100, starts full)。</summary>
     public const float EnergyCapacityBase = 100f;
 
-    /// <summary>combatmedium自然回复（LD：8/s）。</summary>
+    /// <summary>Passive regen in combat (LD: 8/s)。</summary>
     public const float EnergyRegenCombat = 8f;
 
-    /// <summary>脱战自然回复（LD：12/s）。</summary>
+    /// <summary>Passive regen out of combat (LD: 12/s)。</summary>
     public const float EnergyRegenOutOfCombat = 12f;
 
-    /// <summary>max energy（affix"能源scale out"scale out）。</summary>
+    /// <summary>Max energy (scaled up by "Energy Capacitor" affix)。</summary>
     public float MaxEnergy { get; private set; }
 
-    /// <summary>currentenergy（0..MaxEnergy，skill消耗；combat/脱战回复）。</summary>
+    /// <summary>Current energy (0..MaxEnergy; consumed by skills; regen in/out of combat)。</summary>
     public float Energy { get; private set; }
 
-    /// <summary>energy regenbonus %（affix"快速charge"，combat/脱战两velocity同乘）。</summary>
+    /// <summary>Energy regen bonus % ("Fast Recharge" affix; applies to both combat and out-of-combat rates)。</summary>
     public float EnergyRegenBonus { get; private set; }
 
-    /// <summary>skillenergy cost倍率（affix"节能module"：1.0 = 无reduction，乘法复合，min 0.2）。</summary>
+    /// <summary>Skill energy cost multiplier ("Skill Cost Down" affix; 1.0 = no reduction; multiplicative, min 0.2)。</summary>
     public float SkillCostMultiplier { get; private set; } = 1f;
 
-    /// <summary>skillcooldown倍率（affix"cooldown缩减"：1.0 = 无缩减，乘法复合，min 0.2）。</summary>
+    /// <summary>Skill cooldown multiplier ("Cooldown Reduction" affix; 1.0 = no reduction; multiplicative, min 0.2)。</summary>
     public float SkillCooldownMultiplier { get; private set; } = 1f;
 
-    /// <summary>skillactualenergy cost（energy cost × 节能倍率）。</summary>
+    /// <summary>Actual skill energy cost (energy cost x cost multiplier)。</summary>
     public float EffectiveSkillCost(float baseCost) => baseCost * SkillCostMultiplier;
 
-    /// <summary>skill是否energy充足（cooldownready判定由 ActiveSkill 层负责）。</summary>
+    /// <summary>Has enough energy for skill (cooldown readiness is handled by ActiveSkill)。</summary>
     public bool HasEnergyFor(float baseCost) => Energy >= EffectiveSkillCost(baseCost) - 0.001f;
 
-    /// <summary>消耗energy（不降为负）。</summary>
+    /// <summary>Consume energy (never goes negative)。</summary>
     public void SpendEnergy(float cost) => Energy = Math.Max(0f, Energy - cost);
 
-    /// <summary>自然回复（combatmedium 8/s、脱战 12/s，均乘快速chargebonus；不超max）。</summary>
+    /// <summary>Passive regen (combat 8/s, out of combat 12/s, both multiplied by Fast Recharge bonus; capped at max)。</summary>
     public void RegenEnergy(float dt, bool inCombat)
     {
         float rate = (inCombat ? EnergyRegenCombat : EnergyRegenOutOfCombat) * (1f + EnergyRegenBonus / 100f);
@@ -83,16 +83,16 @@ public abstract class ShipBase : IShip
 
     private float _mitigationTimer;
 
-    /// <summary>damage reductionwindow是否生效（受击后 2s）。</summary>
+    /// <summary>Is damage reduction window active (2s after being hit)。</summary>
     public bool IsMitigating => _mitigationTimer > 0f;
 
-    /// <summary>有效damage reduction率：window内取affix值，else 0。</summary>
+    /// <summary>Effective damage reduction: affix value if in window, else 0。</summary>
     public float EffectiveDamageReduction => IsMitigating ? DamageReductionPct : 0f;
 
-    /// <summary>受击时startup 2s damage reductionwindow。</summary>
+    /// <summary>Start 2s damage reduction window when hit。</summary>
     public void OnHit() => _mitigationTimer = 2f;
 
-    /// <summary>递减damage reductionwindow（presentation每帧call）。</summary>
+    /// <summary>Tick down damage reduction window (called every frame by presentation)。</summary>
     public void TickTimers(float dt)
     {
         if (_mitigationTimer > 0f)
@@ -106,7 +106,7 @@ public abstract class ShipBase : IShip
     public float Speed { get; protected set; }
     public int ModuleSlots { get; protected set; }
 
-    /// <summary>已fitmodule（interfacepolymorphism：Weapon/Armor/Power/Special）。</summary>
+    /// <summary>Fitted modules (interface polymorphism: Weapon/Armor/Power/Special)。</summary>
     public List<IShipModule> Modules { get; } = new();
 
     private readonly int _baseHull;
@@ -133,12 +133,12 @@ public abstract class ShipBase : IShip
 
     public bool IsDestroyed => Hull <= 0;
 
-    /// <summary>fitmodule并即时生效（由派生类implementattributebonus）。</summary>
+    /// <summary>Fit module and apply immediately (derived class implements attribute bonus)。</summary>
     public void EquipModule(IShipModule module)
     {
         if (Modules.Count >= ModuleSlots)
         {
-            throw new InvalidOperationException($"{Name} 槽位已满（{ModuleSlots}）");
+            throw new InvalidOperationException($"{Name} slots full ({ModuleSlots})");
         }
         Modules.Add(module);
         module.ApplyEffect(this);
@@ -146,7 +146,7 @@ public abstract class ShipBase : IShip
 
     public virtual void TakeHit(int damage) => CombatCalculator.ApplyHit(this, damage);
 
-    /// <summary>重生/load：resetcombatstate并重新applymodulebonus。</summary>
+    /// <summary>On respawn/load: reset combat state and re-apply module bonuses。</summary>
     public void ResetCombatState()
     {
         Hull = _baseHull;
@@ -172,7 +172,7 @@ public abstract class ShipBase : IShip
         }
     }
 
-    // modulebonus入口（internal：同一program集的moduleimplement可call）
+    // Module bonus entry (internal: module impls in same assembly can call)
     internal void AddFirepower(float bonus) => Firepower += bonus;
     internal void AddShield(int bonus)
     {
@@ -183,7 +183,7 @@ public abstract class ShipBase : IShip
     internal void AddMaxHull(int bonus)
     {
         MaxHull += bonus;
-        Hull += bonus; // scale outalso抬升currenthull（出战即满）
+        Hull += bonus; // Scale up also raises current hull (starts full on sortie)
     }
 
     internal void AddFireRate(float multiplierBonus) => FireRateMultiplier += multiplierBonus;
@@ -200,7 +200,7 @@ public abstract class ShipBase : IShip
 
     internal void AddArmor(int bonus) => Armor += bonus;
 
-    /// <summary>能源scale out：max按current值复合scale out，currentenergysync抬升（出战即满）。</summary>
+    /// <summary>Energy scale-up: max scales multiplicatively, current energy syncs up (starts full on sortie)。</summary>
     internal void AddMaxEnergyPercent(float bonus)
     {
         float extra = MaxEnergy * bonus / 100f;
@@ -217,7 +217,7 @@ public abstract class ShipBase : IShip
         => SkillCooldownMultiplier = Math.Clamp(SkillCooldownMultiplier * (1f - bonusPercent / 100f), 0.2f, 1f);
 }
 
-/// <summary>轻巡：balance机动，slot最少。</summary>
+/// <summary>Scout: balanced mobility, fewest slots。</summary>
 public sealed class ScoutShip : ShipBase
 {
     public ScoutShip()
@@ -226,7 +226,7 @@ public sealed class ScoutShip : ShipBase
     }
 }
 
-/// <summary>assault ship：firepower优先。</summary>
+/// <summary>Assault ship: firepower-focused。</summary>
 public sealed class AssaultShip : ShipBase
 {
     public AssaultShip()
@@ -235,7 +235,7 @@ public sealed class AssaultShip : ShipBase
     }
 }
 
-/// <summary>battleship：重装重firepower。</summary>
+/// <summary>Battleship: heavy armor and firepower。</summary>
 public sealed class Battleship : ShipBase
 {
     public Battleship()
@@ -244,7 +244,7 @@ public sealed class Battleship : ShipBase
     }
 }
 
-/// <summary>fortress：极致生存。</summary>
+/// <summary>Fortress: extreme survivability。</summary>
 public sealed class FortressShip : ShipBase
 {
     public FortressShip()

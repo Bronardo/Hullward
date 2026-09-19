@@ -4,41 +4,41 @@ using Hullward.Domain.Loot;
 
 namespace Hullward.Domain.Modules;
 
-/// <summary>affixattribute类型（LD affix表 §3.2）。</summary>
+/// <summary>Affix stat type (LD affix table §3.2)。</summary>
 public enum AffixStat
 {
     // weapon slot
-    FirepowerPercent,      // reinforcement炮击：weapondamage +%
-    AttackSpeedPercent,    // 急速供弹：攻击speed +%
-    CritChance,            // fatal一击：critchance +%
-    CritDamage,            // crit增幅：crit damage +%
-    ShieldPierce,          // shieldpierce：忽略targetshield %
-    SlowOnHit,             // slow磁场：hitslow %（2s）
-    EnergyOnKill,          // energy反馈：击杀回复能源
-    AoeBlast,              // range爆破：hitrange爆炸（黄+）
+    FirepowerPercent,      // Powered Cannons: weapon damage +%
+    AttackSpeedPercent,    // Rapid Loading: attack speed +%
+    CritChance,            // Critical Hit: crit chance +%
+    CritDamage,            // Critical Amp: crit damage +%
+    ShieldPierce,          // Shield Pierce: ignore target shield %
+    SlowOnHit,             // Slow Field: hit slow % (2s)
+    EnergyOnKill,          // Energy Feedback: on-kill energy return
+    AoeBlast,              // Aoe Blast: hit explodes in range (Rare+)
     // armor slot
     MaxShieldPercent,      // shieldscale out：maxshield +%
-    MaxHullPercent,        // hull加固：hull +%
-    ResistancePercent,     // 全向抗性：全抗性 +%
-    ShieldRegen,           // 纳米fix：shield每秒recovery +
-    DamageReduction,       // 受击damage reduction：受击后damage reduction %
-    Thorns,                // thorns镀层：反弹近身damage %（黄+）
+    MaxHullPercent,        // Hull Reinforcement: hull +%
+    ResistancePercent,     // All-Resist: all resist +%
+    ShieldRegen,           // Nano Repair: shield regen per sec +
+    DamageReduction,       // Damage Reduction: on-hit damage reduction %
+    Thorns,                // Thorns Plating: reflect melee damage % (Rare+)
     // power slot
-    MaxEnergyPercent,      // 能源scale out：能源max +%
-    EnergyRegenPercent,    // 快速charge：能源回复 +%
-    SkillCostPercent,      // 节能module：skillenergy cost -%
-    CooldownPercent,       // cooldown缩减：skillcooldown -%
-    OverdrivePercent,      // 过载缓冲：过载炮damage +%（黄+）
+    MaxEnergyPercent,      // Energy Capacitor: max energy +%
+    EnergyRegenPercent,    // Fast Recharge: energy regen +%
+    SkillCostPercent,      // Skill Cost Down: skill energy cost -%
+    CooldownPercent,       // Cooldown Reduction: skill cooldown -%
+    OverdrivePercent,      // Overdrive Amp: overload cannon damage +% (Rare+)
     // special slot
-    WarpCooldownPercent,   // 跃迁加速：跃迁cooldown -%
-    TargetingRangePercent, // 广域扫描：索敌range +%
-    MagicFind,             // 打捞增效：MF 寻宝值 +
-    EmpDuration,           // 干扰reinforcement：EMP/slow时长 +%
-    EmergencyShield        // contingencyshield：濒死trigger小shield（黄+）
+    WarpCooldownPercent,   // Warp Speed: warp cooldown -%
+    TargetingRangePercent, // Wide Scanner: targeting range +%
+    MagicFind,             // Magic Find: loot bonus +
+    EmpDuration,           // EMP Amp: EMP/slow duration +%
+    EmergencyShield        // Emergency Shield: on-death trigger small shield (Rare+)
 }
 
 /// <summary>
-/// moduleaffix（LD affix表 §3）：一条affix = attribute类型 + stat（百分比或绝对值）。
+/// Module affix (LD affix table §3): one affix = stat type + value (percent or flat)。
 /// </summary>
 public sealed class Affix
 {
@@ -72,7 +72,7 @@ public sealed class Affix
 
     private string DisplayName => LegacyNameMap.TryGetValue(Name, out var en) ? en : Name;
 
-    /// <summary>showtext：affix name + stat（百分比统一四舍五入；trigger型affix无stat只显名）。</summary>
+    /// <summary>Display text: affix name + value (percent rounded; trigger affixes show name only)。</summary>
     public string Describe()
     {
         bool triggered = Stat is AffixStat.AoeBlast or AffixStat.EmergencyShield;
@@ -98,8 +98,8 @@ public sealed class Affix
 }
 
 /// <summary>
-/// affix poolconfig（LD affix表 §3.2 原样录入）：
-/// 每slot一个affix pool，entry = affix name + attribute + rarity valuesrange + weight + 最lowrarity。
+/// Affix pool config (verbatim from LD affix table §3.2)：
+/// One pool per slot; entry = affix name + stat + rarity range + weight + min rarity。
 /// </summary>
 public sealed class AffixPool
 {
@@ -109,7 +109,7 @@ public sealed class AffixPool
         public AffixStat Stat { get; }
         public float Min { get; }
         public float Max { get; }
-        /// <summary>黄/绿（Rare/Set）专属range；-1 = 未setting，回退普通range（蓝）。</summary>
+        /// <summary>Rare/Set exclusive range; -1 = unset, fall back to normal (blue) range。</summary>
         public float RareMin { get; }
         public float RareMax { get; }
         public float AncientMin { get; }
@@ -182,27 +182,27 @@ public sealed class AffixPool
 }
 
 /// <summary>
-/// moduleaffixgenerator（LD affix表 §3.3 roll 规则）：
-/// rarityaffix count（白0/蓝1-2/黄2-3/绿3/太古2条暗金range）、按weight抽取、同module不重复、statrange均匀random。
-/// 太古不可reroll；套件affix（绿fixed件）暂以random条数approximate（体系 v2.0 细化）。
+/// Module affix generator (LD affix table §3.3 roll rules)：
+/// Rarity-determined affix count (white 0/blue 1-2/yellow 2-3/green 3/ancient 2 ancient-tier), weight-drawn, no duplicate stat per module, uniform random in stat range。
+/// Ancient cannot reroll; set affixes (green fixed items) approximated with random count (refine in v2.0)。
 /// </summary>
 public static class ModuleRoller
 {
-    /// <summary>rarity → affix条数range（LD §3.1：蓝 1-2、黄 2-3；白 0）。</summary>
+    /// <summary>Rarity -> affix count range (LD §3.1: blue 1-2, yellow 2-3, white 0)。</summary>
     public static (int Min, int Max) AffixCountRange(ItemRarity rarity) => rarity switch
     {
         ItemRarity.Common => (0, 0),
         ItemRarity.Magic => (1, 2),
         ItemRarity.Rare => (2, 3),
-        ItemRarity.Set => (3, 3),        // 绿：fixed套件 + 1（套件未落表，approximate 3 random）
-        ItemRarity.Ancient => (2, 2),    // 太古：fixed强force（取暗金range）
+        ItemRarity.Set => (3, 3),        // Green: fixed set + 1 (set not tabulated, approximate 3 random)
+        ItemRarity.Ancient => (2, 2),    // Ancient: fixed strong values (ancient-tier range)
         _ => (0, 0)
     };
 
-    /// <summary>是否为暗金range（太古专用强stat）。</summary>
+    /// <summary>Is this an ancient-tier range (strong stat for ancient only)。</summary>
     public static bool IsAncientRoll(ItemRarity rarity) => rarity == ItemRarity.Ancient;
 
-    /// <summary>给dropmodule roll affix（LootTable 生成时call；太古fixed 2 条暗金range）。</summary>
+    /// <summary>Roll affixes for a dropped module (called by LootTable; ancient fixed 2 ancient-tier affixes)。</summary>
     public static void RollAffixes(ModuleDrop drop, Random rng)
     {
         drop.Affixes.Clear();
@@ -213,7 +213,7 @@ public static class ModuleRoller
         }
         int count = min == max ? min : rng.Next(min, max + 1);
         var pool = AffixPool.ForSlot(drop.Slot);
-        // 按weight预展开候选（同module不重复）
+        // Expand candidates by weight (no duplicate stat per module)
         var candidates = new List<AffixPool.AffixEntry>();
         foreach (var entry in pool)
         {
@@ -229,13 +229,13 @@ public static class ModuleRoller
         {
             int pick = rng.Next(candidates.Count);
             AffixPool.AffixEntry entry = candidates[pick];
-            candidates.RemoveAll(e => e.Stat == entry.Stat); // 同module不重复
+            candidates.RemoveAll(e => e.Stat == entry.Stat); // no duplicate stat per module
             float value = RollValue(entry, drop.Rarity, rng);
             drop.Affixes.Add(new Affix(entry.Name, entry.Stat, value));
         }
     }
 
-    /// <summary>reroll：黄+ 重 roll affix count与stat（太古不可洗，call方validate）。</summary>
+    /// <summary>Reroll: yellow+ re-rolls affix count and values (ancient cannot reroll; caller validates)。</summary>
     public static void RerollAffixes(ModuleDrop drop, Random rng)
     {
         drop.Affixes.Clear();
@@ -243,7 +243,7 @@ public static class ModuleRoller
         drop.RerollCount++;
     }
 
-    /// <summary>按rarity range均匀randomstat。</summary>
+    /// <summary>Uniform random in rarity range。</summary>
     private static float RollValue(AffixPool.AffixEntry entry, ItemRarity rarity, Random rng)
     {
         float min, max;
@@ -254,7 +254,7 @@ public static class ModuleRoller
         }
         else if ((rarity is ItemRarity.Rare or ItemRarity.Set) && entry.RareMin >= 0f)
         {
-            // 黄/绿专属range（LD 线 C C2：fatal一击蓝 5-8 / 黄 8-12 / 暗金 15-18）
+            // Rare/Set exclusive range (LD line C C2: Critical Hit blue 5-8 / yellow 8-12 / ancient 15-18)
             min = entry.RareMin;
             max = entry.RareMax;
         }
@@ -265,7 +265,7 @@ public static class ModuleRoller
         }
         if (min == 0f && max == 0f)
         {
-            // 无暗金column的affix：黄+ 才可 roll，取非暗金range
+            // Affixes without ancient column: rollable at yellow+, use non-ancient range
             min = entry.Min;
             max = entry.Max;
         }
