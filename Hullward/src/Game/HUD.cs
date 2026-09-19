@@ -72,16 +72,21 @@ public partial class HUD : CanvasLayer
         row.AddThemeConstantOverride("separation", 16);
         _taskLabel = MakeLabel(16, "#d8ecff");
         _taskLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        _waveLabel = MakeLabel(13, "#8fa3c8");
-        _waveLabel.HorizontalAlignment = HorizontalAlignment.Center;
-        _waveLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         var pause = MakeLabel(14, "#8fa3c8");
         pause.Text = "▮▮ Esc 暂停";
+        pause.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        pause.HorizontalAlignment = HorizontalAlignment.Right;
         row.AddChild(_taskLabel);
-        row.AddChild(_waveLabel);
         row.AddChild(pause);
         _topBar.AddChild(row);
         AddChild(_topBar);
+
+        // 波次标题独立居中于屏幕顶部（不参与 HBox 三列布局，避免被左右列挤偏）
+        _waveLabel = MakeLabel(13, "#8fa3c8");
+        _waveLabel.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
+        _waveLabel.OffsetLeft = -200; _waveLabel.OffsetRight = 200; _waveLabel.OffsetTop = 18;
+        _waveLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        AddChild(_waveLabel);
     }
 
     private void BuildBottomLeft()
