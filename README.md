@@ -4,6 +4,7 @@
 ![.NET](https://img.shields.io/badge/.NET-8.0-5C2D91)
 ![Godot](https://img.shields.io/badge/Godot-4.7.2-478CBF)
 ![Tests](https://img.shields.io/badge/tests-228%20passed-brightgreen)
+[![GitHub](https://img.shields.io/badge/GitHub-Bronardo%2FHullward-blue)](https://github.com/Bronardo/Hullward)
 
 A top-down space-ship ARPG loot game — Deakin SIT771 "Something Awesome" 7.4H.
 
