@@ -192,7 +192,7 @@ public static class UiScreens
     }
 
     /// <summary>星图（规格 §4）：母舰居中，任务节点散点分布；节点锚定窗口中心，随 resize 自适应。</summary>
-    public static Control Starmap(StarMap map, Action<StarMapNode> onPick, Action onMothership)
+    public static Control Starmap(StarMap map, Action<StarMapNode> onPick, Action onMothership, Action onMenu)
     {
         Control root = Fullscreen();
 
@@ -246,6 +246,23 @@ public static class UiScreens
         mothershipBtn.Pressed += onMothership;
         mothershipBtn.Pressed += () => ClickSound?.Invoke();
         root.AddChild(mothershipBtn);
+
+        // 迭代 22：主菜单按钮（进入母舰按钮下方）
+        var menuBtn = new Button
+        {
+            Text = "⌂ 主菜单",
+            CustomMinimumSize = new Vector2(160, 36),
+            MouseFilter = Control.MouseFilterEnum.Stop
+        };
+        menuBtn.AddThemeFontSizeOverride("font_size", 15);
+        menuBtn.AddThemeColorOverride("font_color", new Color("#d8ecff"));
+        menuBtn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("#2a3550"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        menuBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("#3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        menuBtn.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
+        menuBtn.Position = new Vector2(-80, -110);
+        menuBtn.Pressed += onMenu;
+        menuBtn.Pressed += () => ClickSound?.Invoke();
+        root.AddChild(menuBtn);
 
         root.AddChild(header);
 

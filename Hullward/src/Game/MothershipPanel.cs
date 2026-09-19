@@ -28,6 +28,7 @@ public sealed partial class MothershipPanel : Control
     private readonly ShipPresets _presets;
     private readonly Random _rng;
     private readonly Action _onClose;
+    private readonly Action _onMenu;
     private readonly Action _onChanged;
     private ShipClass _shipClass;
     private readonly Func<ShipClass, (ShipBase Ship, List<ModuleDrop?> Slots)?> _onShipChange;
@@ -46,6 +47,7 @@ public sealed partial class MothershipPanel : Control
         ShipPresets presets,
         Random rng,
         Action onClose,
+        Action onMenu,
         Action onChanged,
         ShipClass shipClass,
         Func<ShipClass, (ShipBase Ship, List<ModuleDrop?> Slots)?> onShipChange)
@@ -58,6 +60,7 @@ public sealed partial class MothershipPanel : Control
         _presets = presets;
         _rng = rng;
         _onClose = onClose;
+        _onMenu = onMenu;
         _onChanged = onChanged;
         _shipClass = shipClass;
         _onShipChange = onShipChange;
@@ -151,6 +154,16 @@ public sealed partial class MothershipPanel : Control
         close.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         close.Pressed += _onClose;
         header.AddChild(close);
+
+        // 迭代 22：主菜单按钮（返回星图旁）
+        var menu = new Button { Text = "⌂ 主菜单", CustomMinimumSize = new Vector2(120, 40) };
+        menu.AddThemeFontSizeOverride("font_size", 16);
+        menu.AddThemeColorOverride("font_color", new Color("#d8ecff"));
+        menu.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("#3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        menu.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("#4a5a80"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+        menu.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        menu.Pressed += _onMenu;
+        header.AddChild(menu);
         return header;
     }
 

@@ -219,15 +219,29 @@ public partial class Main : Node
             };
             shade.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             shade.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            var box = new VBoxContainer { ProcessMode = ProcessModeEnum.Always };
+            box.SetAnchorsPreset(Control.LayoutPreset.Center);
             var label = new Label
             {
                 Text = "⏸ 已暂停 — 按 Esc 继续",
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Center
             };
-            label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            label.AddThemeFontSizeOverride("font_size", 20);
+            label.AddThemeColorOverride("font_color", new Color("#d8ecff"));
+            box.AddChild(label);
+
+            var toMenu = new Button { Text = "返回主菜单（自动保存）", CustomMinimumSize = new Vector2(260, 44) };
+            toMenu.AddThemeFontSizeOverride("font_size", 16);
+            toMenu.Pressed += () => { ReturnToMenu(); };
+            box.AddChild(toMenu);
+
+            var quit = new Button { Text = "退出游戏", CustomMinimumSize = new Vector2(260, 44) };
+            quit.AddThemeFontSizeOverride("font_size", 16);
+            quit.Pressed += () => { GetTree().Quit(); };
+            box.AddChild(quit);
+
             _pauseOverlay.AddChild(shade);
-            _pauseOverlay.AddChild(label);
+            _pauseOverlay.AddChild(box);
             AddChild(_pauseOverlay);
         }
         else
@@ -275,7 +289,7 @@ public partial class Main : Node
         if (_hud != null) _hud.Visible = false; // 战斗 HUD 仅战斗中显示
         _background.Color = ZoneColor(ZoneLevel);
         _starMap = new StarMapGenerator().Generate(ZoneLevel, _mothershipLevel, _rng);
-        _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked, ShowMothership));
+        _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked, ShowMothership, ReturnToMenu));
         GD.Print($"星图就绪: 第{_starMap.Chapter}章 母舰Lv{_mothershipLevel} {_starMap.Nodes.Count} 个任务");
     }
 
@@ -289,6 +303,7 @@ public partial class Main : Node
         _uiLayer.AddChild(new MothershipPanel(
             _inventory, _equippedSlots, _mothershipShip, _mothershipLevel, _mothershipExp, _presets, _rng,
             onClose: ShowStarmap,
+            onMenu: ReturnToMenu,
             onChanged: () => { },
             shipClass: _shipClass,
             onShipChange: SwitchShip));
@@ -375,6 +390,16 @@ public partial class Main : Node
             : ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
         GD.Print($"已读档: 章节 {ZoneLevel}, 母舰 Lv{_mothershipLevel}, 旗舰 {ShipCatalog.DisplayName(_shipClass)}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
         ShowStarmap();
+    }
+
+    /// <summary>迭代 22：返回主菜单（自动保存，LD 补丁 v0.6.1）。</summary>
+    private void ReturnToMenu()
+    {
+        SaveGame();
+        GetTree().Paused = false;
+        _paused = false;
+        if (_pauseOverlay != null) { _pauseOverlay.QueueFree(); _pauseOverlay = null; }
+        ShowMenu();
     }
 
     private void OnQuit() => GetTree().Quit();
