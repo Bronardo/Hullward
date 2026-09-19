@@ -1,4 +1,4 @@
-# Hullward (《深空暗骸》 / Deep Space Relics)
+# Hullward
 
 ![Release](https://img.shields.io/badge/release-v0.7.1-blue)
 ![.NET](https://img.shields.io/badge/.NET-8.0-5C2D91)

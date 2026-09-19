@@ -1,4 +1,4 @@
-# Hullward (《深空暗骸》 / Deep Space Relics) — ULO1-5 Evidence Document
+# Hullward — ULO1-5 Evidence Document
 
 > Version: v1.2 (includes sprint 3: mothership + affixes + adaptive UI; updated through iteration 28) ｜ Date: 2026-09-19 ｜ Purpose: SIT771 "Something Awesome" 7.4H final evidence
 > Mapping to requirements: ULO1 (code conventions / debugging), ULO2 (abstraction/encapsulation/inheritance/polymorphism), ULO3 (implement and test), ULO4 (diagrams/text expressing design), ULO5 (evidentiary reasoning)

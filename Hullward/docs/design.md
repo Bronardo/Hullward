@@ -1,4 +1,4 @@
-# Hullward (《深空暗骸》 / Deep Space Relics) — Design Document
+# Hullward — Design Document
 
 > Version: v1.0 ｜ Date: 2026-09-17 ｜ Author: PM / Lead Dev (Doubao)
 > Based on: `游戏策划文档.md` v0.4 (LD final) + user decision (2026-09-17 13:39:38: main gun auto-target + manual active skills; pixel art style)

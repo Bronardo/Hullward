@@ -1,4 +1,4 @@
-# Hullward (《深空暗骸》 / Deep Space Relics)
+# Hullward
 
 ![Combat HUD](docs/screenshots/04_combat_hud.png)
 
