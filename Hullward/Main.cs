@@ -115,7 +115,7 @@ public partial class Main : Node
         }
 
         // Sprint 6 迭代 19：分区战斗 HUD（LD v0.6.0 §3）
-        string task = _taskIsBoss ? (_taskGateLabel ?? "BOSS 讨伐") : $"清剿任务（剩余 {_targets.Count}）";
+        string task = _taskIsBoss ? (_taskGateLabel ?? "Boss Bounty") : $"Cleansing ({_targets.Count} left)";
         var ship = _player.ShipStats;
 
         var blips = new List<HUD.RadarBlip>();
@@ -129,8 +129,8 @@ public partial class Main : Node
 
         _hud.UpdateBattle(new BattleHudData
         {
-            TaskTitle = $"第{ZoneLevel}章·{task}",
-            WaveTitle = _taskIsBoss ? "BOSS 讨伐" : "清剿任务",
+            TaskTitle = $"Sector {ZoneLevel} · {task}",
+            WaveTitle = _taskIsBoss ? "Boss Bounty" : "Cleansing",
             Shield = (int)ship.Shield, MaxShield = ship.MaxShield,
             Hull = ship.Hull, MaxHull = ship.MaxHull,
             Energy = ship.Energy, MaxEnergy = ship.MaxEnergy,
@@ -489,8 +489,8 @@ public partial class Main : Node
         int alloyGain = _inventory.Alloy - _taskStartAlloy;
         int moduleGain = _modulesPicked - _taskStartModules;
         string missionSummary = _taskIsBoss
-            ? $"{( _taskGateLabel ?? "BOSS 讨伐" )} — 第 {ZoneLevel} 章守关旗舰"
-            : $"清剿任务 — 强度 {_currentTask!.Strength}（危险 ★{_currentTask.DangerStars}）";
+            ? $"{( _taskGateLabel ?? "Boss Bounty" )} — Sector {ZoneLevel} Guardian"
+            : $"Cleansing — Power {_currentTask!.Strength} (Danger ★{_currentTask.DangerStars})";
 
         string lootText;
         if (victory)
@@ -515,12 +515,12 @@ public partial class Main : Node
         }
         else
         {
-            lootText = "舰长阵亡，远征记录保留 —— 残骸已回收";
+            lootText = "Ship lost. Log preserved — debris salvaged";
             _player.ShipStats.Hull = 1; // 失败存档耐久按最低记录
         }
 
         SaveGame(); // 任务结算自动存档（远征记录留存，重开可继续）
-        lootText += "\n✓ 远征记录已自动保存";
+        lootText += "\n✓ Run auto-saved";
         _uiLayer.AddChild(UiScreens.Settlement(victory, lootText, missionSummary, ShowStarmap));
         GD.Print($"结算: 胜利={victory} 合金+{alloyGain} 模块+{moduleGain} 母舰Lv{_mothershipLevel}");
     }
@@ -702,7 +702,7 @@ public partial class Main : Node
             AutoFit.AutoEquipIntoSlots(_inventory, _equippedSlots);
             ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
             // 掉落反馈（LD Sprint 3 §4.6 B4）：品质 + 模块名 + 词缀数
-            _hud.ShowToast($"获得 {RarityLabel(pickup.ModuleData.Rarity)} {pickup.ModuleData.Name}（{pickup.ModuleData.Affixes.Count} 词缀）");
+            _hud.ShowToast($"Dropped {RarityLabel(pickup.ModuleData.Rarity)} {pickup.ModuleData.Name} ({pickup.ModuleData.Affixes.Count} affixes)");
             GD.Print($"拾取模块: {pickup.ModuleData.Name} | 装配后火力 {_player.ShipStats.Firepower}, 护盾 {_player.ShipStats.Shield}");
         }
         else
@@ -716,11 +716,11 @@ public partial class Main : Node
 
     private static string RarityLabel(ItemRarity rarity) => rarity switch
     {
-        ItemRarity.Common => "白色",
-        ItemRarity.Magic => "蓝色",
-        ItemRarity.Rare => "黄色",
-        ItemRarity.Set => "绿色",
-        ItemRarity.Ancient => "太古",
+        ItemRarity.Common => "Common",
+        ItemRarity.Magic => "Magic",
+        ItemRarity.Rare => "Rare",
+        ItemRarity.Set => "Set",
+        ItemRarity.Ancient => "Ancient",
         _ => "未知"
     };
 
