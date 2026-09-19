@@ -495,7 +495,7 @@ public partial class Main : Node
         string lootText;
         if (victory)
         {
-            lootText = $"战利品：模块 ×{moduleGain}　合金 +{alloyGain}";
+            lootText = $"Loot: {moduleGain} modules  +{alloyGain} alloy";
             int expGain = _taskIsBoss ? 2 : 1;
             _mothershipExp += expGain;
             int oldLevel = _mothershipLevel;
@@ -506,7 +506,7 @@ public partial class Main : Node
             }
             if (_mothershipLevel > oldLevel)
             {
-                lootText += $"\n◆ 母舰升级 Lv.{oldLevel} → Lv.{_mothershipLevel}（章节解锁）";
+                lootText += $"\n◆ Starship leveled Lv.{oldLevel} → Lv.{_mothershipLevel} (new sector unlocked)";
             }
             else
             {
