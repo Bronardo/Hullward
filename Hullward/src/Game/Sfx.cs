@@ -18,6 +18,8 @@ public partial class Sfx : Node
     private AudioStreamPlayer _warp = null!;
     private AudioStreamPlayer _click = null!;
     private AudioStreamPlayer _bossWarn = null!;
+    private AudioStreamPlayer _bgmLounge = null!;
+    private AudioStreamPlayer _bgmBattle = null!;
     private bool _shotToggle;
 
     public override void _Ready()
@@ -34,10 +36,13 @@ public partial class Sfx : Node
         _click = Make("res://assets/audio/sfx/click.ogg", 0.25f);
         _bossWarn = Make("res://assets/audio/sfx/boss_warn.mp3", 0.6f); // 0.45→0.6：用户反馈阶段警示不明显
 
-        // BGM 循环（0.2 音量，用户反馈 0.3 偏大；播放完毕自动从头）
-        var bgm = Make("res://assets/audio/bgm/theme.mp3", 0.2f);
-        bgm.Finished += () => bgm.Play();
-        bgm.Play();
+        // 双 BGM：休闲（主菜单/星图/母舰）与战斗（迭代 26 v0.6.26）
+        // 0.2 音量；播放完毕自动从头
+        _bgmLounge = Make("res://assets/audio/bgm/theme.mp3", 0.2f);
+        _bgmLounge.Finished += () => _bgmLounge.Play();
+        _bgmBattle = Make("res://assets/audio/bgm/battle.mp3", 0.2f);
+        _bgmBattle.Finished += () => _bgmBattle.Play();
+        _bgmLounge.Play();
     }
 
     private AudioStreamPlayer Make(string path, float volume)
@@ -64,4 +69,18 @@ public partial class Sfx : Node
     public void PlayWarp() => _warp.Play();
     public void PlayClick() => _click.Play();
     public void PlayBossWarn() => _bossWarn.Play();
+
+    /// <summary>切到战斗 BGM（The Arplands，upbeat 8-bit）。</summary>
+    public void PlayBattleBgm()
+    {
+        _bgmLounge.Stop();
+        if (!_bgmBattle.Playing) _bgmBattle.Play();
+    }
+
+    /// <summary>切回休闲 BGM（8bit Bossa）。</summary>
+    public void PlayLoungeBgm()
+    {
+        _bgmBattle.Stop();
+        if (!_bgmLounge.Playing) _bgmLounge.Play();
+    }
 }

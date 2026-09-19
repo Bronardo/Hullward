@@ -284,6 +284,7 @@ public partial class Main : Node
 
     private void ShowStarmap()
     {
+        _sfx.PlayLoungeBgm();
         ClearUi();
         _state = GameState.Starmap;
         if (_hud != null) _hud.Visible = false; // 战斗 HUD 仅战斗中显示
@@ -395,6 +396,7 @@ public partial class Main : Node
     /// <summary>迭代 22：返回主菜单（自动保存，LD 补丁 v0.6.1）。</summary>
     private void ReturnToMenu()
     {
+        _sfx.PlayLoungeBgm();
         SaveGame();
         GetTree().Paused = false;
         _paused = false;
@@ -415,6 +417,7 @@ public partial class Main : Node
     private void StartBattle()
     {
         ClearUi();
+        _sfx.PlayBattleBgm();
         _state = GameState.Battle;
         _jumpTimer = 0f;
 
