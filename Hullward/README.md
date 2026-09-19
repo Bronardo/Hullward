@@ -1,5 +1,7 @@
 # Hullward《深空暗骸》
 
+![Combat screenshot](docs/screenshots/combat-sector4.png)
+
 太空舰船 ARPG 刷宝游戏 —— Deakin SIT771 "Something Awesome" 7.4H 项目
 技术栈：**Godot 4.7.2（.NET 版）+ C# / .NET 8**
 
