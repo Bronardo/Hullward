@@ -229,22 +229,11 @@ public static class UiScreens
         hint.AddThemeColorOverride("font_color", new Color(SubColor));
         header.AddChild(hint);
 
-        // 底部按钮栏：MarginContainer 锚定底部，HBox 左右分布（迭代 27.2：避免小窗口裁切）
-        var bottomBar = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        bottomBar.SetAnchorsPreset(Control.LayoutPreset.BottomWide);
-        bottomBar.AddThemeConstantOverride("margin_left", 24);
-        bottomBar.AddThemeConstantOverride("margin_right", 24);
-        bottomBar.AddThemeConstantOverride("margin_bottom", 16);
-        bottomBar.AddThemeConstantOverride("margin_top", 0);
-        var bottomRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Stop };
-        bottomRow.AddThemeConstantOverride("spacing", 16);
-        bottomBar.AddChild(bottomRow);
-
+        // 底部按钮：直接锚定左下角/右下角，offset_top = -(按钮高 + 24 margin)（迭代 27.3 修正裁切）
         var menuBtn = new Button
         {
             Text = "⌂ Main Menu",
             CustomMinimumSize = new Vector2(160, 36),
-            SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.ShrinkBegin,
             MouseFilter = Control.MouseFilterEnum.Stop
         };
         menuBtn.AddThemeFontSizeOverride("font_size", 15);
@@ -252,9 +241,11 @@ public static class UiScreens
         menuBtn.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("#2a3550"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         menuBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("#3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         menuBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        menuBtn.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
+        menuBtn.Position = new Vector2(24, -60);
         menuBtn.Pressed += onMenu;
         menuBtn.Pressed += () => ClickSound?.Invoke();
-        bottomRow.AddChild(menuBtn);
+        root.AddChild(menuBtn);
 
         var mothershipBtn = new Button
         {
@@ -268,11 +259,11 @@ public static class UiScreens
         mothershipBtn.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = new Color("ffe08a").Lightened(0.15f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         mothershipBtn.AddThemeStyleboxOverride("pressed", new StyleBoxFlat { BgColor = new Color("ffe08a").Darkened(0.2f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
         mothershipBtn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        mothershipBtn.SetAnchorsPreset(Control.LayoutPreset.BottomRight);
+        mothershipBtn.Position = new Vector2(-384, -72);
         mothershipBtn.Pressed += onMothership;
         mothershipBtn.Pressed += () => ClickSound?.Invoke();
-        bottomRow.AddChild(mothershipBtn);
-
-        root.AddChild(bottomBar);
+        root.AddChild(mothershipBtn);
 
         root.AddChild(header);
 
