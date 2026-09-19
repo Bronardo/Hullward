@@ -341,7 +341,7 @@ public sealed partial class MothershipPanel : Control
 
         // Stat preview (including affix bonuses; LD Sprint 3 §4.6 B3: affix details visible)
         ShipFittingService.ApplyToShip(_ship, _slots);
-        var affixStats = new List<string> { $"Firepower {_ship.Firepower:0}", $"Shield {_ship.Shield}/{_ship.MaxShield}", $"Hull {_ship.Hull}/{_ship.MaxHull}", $"Atk Speed ×{_ship.FireRateMultiplier:0.00}", $"Resist {_ship.Armor}" };
+        var affixStats = new List<string> { $"Firepower {_ship.Firepower:0}", $"Shield {_ship.Shield:0}/{_ship.MaxShield:0}", $"Hull {_ship.Hull:0}/{_ship.MaxHull:0}", $"Atk Speed ×{_ship.FireRateMultiplier:0.0}", $"Resist {_ship.Armor:0}" };
         if (_ship.MagicFind > 0)
         {
             affixStats.Add($"MF {_ship.MagicFind}");
@@ -352,7 +352,7 @@ public sealed partial class MothershipPanel : Control
         }
         if (_ship.CritDamage > 2f)
         {
-            affixStats.Add($"Crit Dmg ×{_ship.CritDamage:0.00}");
+            affixStats.Add($"Crit Dmg ×{_ship.CritDamage:0.0}");
         }
         if (_ship.DamageReductionPct > 0f)
         {
@@ -363,12 +363,12 @@ public sealed partial class MothershipPanel : Control
             affixStats.Add($"Thorns {_ship.ThornsPct * 100f:0}%");
         }
         // Sprint 5 iteration 17 C2: stat preview in 3-column groups (offense/defense/skill; LD §7)
-        var attackRows = new List<string> { $"Firepower {_ship.Firepower:0}", $"Atk Speed ×{_ship.FireRateMultiplier:0.00}", $"Crit {_ship.CritChance * 100f:0}%", $"Crit Dmg ×{_ship.CritDamage:0.00}" };
-        var defenseRows = new List<string> { $"Shield {_ship.Shield}/{_ship.MaxShield}", $"Hull {_ship.Hull}/{_ship.MaxHull}", $"Resist {_ship.Armor}" };
+        var attackRows = new List<string> { $"Firepower {_ship.Firepower:0}", $"Atk Speed ×{_ship.FireRateMultiplier:0.0}", $"Crit {_ship.CritChance * 100f:0}%", $"Crit Dmg ×{_ship.CritDamage:0.0}" };
+        var defenseRows = new List<string> { $"Shield {_ship.Shield:0}/{_ship.MaxShield:0}", $"Hull {_ship.Hull:0}/{_ship.MaxHull:0}", $"Resist {_ship.Armor:0}" };
         if (_ship.DamageReductionPct > 0f) { defenseRows.Add($"DR {_ship.DamageReductionPct * 100f:0}%"); }
         if (_ship.ThornsPct > 0f) { defenseRows.Add($"Thorns {_ship.ThornsPct * 100f:0}%"); }
-        var skillRows = new List<string> { $"Energy {_ship.Energy}/{_ship.MaxEnergy}", $"Regen {_ship.EnergyRegenBonus:0}·s", $"Q Cost {_ship.EffectiveSkillCost(30)} / E Cost {_ship.EffectiveSkillCost(40)}" };
-        if (_ship.SkillCooldownMultiplier < 1f) { skillRows.Add($"CD ×{_ship.SkillCooldownMultiplier:0.00}"); }
+        var skillRows = new List<string> { $"Energy {_ship.Energy:0}/{_ship.MaxEnergy:0}", $"Regen {_ship.EnergyRegenBonus:0}/s", $"Q Cost {_ship.EffectiveSkillCost(30):0} / E Cost {_ship.EffectiveSkillCost(40):0}" };
+        if (_ship.SkillCooldownMultiplier < 1f) { skillRows.Add($"CD ×{_ship.SkillCooldownMultiplier:0.0}"); }
         if (_ship.MagicFind > 0) { skillRows.Add($"MF +{_ship.MagicFind}"); }
 
         var statsRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -720,7 +720,7 @@ public sealed partial class MothershipPanel : Control
 
         var info = new Label
         {
-            Text = $"Current Hull: {_ship.Hull} / {_ship.MaxHull}　(Shield {_ship.Shield}/{_ship.MaxShield}, shield resets each sortie, only Hull is repaired)",
+            Text = $"Current Hull: {_ship.Hull:0} / {_ship.MaxHull:0}　(Shield {_ship.Shield:0}/{_ship.MaxShield:0}, shield resets each sortie, only Hull is repaired)",
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         info.AddThemeFontSizeOverride("font_size", 18);

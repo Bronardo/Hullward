@@ -234,7 +234,7 @@ public partial class HUD : CanvasLayer
         _slotQ.SetState(d.SkillQReady, d.SkillQEnough, d.SkillQRemain, d.SkillQCooldown);
         _slotE.SetState(d.SkillEReady, d.SkillEEnough, d.SkillERemain, d.SkillECooldown);
 
-        _shipLabel.Text = $"{d.ShipName}　Lv.{d.ShipLevel}\nFirepower {d.Firepower:0} · Atk Speed ×{d.FireRate:0.00}";
+        _shipLabel.Text = $"{d.ShipName}　Lv.{d.ShipLevel}\nFirepower {d.Firepower:0} · Atk Speed ×{d.FireRate:0.0}";
 
         _radar.UpdateRadar(d.PlayerPos, d.Hostiles, d.RadarRange);
     }
