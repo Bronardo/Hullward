@@ -272,6 +272,7 @@ public partial class Main : Node
     {
         ClearUi();
         _state = GameState.Starmap;
+        if (_hud != null) _hud.Visible = false; // 战斗 HUD 仅战斗中显示
         _background.Color = ZoneColor(ZoneLevel);
         _starMap = new StarMapGenerator().Generate(ZoneLevel, _mothershipLevel, _rng);
         _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked, ShowMothership));
@@ -283,6 +284,7 @@ public partial class Main : Node
     {
         ClearUi();
         _state = GameState.Mothership;
+        if (_hud != null) _hud.Visible = false; // 战斗 HUD 仅战斗中显示
         ShipFittingService.ApplyToShip(_mothershipShip, _equippedSlots);
         _uiLayer.AddChild(new MothershipPanel(
             _inventory, _equippedSlots, _mothershipShip, _mothershipLevel, _mothershipExp, _presets, _rng,
