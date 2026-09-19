@@ -98,7 +98,7 @@ public partial class Main : Node
         _uiLayer = new CanvasLayer { Name = "UILayer" };
         AddChild(_uiLayer);
         ShowMenu();
-        GD.Print("UI ready: 主菜单");
+        GD.Print("UI ready: main menu");
     }
 
     /// <summary>技能状态文本：冷却中 → 剩余秒；冷却就绪但能量不足 → "Low Energy"（灰态）；否则"Ready"。</summary>
@@ -207,7 +207,7 @@ public partial class Main : Node
         }
         _paused = !_paused;
         GetTree().Paused = _paused;
-        GD.Print(_paused ? "战斗暂停" : "战斗继续");
+        GD.Print(_paused ? "Paused" : "Resumed");
 
         if (_paused)
         {
@@ -291,7 +291,7 @@ public partial class Main : Node
         _background.Color = ZoneColor(ZoneLevel);
         _starMap = new StarMapGenerator().Generate(ZoneLevel, _mothershipLevel, _rng);
         _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked, ShowMothership, ReturnToMenu));
-        GD.Print($"星图就绪: 第{_starMap.Chapter}章 母舰Lv{_mothershipLevel} {_starMap.Nodes.Count} 个任务");
+        GD.Print($"Starmap ready: sector {_starMap.Chapter}, mothership Lv{_mothershipLevel}, {_starMap.Nodes.Count} missions");
     }
 
     /// <summary>进入母舰内部（LD §6 船坞/仓库/装配/工坊/维修/商店）。</summary>
@@ -308,7 +308,7 @@ public partial class Main : Node
             onChanged: () => { },
             shipClass: _shipClass,
             onShipChange: SwitchShip));
-        GD.Print($"母舰内部: 旗舰 {ShipCatalog.DisplayName(_shipClass)}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
+        GD.Print($"Mothership: flagship {ShipCatalog.DisplayName(_shipClass)}, alloy {_inventory.Alloy}, inventory {_inventory.Modules.Count}, fitted {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
     }
 
     /// <summary>船坞切换旗舰：换船体 + 槽位重排（保留前 N、超出退回背包、不足补空）。返回新船与槽位；同船型返回 null。</summary>
@@ -324,7 +324,7 @@ public partial class Main : Node
         _equippedSlots = newSlots;
         _shipClass = shipClass;
         SaveGame(); // 切换即持久（母舰内无战斗，SaveGame 已兼容取 _mothershipShip.Hull）
-        GD.Print($"船坞切换: {ShipCatalog.DisplayName(shipClass)} 槽位 {_equippedSlots.Count}, 背包 {_inventory.Modules.Count}");
+        GD.Print($"Dock switch: {ShipCatalog.DisplayName(shipClass)} slots {_equippedSlots.Count}, inventory {_inventory.Modules.Count}");
         return (next, newSlots);
     }
 
@@ -367,7 +367,7 @@ public partial class Main : Node
         SaveData? data = _saveService.Load(name);
         if (data == null)
         {
-            GD.Print($"存档 {name} 读取失败，返回主菜单");
+            GD.Print($"Save {name} failed to load, back to main menu");
             ShowMenu();
             return;
         }
@@ -389,7 +389,7 @@ public partial class Main : Node
         _equippedSlots = data.EquippedSlots.Count > 0
             ? ShipFittingService.RebaseSlots(_inventory, SaveDataMapper.ToDomainSlots(data.EquippedSlots), _mothershipShip.ModuleSlots)
             : ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
-        GD.Print($"已读档: 章节 {ZoneLevel}, 母舰 Lv{_mothershipLevel}, 旗舰 {ShipCatalog.DisplayName(_shipClass)}, 合金 {_inventory.Alloy}, 背包 {_inventory.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
+        GD.Print($"Loaded: sector {ZoneLevel}, mothership Lv{_mothershipLevel}, flagship {ShipCatalog.DisplayName(_shipClass)}, alloy {_inventory.Alloy}, inventory {_inventory.Modules.Count}, fitted {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
         ShowStarmap();
     }
 
@@ -472,7 +472,7 @@ public partial class Main : Node
         _taskStartModules = _modulesPicked;
         _sfx.PlayWarp(); // 跃迁进入任务区
         SpawnWave();
-        GD.Print($"任务开始: 章节{ZoneLevel} 强度{_currentTask!.Strength} Boss={_taskIsBoss} 敌舰 {_targets.Count}");
+        GD.Print($"Mission start: sector {ZoneLevel} power {_currentTask!.Strength} boss={_taskIsBoss} hostiles {_targets.Count}");
     }
 
     // ---------- 任务结算 ----------
@@ -522,7 +522,7 @@ public partial class Main : Node
         SaveGame(); // 任务结算自动存档（远征记录留存，重开可继续）
         lootText += "\n✓ Run auto-saved";
         _uiLayer.AddChild(UiScreens.Settlement(victory, lootText, missionSummary, ShowStarmap));
-        GD.Print($"结算: 胜利={victory} 合金+{alloyGain} 模块+{moduleGain} 母舰Lv{_mothershipLevel}");
+        GD.Print($"Settlement: victory={victory} alloy+{alloyGain} modules+{moduleGain} mothership Lv{_mothershipLevel}");
     }
 
     // ---------- 波次生成（按任务强度） ----------
@@ -623,7 +623,7 @@ public partial class Main : Node
         _enemies.AddChild(drone);
         _targets.Add(drone);
         _player.SetTargets(_targets);
-        GD.Print($"Boss 召唤: {ship.Name} @({position.X:0},{position.Y:0})");
+        GD.Print($"Boss spawn: {ship.Name} @({position.X:0},{position.Y:0})");
     }
 
     private void ClearEnemies()
@@ -669,7 +669,7 @@ public partial class Main : Node
             SpawnPickup(Pickup.CreateModule(bossDrop, RarityColor(bossDrop.Rarity)), worldPosition, player);
             int bossAlloy = _loot.RollAlloy(ZoneLevel, _rng, _player.ShipStats.MagicFind) * 3;
             SpawnPickup(Pickup.CreateAlloy(bossAlloy), worldPosition, player);
-            GD.Print($"Boss 掉落: {RarityLabel(bossDrop.Rarity)} {bossDrop.Name}（{bossDrop.Affixes.Count} 词缀）合金×{bossAlloy}");
+            GD.Print($"Boss drop: {RarityLabel(bossDrop.Rarity)} {bossDrop.Name} ({bossDrop.Affixes.Count} affixes) alloyx{bossAlloy}");
             return;
         }
         ModuleDrop? drop = _loot.RollModule(ZoneLevel, _rng);
@@ -703,14 +703,14 @@ public partial class Main : Node
             ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
             // 掉落反馈（LD Sprint 3 §4.6 B4）：品质 + 模块名 + 词缀数
             _hud.ShowToast($"Dropped {RarityLabel(pickup.ModuleData.Rarity)} {pickup.ModuleData.DisplayName} ({pickup.ModuleData.Affixes.Count} affixes)");
-            GD.Print($"拾取模块: {pickup.ModuleData.Name} | 装配后火力 {_player.ShipStats.Firepower}, 护盾 {_player.ShipStats.Shield}");
+            GD.Print($"Module pickup: {pickup.ModuleData.DisplayName} | firepower {_player.ShipStats.Firepower}, shield {_player.ShipStats.Shield}");
         }
         else
         {
             int alloy = ExtractAlloyAmount(pickup.Label);
             _inventory.AddAlloy(alloy);
             _hud.ShowToast($"Alloy +{alloy}");
-            GD.Print($"拾取合金×{alloy} | 合金总量 {_inventory.Alloy}");
+            GD.Print($"Alloy pickup x{alloy} | total {_inventory.Alloy}");
         }
     }
 
@@ -750,7 +750,7 @@ public partial class Main : Node
         }
         data.EquippedSlots = SaveDataMapper.ToDataSlots(_equippedSlots);
         _saveService.Save(_captainName, data);
-        GD.Print($"已存档 -> {_saveService.SavePathFor(_captainName)} (章节 {data.ZoneLevel}, 母舰 Lv{data.MothershipLevel}, 合金 {data.Alloy}, 背包 {data.Modules.Count}, 装配 {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count})");
+        GD.Print($"Saved -> {_saveService.SavePathFor(_captainName)} (sector {data.ZoneLevel}, mothership Lv{data.MothershipLevel}, alloy {data.Alloy}, inventory {data.Modules.Count}, fitted {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count})");
     }
 
     private void LoadGame()
@@ -758,7 +758,7 @@ public partial class Main : Node
         SaveData? data = _saveService.Load(_captainName);
         if (data == null)
         {
-            GD.Print("无存档");
+            GD.Print("No save");
             return;
         }
         _mothershipLevel = Math.Clamp(data.MothershipLevel, 1, 4);
@@ -775,7 +775,7 @@ public partial class Main : Node
         _player.ShipStats.ResetCombatState();
         _player.ShipStats.Hull = Math.Max(1, data.PlayerHull);
         ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
-        GD.Print($"战斗中读档: 章节 {ZoneLevel}, 合金 {_inventory.Alloy}, 火力 {_player.ShipStats.Firepower}");
+        GD.Print($"Mid-battle load: sector {ZoneLevel}, alloy {_inventory.Alloy}, firepower {_player.ShipStats.Firepower}");
     }
 
     // ---------- 环境 ----------

@@ -80,7 +80,7 @@ public partial class Pickup : Node2D
         float dy = Player.Position.Y - Position.Y;
         if (dx * dx + dy * dy < PickupRadius * PickupRadius)
         {
-            GD.Print($"拾取: {Label}");
+            GD.Print($"Picked up: {Label}");
             Collected?.Invoke(this);
             QueueFree();
         }

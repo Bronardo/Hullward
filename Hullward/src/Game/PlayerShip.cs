@@ -126,11 +126,11 @@ public partial class PlayerShip : CharacterBody2D
 
             if (key.Keycode == Key.Q && SkillQ.TryUse(context))
             {
-                GD.Print($"技能 Q 过载炮: {ShipStats.Firepower * OverdriveCannon.DamageMultiplier:0} 伤害");
+                GD.Print($"Skill Q Overload Cannon: {ShipStats.Firepower * OverdriveCannon.DamageMultiplier:0} dmg");
             }
             else if (key.Keycode == Key.E && SkillE.TryUse(context))
             {
-                GD.Print($"技能 E 护盾充能: {ShipStats.Shield}/{ShipStats.MaxShield}");
+                GD.Print($"Skill E Shield Boost: {ShipStats.Shield}/{ShipStats.MaxShield}");
             }
         }
     }
