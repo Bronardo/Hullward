@@ -14,9 +14,9 @@ using Hullward.Game;
 namespace Hullward;
 
 /// <summary>
-/// Hullward 入口节点（UI 规格 v0.2 任务制循环）：
-/// 主菜单 → 命名/选档 → 星图（随机任务） → 任务战斗 → 结算 → 星图全重随机。
-/// 章节随母舰等级解锁；任务完成获得母舰经验；F5 存档 / F9 读档（文件制+命名制）。
+/// Hullward root node (UI spec v0.2 mission loop)：
+/// Main menu -> naming/save select -> starmap (random missions) -> mission combat -> settlement -> starmap re-randomizes。
+/// Sectors unlock by mothership level; missions grant mothership XP; F5 save / F9 load (file-per-name)。
 /// </summary>
 public partial class Main : Node
 {
@@ -24,10 +24,10 @@ public partial class Main : Node
 
     [Export] public float JumpDelay = 2.5f;
 
-    /// <summary>当前章节（= 母舰等级，1-4）。</summary>
+    /// <summary>Current sector (= mothership level, 1-4)。</summary>
     public int ZoneLevel => Math.Clamp(_mothershipLevel, 1, 4);
 
-    /// <summary>母舰经验：每 3 点升 1 级。</summary>
+    /// <summary>Mothership XP: 3 points per level。</summary>
     public const int ExpPerLevel = 3;
 
     private readonly LootTable _loot = new();
@@ -46,16 +46,16 @@ public partial class Main : Node
     private bool _paused;
     private CanvasLayer? _pauseOverlay;
 
-    // UI 流程（主菜单 → 命名/选档 → 星图 → 战斗 → 结算）
+    // UI flow (main menu -> naming/save select -> starmap -> combat -> settlement)
     private GameState _state = GameState.Menu;
     private CanvasLayer _uiLayer = null!;
     private string _namingError = "";
 
-    // 存档（文件制 + 命名制：主角名为唯一标识）
+    // Save system (file-per-name; captain name is the unique key)
     private SaveService _saveService = null!;
     private string _captainName = "captain";
 
-    // 星图 / 任务
+    // Starmap / missions
     private StarMap _starMap = null!;
     private StarMapNode? _currentTask;
     private int _mothershipLevel = 1;
@@ -64,9 +64,9 @@ public partial class Main : Node
     private int _taskStartAlloy;
     private int _taskStartModules;
     private bool _taskIsBoss;
-    private string? _taskGateLabel; // 章节门专属名（终章"坍缩禁区 · 遗迹守护"，Sprint 4 线 B2）
+    private string? _taskGateLabel; // Gate-specific label (final sector "Collapse Zone: Relic Guardian", Sprint 4 line B2)
 
-    // 母舰内部（LD §6：装配槽位 / 配装方案 / 出战船体；船坞 §船坞：四档旗舰切换）
+    // Mothership interior (LD §6: fit slots / loadouts / sortie hull; dock §dock: 4-tier flagship switch)
     private ShipBase _mothershipShip = null!;
     private List<ModuleDrop?> _equippedSlots = null!;
     private readonly ShipPresets _presets = new();
@@ -75,11 +75,11 @@ public partial class Main : Node
     public override void _Ready()
     {
         GD.Print("Hullward bootstrap OK - Godot C# pipeline ready");
-        // 主节点始终处理输入：战斗暂停（Esc）时仍需响应按键恢复
+        // Root node always processes input: even when combat paused (Esc), it must respond to resume key
         ProcessMode = ProcessModeEnum.Always;
         _saveService = new SaveService(ProjectSettings.GlobalizePath("user://saves"));
 
-        // 像素星空背景（按章节变色）
+        // Pixel starfield background (color shifts by sector)
         _background = new ColorRect
         {
             Color = ZoneColor(ZoneLevel),
@@ -90,7 +90,7 @@ public partial class Main : Node
         SpawnNebula();
         SpawnStars();
 
-        // Sprint 4 线 A：音效/BGM 管理器 + UI 点击音效钩子（UiScreens.ActionButton 统一触发）
+        // Sprint 4 line A: sfx/BGM manager + UI click sound hook (fired by UiScreens.ActionButton)
         _sfx = new Sfx { Name = "Sfx" };
         AddChild(_sfx);
         UiScreens.ClickSound = () => _sfx.PlayClick();
@@ -101,7 +101,7 @@ public partial class Main : Node
         GD.Print("UI ready: main menu");
     }
 
-    /// <summary>技能状态文本：冷却中 → 剩余秒；冷却就绪但能量不足 → "Low Energy"（灰态）；否则"Ready"。</summary>
+    /// <summary>Skill status text: cooling -> remaining seconds; ready but low energy -> "Low Energy" (greyed); otherwise "Ready"。</summary>
     private string SkillState(Domain.Combat.ActiveSkill skill)
         => !skill.IsReady
             ? $"{skill.Remaining:0.0}s"
@@ -114,7 +114,7 @@ public partial class Main : Node
             return;
         }
 
-        // Sprint 6 迭代 19：分区战斗 HUD（LD v0.6.0 §3）
+        // Sprint 6 iteration 19: split combat HUD (LD v0.6.0 §3)
         string task = _taskIsBoss ? (_taskGateLabel ?? "Boss Bounty") : $"Cleansing ({_targets.Count} left)";
         var ship = _player.ShipStats;
 
@@ -159,7 +159,7 @@ public partial class Main : Node
             return;
         }
 
-        // 清怪 → 短暂延迟 → 任务胜利结算
+        // Clear enemies -> short delay -> mission victory settlement
         if (_waveActive && _targets.Count == 0)
         {
             _jumpTimer += (float)delta;
@@ -181,11 +181,11 @@ public partial class Main : Node
         {
             if (key.Keycode == Key.Escape)
             {
-                TogglePause(); // 战斗中 Esc 暂停/继续（截图用）
+                TogglePause(); // Toggle pause/resume during combat (for screenshots)
             }
             else if (_paused)
             {
-                return; // 暂停时仅 Esc 有效
+                return; // Only Esc works while paused
             }
             else if (key.Keycode == Key.F5)
             {
@@ -198,7 +198,7 @@ public partial class Main : Node
         }
     }
 
-    /// <summary>战斗暂停/恢复：冻结场景全部逻辑（GetTree().Paused），叠加半透明遮罩便于截图。</summary>
+    /// <summary>Combat pause/resume: freezes all scene logic (GetTree().Paused), overlays translucent mask for screenshots。</summary>
     private void TogglePause()
     {
         if (_state != GameState.Battle)
@@ -223,19 +223,19 @@ public partial class Main : Node
             box.SetAnchorsPreset(Control.LayoutPreset.Center);
             var label = new Label
             {
-                Text = "⏸ 已暂停 — 按 Esc 继续",
+                Text = "⏸ Paused - press Esc to resume",
                 HorizontalAlignment = HorizontalAlignment.Center
             };
             label.AddThemeFontSizeOverride("font_size", 20);
             label.AddThemeColorOverride("font_color", new Color("#d8ecff"));
             box.AddChild(label);
 
-            var toMenu = new Button { Text = "返回主菜单（自动保存）", CustomMinimumSize = new Vector2(260, 44) };
+            var toMenu = new Button { Text = "Back to Main Menu (auto-saved)", CustomMinimumSize = new Vector2(260, 44) };
             toMenu.AddThemeFontSizeOverride("font_size", 16);
             toMenu.Pressed += () => { ReturnToMenu(); };
             box.AddChild(toMenu);
 
-            var quit = new Button { Text = "退出游戏", CustomMinimumSize = new Vector2(260, 44) };
+            var quit = new Button { Text = "Quit Game", CustomMinimumSize = new Vector2(260, 44) };
             quit.AddThemeFontSizeOverride("font_size", 16);
             quit.Pressed += () => { GetTree().Quit(); };
             box.AddChild(quit);
@@ -251,7 +251,7 @@ public partial class Main : Node
         }
     }
 
-    // ---------- UI 流程（UI 规格 v0.2 §1-4） ----------
+    // ---------- UI flow (UI spec v0.2 §1-4) ----------
 
     private void ClearUi()
     {
@@ -278,7 +278,7 @@ public partial class Main : Node
     private void ShowSaveList()
     {
         ClearUi();
-        _state = GameState.Naming; // 选档属菜单层
+        _state = GameState.Naming; // Save select is part of menu layer
         _uiLayer.AddChild(UiScreens.SaveList(_saveService.List(), OnSavePicked, ShowMenu));
     }
 
@@ -287,19 +287,19 @@ public partial class Main : Node
         _sfx.PlayLoungeBgm();
         ClearUi();
         _state = GameState.Starmap;
-        if (_hud != null) _hud.Visible = false; // 战斗 HUD 仅战斗中显示
+        if (_hud != null) _hud.Visible = false; // Combat HUD only visible during combat
         _background.Color = ZoneColor(ZoneLevel);
         _starMap = new StarMapGenerator().Generate(ZoneLevel, _mothershipLevel, _rng);
         _uiLayer.AddChild(UiScreens.Starmap(_starMap, OnTaskPicked, ShowMothership, ReturnToMenu));
         GD.Print($"Starmap ready: sector {_starMap.Chapter}, mothership Lv{_mothershipLevel}, {_starMap.Nodes.Count} missions");
     }
 
-    /// <summary>进入母舰内部（LD §6 船坞/仓库/装配/工坊/维修/商店）。</summary>
+    /// <summary>Enter mothership interior (LD §6 dock/inventory/fit/workshop/repair/shop)。</summary>
     private void ShowMothership()
     {
         ClearUi();
         _state = GameState.Mothership;
-        if (_hud != null) _hud.Visible = false; // 战斗 HUD 仅战斗中显示
+        if (_hud != null) _hud.Visible = false; // Combat HUD only visible during combat
         ShipFittingService.ApplyToShip(_mothershipShip, _equippedSlots);
         _uiLayer.AddChild(new MothershipPanel(
             _inventory, _equippedSlots, _mothershipShip, _mothershipLevel, _mothershipExp, _presets, _rng,
@@ -311,7 +311,7 @@ public partial class Main : Node
         GD.Print($"Mothership: flagship {ShipCatalog.DisplayName(_shipClass)}, alloy {_inventory.Alloy}, inventory {_inventory.Modules.Count}, fitted {ShipFittingService.FilledCount(_equippedSlots)}/{_equippedSlots.Count}");
     }
 
-    /// <summary>船坞切换旗舰：换船体 + 槽位重排（保留前 N、超出退回背包、不足补空）。返回新船与槽位；同船型返回 null。</summary>
+    /// <summary>Dock flagship switch: swap hull + rebuild slots (keep first N, overflow to inventory, fill missing with empty). Returns new ship and slots; null if same class。</summary>
     private (ShipBase Ship, List<ModuleDrop?> Slots)? SwitchShip(ShipClass shipClass)
     {
         if (_shipClass == shipClass)
@@ -323,7 +323,7 @@ public partial class Main : Node
         _mothershipShip = next;
         _equippedSlots = newSlots;
         _shipClass = shipClass;
-        SaveGame(); // 切换即持久（母舰内无战斗，SaveGame 已兼容取 _mothershipShip.Hull）
+        SaveGame(); // Persist immediately on switch (no combat in mothership; SaveGame already reads _mothershipShip.Hull)
         GD.Print($"Dock switch: {ShipCatalog.DisplayName(shipClass)} slots {_equippedSlots.Count}, inventory {_inventory.Modules.Count}");
         return (next, newSlots);
     }
@@ -339,13 +339,13 @@ public partial class Main : Node
         name = name.Trim();
         if (!SaveNameValidator.IsValid(name))
         {
-            _namingError = "名字需为 1-12 个字符，且不含 / \\ : * ? \" < > |";
+            _namingError = "Name must be 1-12 chars and not contain / \\ : * ? \" < > |";
             ShowNaming();
             return;
         }
         if (_saveService.Exists(name))
         {
-            _namingError = "这个名字已存在，请换一个（或选继续游戏）";
+            _namingError = "That name already exists, pick another (or use Continue)";
             ShowNaming();
             return;
         }
@@ -385,7 +385,7 @@ public partial class Main : Node
         {
             _inventory.AddModule(SaveDataMapper.ToDomain(module));
         }
-        // 读档槽位：旧存档长度可能与当前船型槽数不一致 → RebaseSlots 保留/退回/补空
+        // Loading slots: old save length may differ from current ship slot count -> RebaseSlots keeps/returns/fills
         _equippedSlots = data.EquippedSlots.Count > 0
             ? ShipFittingService.RebaseSlots(_inventory, SaveDataMapper.ToDomainSlots(data.EquippedSlots), _mothershipShip.ModuleSlots)
             : ShipFittingService.EmptySlots(_mothershipShip.ModuleSlots);
@@ -393,7 +393,7 @@ public partial class Main : Node
         ShowStarmap();
     }
 
-    /// <summary>迭代 22：返回主菜单（自动保存，LD 补丁 v0.6.1）。</summary>
+    /// <summary>Iteration 22: back to main menu (auto-save, LD patch v0.6.1)。</summary>
     private void ReturnToMenu()
     {
         _sfx.PlayLoungeBgm();
@@ -410,7 +410,7 @@ public partial class Main : Node
     {
         _currentTask = node;
         _taskIsBoss = node.IsBoss;
-        _taskGateLabel = node.GateLabel; // 章节门专属名（终章"坍缩禁区 · 遗迹守护"）
+        _taskGateLabel = node.GateLabel; // Gate-specific label (final sector "Collapse Zone: Relic Guardian")
         StartBattle();
     }
 
@@ -421,11 +421,11 @@ public partial class Main : Node
         _state = GameState.Battle;
         _jumpTimer = 0f;
 
-        // Sprint 5 P0-B：战斗背景按章节换星云 + 底色
+        // Sprint 5 P0-B: combat background swaps nebula + base color by sector
         _background.Color = ZoneColor(ZoneLevel);
         _nebula.Texture = GD.Load<Texture2D>(ZoneNebulaPath(ZoneLevel));
 
-        // 清理上一场战斗节点（防重入累积多艘玩家船：现象=多船同步移动、仅最新一艘有索敌开火）
+        // Clean up previous battle nodes (prevent re-entry accumulating multiple player ships: symptom = ships move in sync, only latest targets/fires)
         if (_player != null && IsInstanceValid(_player))
         {
             _player.QueueFree();
@@ -445,10 +445,10 @@ public partial class Main : Node
         _targets.Clear();
 
         _player = new PlayerShip { Position = Vector2.Zero, ProcessMode = ProcessModeEnum.Pausable };
-        _player.SetShip(_mothershipShip); // 出战旗舰 = 母舰当前旗舰（同引用：装配/耐久共享）
+        _player.SetShip(_mothershipShip); // Sortie flagship = current mothership flagship (same reference: fit/hull shared)
         _player.Died += () => ShowSettlement(false);
-        _player.Fired += _sfx.PlayShot;      // 主炮射击（双资源轮换）
-        _player.Damaged += _sfx.PlayHit;     // 玩家受击
+        _player.Fired += _sfx.PlayShot;      // Main gun fire (alternate two resources)
+        _player.Damaged += _sfx.PlayHit;     // Player damaged
         AddChild(_player);
 
         _enemies = new Node2D { Name = "Enemies", ProcessMode = ProcessModeEnum.Pausable };
@@ -457,31 +457,31 @@ public partial class Main : Node
         _hud = new HUD { ProcessMode = ProcessModeEnum.Pausable };
         AddChild(_hud);
 
-        // 应用读档耐久
+        // Apply loaded hull
         if (_pendingHull > 0)
         {
             _player.ShipStats.ResetCombatState();
             _player.ShipStats.Hull = Math.Max(1, _pendingHull);
             _pendingHull = 0;
         }
-        // 出战装配：空槽自动装入背包最优，再按槽位应用到出战船体
+        // Sortie fit: empty slots auto-equip best from inventory, then apply to sortie hull
         AutoFit.AutoEquipIntoSlots(_inventory, _equippedSlots);
         ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
 
         _taskStartAlloy = _inventory.Alloy;
         _taskStartModules = _modulesPicked;
-        _sfx.PlayWarp(); // 跃迁进入任务区
+        _sfx.PlayWarp(); // Warp into mission zone
         SpawnWave();
         GD.Print($"Mission start: sector {ZoneLevel} power {_currentTask!.Strength} boss={_taskIsBoss} hostiles {_targets.Count}");
     }
 
-    // ---------- 任务结算 ----------
+    // ---------- Mission settlement ----------
 
     private void ShowSettlement(bool victory)
     {
         if (_state != GameState.Battle)
         {
-            return; // 防重复结算
+            return; // Prevent duplicate settlement
         }
         ClearUi();
         _state = GameState.Settlement;
@@ -516,23 +516,23 @@ public partial class Main : Node
         else
         {
             lootText = "Ship lost. Log preserved — debris salvaged";
-            _player.ShipStats.Hull = 1; // 失败存档耐久按最低记录
+            _player.ShipStats.Hull = 1; // Failure save records hull at minimum
         }
 
-        SaveGame(); // 任务结算自动存档（远征记录留存，重开可继续）
+        SaveGame(); // Auto-save on settlement (run record persists; continue on reload)
         lootText += "\n✓ Run auto-saved";
         _uiLayer.AddChild(UiScreens.Settlement(victory, lootText, missionSummary, ShowStarmap));
         GD.Print($"Settlement: victory={victory} alloy+{alloyGain} modules+{moduleGain} mothership Lv{_mothershipLevel}");
     }
 
-    // ---------- 波次生成（按任务强度） ----------
+    // ---------- Wave composition (by mission power) ----------
 
     private void SpawnWave()
     {
         ClearEnemies();
 
         int strength = _currentTask!.Strength;
-        // 波次构成域层化（WaveComposer：章节差异化规则可单测，LD Sprint 3 §4.2）
+        // Wave composition in domain layer (WaveComposer: sector-specific rules unit-testable, LD Sprint 3 §4.2)
         foreach (var entry in WaveComposer.Compose(ZoneLevel, strength, _taskIsBoss))
         {
             switch (entry.Kind)
@@ -578,25 +578,25 @@ public partial class Main : Node
             };
             if (isBoss)
             {
-                drone.SummonRequested = SpawnSummon; // Boss 召唤（侦察机/突击舰）
-                drone.ToastRequested += _hud != null ? _hud.ShowToast : _ => { }; // 阶段切换/技能提示
-                drone.BossWarnRequested += _sfx.PlayBossWarn; // Boss 阶段 2/3 警示音
+                drone.SummonRequested = SpawnSummon; // Boss summon (Recon/Assault)
+                drone.ToastRequested += _hud != null ? _hud.ShowToast : _ => { }; // Phase switch / skill toast
+                drone.BossWarnRequested += _sfx.PlayBossWarn; // Boss phase 2/3 warning sfx
             }
             drone.Setup(ship, color, size);
-            drone.HitTaken += _sfx.PlayHit; // 敌舰受击
+            drone.HitTaken += _sfx.PlayHit; // Enemy hit
             drone.Destroyed += d =>
             {
                 _targets.Remove(d);
-                _sfx.PlayExplosion(); // 击毁爆炸音
+                _sfx.PlayExplosion(); // Destroyed explosion sfx
                 SpawnExplosionFx(d.Position);
-                DropLoot(d.Position, _player, d.Ship is GuardianBoss); // Boss 必掉黄+ / 暗金
+                DropLoot(d.Position, _player, d.Ship is GuardianBoss); // Boss guaranteed Rare+ / Ancient drop
             };
             _enemies.AddChild(drone);
             _targets.Add(drone);
         }
     }
 
-    /// <summary>Boss 召唤：按种类生成新敌舰（P3 突击舰 / 其余侦察机），接入目标列表与掉落。</summary>
+    /// <summary>Boss summon: spawn new enemy by type (P3 Assault / others Recon), hook into target list and loot。</summary>
     private void SpawnSummon(EnemyKind kind, Vector2 position)
     {
         var (factory, color, size) = kind switch
@@ -652,19 +652,19 @@ public partial class Main : Node
 
     private static Color ZoneColor(int zone) => zone switch
     {
-        1 => new Color("0b1c2c"), // 第1章 航标：深蓝
-        2 => new Color("1a1030"), // 第2章 星港：深紫
-        3 => new Color("301018"), // 第3章 深空：暗红
-        _ => new Color("0a0a0f")  // 终章 坍缩：黑
+        1 => new Color("0b1c2c"), // Sector 1 Beacon: deep blue
+        2 => new Color("1a1030"), // Sector 2 Starport: deep purple
+        3 => new Color("301018"), // Sector 3 Deep Space: dark red
+        _ => new Color("0a0a0f")  // Final sector Collapse: black
     };
 
-    // ---------- 掉落 / 背包 / 装配 ----------
+    // ---------- Drop / inventory / fit ----------
 
     private void DropLoot(Vector2 worldPosition, PlayerShip player, bool isBoss = false)
     {
         if (isBoss)
         {
-            // LD §4.3 Boss 奖励：必掉黄+（Rare/Set/Ancient），暗金 1-3% 受 MF 加成；合金 ×3
+            // LD §4.3 Boss reward: guaranteed Rare+ (Rare/Set/Ancient), Ancient 1-3% boosted by MF; alloy x3
             ModuleDrop bossDrop = _loot.RollBossModule(ZoneLevel, _rng, _player.ShipStats.MagicFind);
             SpawnPickup(Pickup.CreateModule(bossDrop, RarityColor(bossDrop.Rarity)), worldPosition, player);
             int bossAlloy = _loot.RollAlloy(ZoneLevel, _rng, _player.ShipStats.MagicFind) * 3;
@@ -686,22 +686,22 @@ public partial class Main : Node
         pickup.Player = player;
         pickup.Position = worldPosition + new Vector2(_rng.NextSingle() * 30f - 15f, _rng.NextSingle() * 30f - 15f);
         pickup.Collected += OnPickupCollected;
-        pickup.ProcessMode = ProcessModeEnum.Pausable; // 战斗暂停时掉落物静止
-        // 挂到战斗容器：StartBattle 重建容器时残留掉落物一并清理（否则上局未拾取道具会遗留到新战斗且无法拾取）
+        pickup.ProcessMode = ProcessModeEnum.Pausable; // Drops freeze when combat paused
+        // Attached to battle container: StartBattle recreates container so leftover drops are cleaned (otherwise un-picked items from previous battle persist and are un-pickable)
         _enemies.AddChild(pickup);
     }
 
     private void OnPickupCollected(Pickup pickup)
     {
-        _sfx.PlayPickup(); // 拾取音效（模块/合金统一）
+        _sfx.PlayPickup(); // Pickup sfx (module/alloy unified)
         if (pickup.Kind == Pickup.PickupKind.Module && pickup.ModuleData != null)
         {
             _modulesPicked++;
             _inventory.AddModule(pickup.ModuleData);
-            // 新模块自动装入空槽并即时应用到出战船体
+            // New module auto-fits into empty slot and applies immediately to sortie hull
             AutoFit.AutoEquipIntoSlots(_inventory, _equippedSlots);
             ShipFittingService.ApplyToShip(_player.ShipStats, _equippedSlots);
-            // 掉落反馈（LD Sprint 3 §4.6 B4）：品质 + 模块名 + 词缀数
+            // Drop toast (LD Sprint 3 §4.6 B4): rarity + module name + affix count
             _hud.ShowToast($"Dropped {RarityLabel(pickup.ModuleData.Rarity)} {pickup.ModuleData.DisplayName} ({pickup.ModuleData.Affixes.Count} affixes)");
             GD.Print($"Module pickup: {pickup.ModuleData.DisplayName} | firepower {_player.ShipStats.Firepower}, shield {_player.ShipStats.Shield}");
         }
@@ -721,7 +721,7 @@ public partial class Main : Node
         ItemRarity.Rare => "Rare",
         ItemRarity.Set => "Set",
         ItemRarity.Ancient => "Ancient",
-        _ => "未知"
+        _ => "Unknown"
     };
 
     private static int ExtractAlloyAmount(string label)
@@ -730,7 +730,7 @@ public partial class Main : Node
         return idx >= 0 && int.TryParse(label[(idx + 1)..], out int n) ? n : 0;
     }
 
-    // ---------- 存档 ----------
+    // ---------- Save ----------
 
     private void SaveGame()
     {
@@ -778,7 +778,7 @@ public partial class Main : Node
         GD.Print($"Mid-battle load: sector {ZoneLevel}, alloy {_inventory.Alloy}, firepower {_player.ShipStats.Firepower}");
     }
 
-    // ---------- 环境 ----------
+    // ---------- Environment ----------
 
     private static Color RarityColor(ItemRarity rarity) => rarity switch
     {
@@ -790,12 +790,12 @@ public partial class Main : Node
         _ => new Color("ffffff")
     };
 
-    /// <summary>章节星云纹理（Sprint 5 P0-B：zone1-4 平铺，四章配色 冷蓝/青绿/紫红/暗红）。</summary>
+    /// <summary>Sector nebula texture (Sprint 5 P0-B: zones 1-4 tiled, four-sector palette cool blue/teal/purple-red/dark red)。</summary>
     private static string ZoneNebulaPath(int zone) => $"res://assets/background/zone{Math.Clamp(zone, 1, 4)}.png";
 
     private void SpawnNebula()
     {
-        // LD §2.3 章节星云纹理平铺，叠加在章节底色之上（StarMap 背景亦复用该素材）
+        // LD §2.3 sector nebula texture tiled over sector base color (reused by Starmap background)
         _nebula = new TextureRect
         {
             Texture = GD.Load<Texture2D>(ZoneNebulaPath(ZoneLevel)),
@@ -808,13 +808,13 @@ public partial class Main : Node
         AddChild(_nebula);
     }
 
-    /// <summary>击毁爆炸特效（CC0 fire 帧序列，播放一次自毁）。</summary>
+    /// <summary>Destroyed explosion fx (CC0 fire frame sequence, plays once and frees itself)。</summary>
     private void SpawnExplosionFx(Vector2 worldPosition)
     {
         var fx = new ExplosionFx
         {
             Position = worldPosition,
-            ProcessMode = ProcessModeEnum.Pausable // 暂停时爆炸动画冻结
+            ProcessMode = ProcessModeEnum.Pausable // Explosion animation freezes when paused
         };
         AddChild(fx);
     }
@@ -823,7 +823,7 @@ public partial class Main : Node
     {
         var rng = new RandomNumberGenerator();
         rng.Randomize();
-        // Sprint 4 线 A：CC0 星点纹理（25×24，随机缩放出大小层次），叠加在星云之上
+        // Sprint 4 line A: CC0 starfield texture (25x24, random scale for depth), layered over nebula
         var tex = GD.Load<Texture2D>("res://assets/effects/star.png");
         for (int i = 0; i < 120; i++)
         {

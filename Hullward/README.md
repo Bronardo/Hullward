@@ -1,103 +1,106 @@
-# Hullward《深空暗骸》
+# Hullward (《深空暗骸》 / Deep Space Relics)
 
 ![Combat screenshot](docs/screenshots/combat-sector4.png)
 
-太空舰船 ARPG 刷宝游戏 —— Deakin SIT771 "Something Awesome" 7.4H 项目
-技术栈：**Godot 4.7.2（.NET 版）+ C# / .NET 8**
+A space-ship ARPG loot game — Deakin SIT771 "Something Awesome" 7.4H project.
+Tech stack: **Godot 4.7.2 (.NET build) + C# / .NET 8**.
 
-## 玩法（任务制循环 · UI 规格 v0.2）
+## Gameplay (mission loop · UI spec v0.2)
 
-1. **主菜单**：开始新的远征（命名舰长） / 继续游戏（多档存档，只显示舰长名）
-2. **星图**：母舰居中，4-8 个随机任务散点（清剿 / BOSS），标注危险等级 ★ 与强度
-3. **母舰内部**（仓库/装配/工坊/维修/商店）：出击前的补给与配装
-4. **任务战斗**：主炮自动索敌开火 + `Q` 过载炮 / `E` 护盾充能；清剿全部暗骸即胜
-5. **结算**：无论成败消耗一次"时间"，返回后星图全部重随机；远征记录自动保存
-6. **成长**：任务获得母舰经验 → 母舰升级 → 章节解锁（4 章）+ 商店/工坊解锁更多内容
-7. **刷装**：击毁敌舰掉落模块（白/蓝/黄/绿/太古 5 品质 + 词缀）与合金，手动装配 + 词缀洗练
+1. **Main menu**: start a new run (name the captain) / continue (multi-save, shows captain names only)
+2. **Starmap**: mothership at center, 4-8 random mission nodes (Cleansing / Boss) with danger rating ★ and power
+3. **Mothership interior** (Dock / Inventory / Fit / Workshop / Repair / Shop): resupply and fit before sortie
+4. **Mission combat**: main gun auto-targets and fires + `Q` overload cannon / `E` shield boost; clear all hostiles to win
+5. **Settlement**: every sortie (win or lose) consumes one "turn"; the starmap re-randomizes on return; run auto-saves
+6. **Progression**: missions grant mothership XP -> mothership level up -> sectors unlock (4 sectors) + shop/workshop unlock more
+7. **Loot**: destroyed enemies drop modules (Common/Magic/Rare/Set/Ancient, 5 rarities + affixes) and alloy; manual fitting + affix reroll
 
-## 母舰内部（LD 规格 §6）
+## Mothership interior (LD spec §6)
 
-| 标签页 | 功能 |
+| Tab | Function |
 |---|---|
-| 装配 | 槽位可视化（点击选中/装卸）、属性实时预览（火力/护盾/耐久/攻速/抗性/MF）、2 套配装方案 |
-| 仓库 | 背包模块列表，按品质筛选（全部/白/蓝/黄/绿/太古） |
-| 工坊 | 拆解（白1/蓝3/黄8/绿15 合金，太古不可拆）；洗练（黄+ 重 roll 词缀，费用 5/10/20/40…） |
-| 维修 | 耐久恢复（按受损比例计合金） |
-| 商店 | 白/蓝模块补给（合金计价，不卖高阶） |
+| Dock | Switch flagship between 4 ship classes (Scout / Assault / Battleship / Fortress) |
+| Fit | Visual slots (click select/equip/unequip), real-time stat preview (firepower/shield/hull/attack speed/resist/MF), 2 loadouts |
+| Inventory | Module list, filter by rarity (All/Common/Magic/Rare/Set/Ancient) |
+| Workshop | Disassemble (Common 1 / Magic 3 / Rare 8 / Set 15 alloy, Ancient cannot be disassembled); Reroll (Rare+ re-rolls affixes, cost 5/10/20/40...) |
+| Repair | Hull restore (alloy cost by damage ratio) |
+| Shop | Common/Magic module supply (alloy-priced, no high-tier) |
 
-## 词缀系统（LD 词缀表 §3）
+## Affix system (LD affix table §3)
 
-- 品质词缀数：白 0 / 蓝 1-2 / 黄 2-3 / 绿 3 / 太古 2（暗金强数值）
-- 槽位词缀池按权重抽取，同模块不重复；数值按品质区间均匀随机
-- 已接线效果：强化炮击→火力、急速供弹→攻速、护盾扩容→护盾、船体加固→耐久、全向抗性→抗性、打捞增效→MF
-- 其余词缀（暴击/减速/范围爆破/能源/EMP 等）生成与洗练闭环可用，战斗效果接口预留
+- Affix count by rarity: Common 0 / Magic 1-2 / Rare 2-3 / Set 3 / Ancient 2 (strong ancient-tier values)
+- Slot affix pools are weight-drawn, no duplicate stat per module; values uniformly random within rarity range
+- Wired effects: Powered Cannons -> firepower, Rapid Loading -> attack speed, Shield Capacitor -> shield, Hull Reinforcement -> hull, All-Resist -> resist, Magic Find -> loot bonus
+- Other affixes (crit/slow/Aoe blast/energy/EMP etc.) generate and reroll in the loop; combat-effect interface reserved
 
-## 操作
+## Controls
 
-| 按键 | 功能 |
+| Key | Function |
 |---|---|
-| 鼠标 | 菜单 / 星图选任务 / 母舰内部操作 |
-| WASD / 方向键 | 移动 |
-| Q / E | 过载炮 / 护盾充能 |
-| F5 / F9 | 快存 / 读档（结算自动保存）|
+| Mouse | Menus / pick mission on starmap / mothership UI |
+| WASD / Arrow keys | Move |
+| Q / E | Overload Cannon / Shield Boost |
+| F5 / F9 | Quick save / load (auto-save on settlement) |
+| Esc | Pause/resume (useful for screenshots) |
 
-## 章节（随母舰等级解锁）
+## Sectors (unlock by mothership level)
 
-| 章节 | 解锁 | 敌人 |
+| Sector | Unlock | Enemies |
 |---|---|---|
-| 第1章 航标 | 初始 | 侦察机、突击舰 |
-| 第2章 星港 | 母舰 Lv2 | + 堡垒舰 |
-| 第3章 深空 | 母舰 Lv3 | + 虫群 |
-| 终章 坍缩 | 母舰 Lv4 | 禁区守卫（Boss）|
+| Sector 1 Beacon | Start | Recon, Assault |
+| Sector 2 Starport | Mothership Lv 2 | + Fortress |
+| Sector 3 Deep Space | Mothership Lv 3 | + Swarm drones |
+| Final Collapse | Mothership Lv 4 | Collapse Guardian (Boss) |
 
-## 运行（编辑器/开发）
+## Run (editor / dev)
 
 ```powershell
-# 双击 run_game.bat（仓库根），或：
+# Double-click run_game.bat (repo root), or:
 D:\pg\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64.exe --path Hullward
 ```
 
-## 运行（发布版）
+## Run (release)
 
 ```powershell
-Hullward\build\Hullward.exe   # release exe（含 .NET 运行时，无需安装 Godot）
+Hullward\build\Hullward.exe   # release exe (bundles .NET runtime; no Godot install needed)
 ```
 
-## 测试
+## Tests
 
 ```powershell
-dotnet test Hullward\Hullward.sln    # 105 个域层测试
+dotnet test Hullward\Hullward.sln    # 228 domain-layer unit tests
 dotnet build Hullward\Hullward.sln   # 0 error / 0 warning
 ```
 
-## 存档位置
+## Save location
 
 ```
-%APPDATA%\Godot\app_userdata\Hullward\saves\<舰长名>.json
+%APPDATA%\Godot\app_userdata\Hullward\saves\<captain-name>.json
 ```
-存档包含：章节/合金/耐久/背包模块（含词缀与洗练次数）/母舰等级经验/**出战装配槽位**。
 
-## 架构
+Save contains: sector / alloy / hull / inventory modules (with affixes and reroll count) / mothership level & XP / **fitted sortie slots**.
+
+## Architecture
 
 ```
 Hullward/
 ├── src/
-│   ├── Domain/     # 纯 C# 域层（零 Godot 依赖，xUnit 可测）
-│   │   ├── Ships/      # ShipBase 抽象层次（轻巡/突击/战列/要塞）
-│   │   ├── Modules/    # IShipModule 接口 + 词缀系统 + 手动装配 + 配装方案
-│   │   ├── Enemies/    # EnemyShip 多态层次（侦察/劫掠/堡垒/虫群/Boss）
-│   │   ├── Combat/     # 结算 / 索敌 / 主动技能
-│   │   ├── Loot/       # 掉落表 / 工坊（拆解/洗练/维修） / 商店
-│   │   ├── WorldGen/   # 星域生成 / 星图任务生成 / 章节目录
-│   │   └── Save/       # 多文件命名存档（词缀/装配持久化）
-│   └── Game/       # Godot 表现层（UI 屏幕 / 母舰面板 / 节点渲染 / 输入 / HUD）
-├── tests/           # xUnit 测试项目
-├── docs/            # 设计文档 / ULO 证据文档
-└── build/           # release exe（git 忽略）
+│   ├── Domain/     # Pure C# domain layer (zero Godot dependency, xUnit-testable)
+│   │   ├── Ships/      # ShipBase abstraction hierarchy (Scout/Assault/Battleship/Fortress)
+│   │   ├── Modules/    # IShipModule interface + affix system + manual fitting + loadouts
+│   │   ├── Enemies/    # EnemyShip polymorphic hierarchy (Recon/Raider/Bastion/Swarm/Boss)
+│   │   ├── Combat/     # Settlement / targeting / active skills
+│   │   ├── Loot/       # Loot table / workshop (disassemble/reroll/repair) / shop
+│   │   ├── WorldGen/   # Sector generation / starmap mission generation / sector catalog
+│   │   └── Save/       # Multi-file named saves (affix/fit persistence)
+│   └── Game/       # Godot presentation layer (UI screens / mothership panel / node rendering / input / HUD)
+├── tests/           # xUnit test project
+├── docs/            # Design docs / ULO evidence docs
+└── build/           # release exe (git-ignored)
 ```
 
-设计依据见 `docs/设计文档.md`；过程证据见 `docs/ULO 证据文档.md` 与工程日志。
+Design rationale in `docs/design.md`; process evidence in `docs/ULO-evidence.md` and the engineering log.
 
-## 素材
+## Assets
 
-开发期全部为程序化绘制（ColorRect 像素方块）；定稿期可替换 CC0/自绘素材。
+During development all visuals are procedurally drawn (ColorRect pixel blocks); final build can swap in CCO / hand-drawn assets.
