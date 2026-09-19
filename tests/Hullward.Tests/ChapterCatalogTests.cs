@@ -6,10 +6,10 @@ namespace Hullward.Tests.Domain;
 public class ChapterCatalogTests
 {
     [Theory]
-    [InlineData(1, "航标", 1, 5)]
-    [InlineData(2, "星港", 2, 8)]
-    [InlineData(3, "深空", 3, 12)]
-    [InlineData(4, "坍缩", 4, 16)]
+    [InlineData(1, "Beacon", 1, 5)]
+    [InlineData(2, "Starport", 2, 8)]
+    [InlineData(3, "Deep Space", 3, 12)]
+    [InlineData(4, "Collapse", 4, 16)]
     public void Get_ReturnsChapterData(int chapter, string name, int unlockLevel, int baseStrength)
     {
         var info = ChapterCatalog.Get(chapter);

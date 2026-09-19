@@ -45,7 +45,7 @@ public sealed class ModuleDrop
     }
 
     /// <summary>词缀摘要（多行，用于 UI/存档显示）。</summary>
-    public string AffixSummary() => Affixes.Count == 0 ? "（无词缀）" : string.Join("\n", Affixes.Select(a => a.Describe()));
+    public string AffixSummary() => Affixes.Count == 0 ? "(no affixes)" : string.Join("\n", Affixes.Select(a => a.Describe()));
 }
 
 /// <summary>

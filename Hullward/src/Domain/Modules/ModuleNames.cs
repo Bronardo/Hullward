@@ -40,31 +40,31 @@ public static class ModuleNames
     /// <summary>品类名（LD §2 表）。</summary>
     public static string CategoryName(ModuleCategory category) => category switch
     {
-        ModuleCategory.PulseCannon => "脉冲炮",
-        ModuleCategory.RailGun => "磁轨炮",
-        ModuleCategory.LaserArray => "激光阵列",
-        ModuleCategory.Gatling => "速射机炮",
-        ModuleCategory.Composite => "复合装甲",
-        ModuleCategory.Reactive => "反应装甲",
-        ModuleCategory.NanoCoating => "纳米镀层",
-        ModuleCategory.Phase => "相位装甲",
-        ModuleCategory.FusionCore => "聚变核心",
-        ModuleCategory.Capacitor => "电容电池",
-        ModuleCategory.Reactor => "反应炉",
-        ModuleCategory.EnergyNode => "能源节点",
-        ModuleCategory.Scanner => "扫描器",
-        ModuleCategory.Jammer => "干扰器",
-        ModuleCategory.WarpEngine => "跃迁引擎",
-        _ => "应急护盾"
+        ModuleCategory.PulseCannon => "Pulse Cannon",
+        ModuleCategory.RailGun => "Railgun",
+        ModuleCategory.LaserArray => "Laser Array",
+        ModuleCategory.Gatling => "Autocannon",
+        ModuleCategory.Composite => "Composite Armor",
+        ModuleCategory.Reactive => "Reactive Armor",
+        ModuleCategory.NanoCoating => "Nano Plating",
+        ModuleCategory.Phase => "Phase Armor",
+        ModuleCategory.FusionCore => "Fusion Core",
+        ModuleCategory.Capacitor => "Capacitor Cell",
+        ModuleCategory.Reactor => "Reactor",
+        ModuleCategory.EnergyNode => "Power Node",
+        ModuleCategory.Scanner => "Scanner",
+        ModuleCategory.Jammer => "Jammer",
+        ModuleCategory.WarpEngine => "Warp Engine",
+        _ => "Emergency Shield"
     };
 
     /// <summary>品质前缀（LD §3；白无前缀）。</summary>
     public static string RarityPrefix(ItemRarity rarity) => rarity switch
     {
-        ItemRarity.Magic => "改良 ",
-        ItemRarity.Rare => "精锐 ",
-        ItemRarity.Set => "深烬 ",
-        ItemRarity.Ancient => "太古 ",
+        ItemRarity.Magic => "Improved ",
+        ItemRarity.Rare => "Elite ",
+        ItemRarity.Set => "Ember ",
+        ItemRarity.Ancient => "Ancient ",
         _ => ""
     };
 

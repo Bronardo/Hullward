@@ -22,7 +22,7 @@ public sealed class EliteGuardShip : EnemyShip
     private float _fireCooldown;
 
     public EliteGuardShip()
-        : base("旗舰护卫", hull: 150, shield: 50, armor: 14, firepower: 13f)
+        : base("Elite Guard", hull: 150, shield: 50, armor: 14, firepower: 13f)
     {
     }
 

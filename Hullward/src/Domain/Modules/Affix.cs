@@ -115,42 +115,42 @@ public sealed class AffixPool
 
     private static readonly AffixEntry[] WeaponAffixes =
     {
-        new("强化炮击", AffixStat.FirepowerPercent, 5, 8, 15, 20, 20, ItemRarity.Magic),
-        new("急速供弹", AffixStat.AttackSpeedPercent, 4, 7, 12, 15, 18, ItemRarity.Magic),
-        new("致命一击", AffixStat.CritChance, 5, 8, 15, 18, 15, ItemRarity.Magic, 8, 12),
-        new("暴击增幅", AffixStat.CritDamage, 10, 15, 30, 40, 12, ItemRarity.Magic),
-        new("护盾穿透", AffixStat.ShieldPierce, 5, 10, 20, 25, 10, ItemRarity.Magic),
-        new("减速磁场", AffixStat.SlowOnHit, 10, 15, 30, 30, 10, ItemRarity.Magic),
-        new("能量反馈", AffixStat.EnergyOnKill, 2, 4, 8, 10, 7, ItemRarity.Magic),
-        new("范围爆破", AffixStat.AoeBlast, 0, 0, 0, 0, 8, ItemRarity.Rare)
+        new("Powered Cannons", AffixStat.FirepowerPercent, 5, 8, 15, 20, 20, ItemRarity.Magic),
+        new("Rapid Loading", AffixStat.AttackSpeedPercent, 4, 7, 12, 15, 18, ItemRarity.Magic),
+        new("Critical Hit", AffixStat.CritChance, 5, 8, 15, 18, 15, ItemRarity.Magic, 8, 12),
+        new("Critical Amp", AffixStat.CritDamage, 10, 15, 30, 40, 12, ItemRarity.Magic),
+        new("Shield Pierce", AffixStat.ShieldPierce, 5, 10, 20, 25, 10, ItemRarity.Magic),
+        new("Slow Field", AffixStat.SlowOnHit, 10, 15, 30, 30, 10, ItemRarity.Magic),
+        new("Energy Feedback", AffixStat.EnergyOnKill, 2, 4, 8, 10, 7, ItemRarity.Magic),
+        new("Aoe Blast", AffixStat.AoeBlast, 0, 0, 0, 0, 8, ItemRarity.Rare)
     };
 
     private static readonly AffixEntry[] ArmorAffixes =
     {
-        new("护盾扩容", AffixStat.MaxShieldPercent, 8, 12, 25, 30, 20, ItemRarity.Magic),
-        new("船体加固", AffixStat.MaxHullPercent, 8, 12, 25, 30, 18, ItemRarity.Magic),
-        new("全向抗性", AffixStat.ResistancePercent, 5, 8, 15, 20, 15, ItemRarity.Magic),
-        new("纳米修复", AffixStat.ShieldRegen, 2, 4, 8, 10, 15, ItemRarity.Magic),
-        new("受击减伤", AffixStat.DamageReduction, 8, 12, 25, 25, 12, ItemRarity.Magic),
-        new("反伤镀层", AffixStat.Thorns, 0, 0, 10, 20, 8, ItemRarity.Rare)
+        new("Shield Capacitor", AffixStat.MaxShieldPercent, 8, 12, 25, 30, 20, ItemRarity.Magic),
+        new("Hull Reinforcement", AffixStat.MaxHullPercent, 8, 12, 25, 30, 18, ItemRarity.Magic),
+        new("All-Resist", AffixStat.ResistancePercent, 5, 8, 15, 20, 15, ItemRarity.Magic),
+        new("Nano Repair", AffixStat.ShieldRegen, 2, 4, 8, 10, 15, ItemRarity.Magic),
+        new("Damage Reduction", AffixStat.DamageReduction, 8, 12, 25, 25, 12, ItemRarity.Magic),
+        new("Thorns Plating", AffixStat.Thorns, 0, 0, 10, 20, 8, ItemRarity.Rare)
     };
 
     private static readonly AffixEntry[] PowerAffixes =
     {
-        new("能源扩容", AffixStat.MaxEnergyPercent, 8, 12, 25, 30, 22, ItemRarity.Magic),
-        new("快速充能", AffixStat.EnergyRegenPercent, 8, 12, 25, 30, 22, ItemRarity.Magic),
-        new("节能模块", AffixStat.SkillCostPercent, 5, 8, 15, 20, 20, ItemRarity.Magic),
-        new("冷却缩减", AffixStat.CooldownPercent, 5, 8, 15, 20, 20, ItemRarity.Magic),
-        new("过载缓冲", AffixStat.OverdrivePercent, 0, 0, 15, 25, 16, ItemRarity.Rare)
+        new("Energy Capacitor", AffixStat.MaxEnergyPercent, 8, 12, 25, 30, 22, ItemRarity.Magic),
+        new("Fast Recharge", AffixStat.EnergyRegenPercent, 8, 12, 25, 30, 22, ItemRarity.Magic),
+        new("Skill Cost Down", AffixStat.SkillCostPercent, 5, 8, 15, 20, 20, ItemRarity.Magic),
+        new("Cooldown Reduction", AffixStat.CooldownPercent, 5, 8, 15, 20, 20, ItemRarity.Magic),
+        new("Overdrive Amp", AffixStat.OverdrivePercent, 0, 0, 15, 25, 16, ItemRarity.Rare)
     };
 
     private static readonly AffixEntry[] SpecialAffixes =
     {
-        new("跃迁加速", AffixStat.WarpCooldownPercent, 5, 10, 20, 25, 18, ItemRarity.Magic),
-        new("广域扫描", AffixStat.TargetingRangePercent, 10, 15, 30, 30, 18, ItemRarity.Magic),
-        new("打捞增效", AffixStat.MagicFind, 5, 10, 30, 50, 25, ItemRarity.Magic),
-        new("干扰强化", AffixStat.EmpDuration, 10, 10, 30, 30, 15, ItemRarity.Magic),
-        new("应急护盾", AffixStat.EmergencyShield, 0, 0, 25, 25, 12, ItemRarity.Rare)
+        new("Warp Speed", AffixStat.WarpCooldownPercent, 5, 10, 20, 25, 18, ItemRarity.Magic),
+        new("Wide Scanner", AffixStat.TargetingRangePercent, 10, 15, 30, 30, 18, ItemRarity.Magic),
+        new("Magic Find", AffixStat.MagicFind, 5, 10, 30, 50, 25, ItemRarity.Magic),
+        new("EMP Amp", AffixStat.EmpDuration, 10, 10, 30, 30, 15, ItemRarity.Magic),
+        new("Emergency Shield", AffixStat.EmergencyShield, 0, 0, 25, 25, 12, ItemRarity.Rare)
     };
 
     public static IReadOnlyList<AffixEntry> ForSlot(ModuleType slot) => slot switch

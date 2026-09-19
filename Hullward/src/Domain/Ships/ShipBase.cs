@@ -221,7 +221,7 @@ public abstract class ShipBase : IShip
 public sealed class ScoutShip : ShipBase
 {
     public ScoutShip()
-        : base("轻巡", hull: 120, shield: 40, armor: 5, firepower: 10f, speed: 320f, moduleSlots: 2)
+        : base("Scout", hull: 120, shield: 40, armor: 5, firepower: 10f, speed: 320f, moduleSlots: 2)
     {
     }
 }
@@ -230,7 +230,7 @@ public sealed class ScoutShip : ShipBase
 public sealed class AssaultShip : ShipBase
 {
     public AssaultShip()
-        : base("突击舰", hull: 160, shield: 60, armor: 10, firepower: 16f, speed: 280f, moduleSlots: 3)
+        : base("Assault", hull: 160, shield: 60, armor: 10, firepower: 16f, speed: 280f, moduleSlots: 3)
     {
     }
 }
@@ -239,7 +239,7 @@ public sealed class AssaultShip : ShipBase
 public sealed class Battleship : ShipBase
 {
     public Battleship()
-        : base("战列舰", hull: 280, shield: 120, armor: 25, firepower: 24f, speed: 200f, moduleSlots: 4)
+        : base("Battleship", hull: 280, shield: 120, armor: 25, firepower: 24f, speed: 200f, moduleSlots: 4)
     {
     }
 }
@@ -248,7 +248,7 @@ public sealed class Battleship : ShipBase
 public sealed class FortressShip : ShipBase
 {
     public FortressShip()
-        : base("要塞舰", hull: 420, shield: 200, armor: 40, firepower: 18f, speed: 150f, moduleSlots: 5)
+        : base("Fortress", hull: 420, shield: 200, armor: 40, firepower: 18f, speed: 150f, moduleSlots: 5)
     {
     }
 }

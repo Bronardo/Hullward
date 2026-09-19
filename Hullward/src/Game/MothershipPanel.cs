@@ -138,14 +138,14 @@ public sealed partial class MothershipPanel : Control
         var header = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         var title = new Label
         {
-            Text = $"⚙ 母舰内部 — Lv.{_mothershipLevel}（经验 {_mothershipExp}）　船体：{_ship.Name}　合金：{_inventory.Alloy}",
+            Text = $"⚙ Starship — Lv.{_mothershipLevel} (XP {_mothershipExp})　Hull: {_ship.Name}　Alloy: {_inventory.Alloy}",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
         title.AddThemeFontSizeOverride("font_size", 22);
         title.AddThemeColorOverride("font_color", new Color(TitleColor));
         header.AddChild(title);
 
-        var close = new Button { Text = "返回星图", CustomMinimumSize = new Vector2(140, 40) };
+        var close = new Button { Text = "Back to Map", CustomMinimumSize = new Vector2(140, 40) };
         close.AddThemeFontSizeOverride("font_size", 16);
         close.AddThemeColorOverride("font_color", new Color("10131f"));
         close.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("6ee06e"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
@@ -156,7 +156,7 @@ public sealed partial class MothershipPanel : Control
         header.AddChild(close);
 
         // 迭代 22：主菜单按钮（返回星图旁）
-        var menu = new Button { Text = "⌂ 主菜单", CustomMinimumSize = new Vector2(120, 40) };
+        var menu = new Button { Text = "⌂ Main Menu", CustomMinimumSize = new Vector2(120, 40) };
         menu.AddThemeFontSizeOverride("font_size", 16);
         menu.AddThemeColorOverride("font_color", new Color("#d8ecff"));
         menu.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("#3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
@@ -169,7 +169,7 @@ public sealed partial class MothershipPanel : Control
 
     private Control BuildTabs()
     {
-        string[] names = { "船坞", "装配", "仓库", "工坊", "维修", "商店" };
+        string[] names = { "Dock", "Equip", "Inventory", "Workshop", "Repair", "Shop" };
         var tabs = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         tabs.AddThemeConstantOverride("separation", 8);
         for (int i = 0; i < names.Length; i++)
@@ -241,7 +241,7 @@ public sealed partial class MothershipPanel : Control
 
         var hint = new Label
         {
-            Text = "船坞 —— 旗舰四档船体随母舰等级解锁；切换后装配槽位自动重排，超出模块退回仓库",
+            Text = "Dock — four hull classes unlock with Starship level; slots auto-reset on switch, overflow returns to inventory",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
@@ -270,8 +270,8 @@ public sealed partial class MothershipPanel : Control
             var info = new Label
             {
                 Text = $"{ShipCatalog.DisplayName(shipClass)}　{ShipCatalog.Role(shipClass)}" +
-                       (current ? "\n◆ 当前旗舰" : "") +
-                       (unlocked ? "" : $"\n· 母舰 Lv.{(int)shipClass} 解锁"),
+                       (current ? "\n◆ Active Flagship" : "") +
+                       (unlocked ? "" : $"\n· Unlocks at Starship Lv.{(int)shipClass}"),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
@@ -281,7 +281,7 @@ public sealed partial class MothershipPanel : Control
 
             var stats = new Label
             {
-                Text = $"耐久 {preview.MaxHull}｜护盾 {preview.MaxShield}｜火力 {preview.Firepower:0}｜装甲 {preview.Armor}｜速度 {preview.Speed:0}｜槽位 {preview.ModuleSlots}",
+                Text = $"Hull {preview.MaxHull}｜Shield {preview.MaxShield}｜Firepower {preview.Firepower:0}｜Armor {preview.Armor}｜Speed {preview.Speed:0}｜Slots {preview.ModuleSlots}",
                 HorizontalAlignment = HorizontalAlignment.Right,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore
@@ -291,7 +291,7 @@ public sealed partial class MothershipPanel : Control
 
             var switchBtn = new Button
             {
-                Text = current ? "已启用" : unlocked ? "切换到此舰" : "未解锁",
+                Text = current ? "Active" : unlocked ? "Switch" : "Locked",
                 CustomMinimumSize = new Vector2(140, 40),
                 Disabled = current || !unlocked,
                 MouseFilter = Control.MouseFilterEnum.Stop
@@ -316,7 +316,7 @@ public sealed partial class MothershipPanel : Control
                     _shipClass = shipClass;
                     _slots.Clear();
                     _slots.AddRange(result.Value.Slots);
-                    _status = $"已切换旗舰：{ShipCatalog.DisplayName(shipClass)}（装配槽位 {_slots.Count}）";
+                    _status = $"Flagship switched: {ShipCatalog.DisplayName(shipClass)} ({_slots.Count} slots)";
                     _onChanged();
                     Rebuild();
                 }
@@ -341,41 +341,41 @@ public sealed partial class MothershipPanel : Control
 
         // 属性预览（含词缀加成属性，LD Sprint 3 §4.6 B3：词缀明细可见）
         ShipFittingService.ApplyToShip(_ship, _slots);
-        var affixStats = new List<string> { $"火力 {_ship.Firepower:0}", $"护盾 {_ship.Shield}/{_ship.MaxShield}", $"耐久 {_ship.Hull}/{_ship.MaxHull}", $"攻速 ×{_ship.FireRateMultiplier:0.00}", $"抗性 {_ship.Armor}" };
+        var affixStats = new List<string> { $"Firepower {_ship.Firepower:0}", $"Shield {_ship.Shield}/{_ship.MaxShield}", $"Hull {_ship.Hull}/{_ship.MaxHull}", $"Atk Speed ×{_ship.FireRateMultiplier:0.00}", $"Resist {_ship.Armor}" };
         if (_ship.MagicFind > 0)
         {
             affixStats.Add($"MF {_ship.MagicFind}");
         }
         if (_ship.CritChance > 0f)
         {
-            affixStats.Add($"暴击 {_ship.CritChance * 100f:0}%");
+            affixStats.Add($"Crit {_ship.CritChance * 100f:0}%");
         }
         if (_ship.CritDamage > 2f)
         {
-            affixStats.Add($"暴伤 ×{_ship.CritDamage:0.00}");
+            affixStats.Add($"Crit Dmg ×{_ship.CritDamage:0.00}");
         }
         if (_ship.DamageReductionPct > 0f)
         {
-            affixStats.Add($"减伤 {_ship.DamageReductionPct * 100f:0}%");
+            affixStats.Add($"DR {_ship.DamageReductionPct * 100f:0}%");
         }
         if (_ship.ThornsPct > 0f)
         {
-            affixStats.Add($"反伤 {_ship.ThornsPct * 100f:0}%");
+            affixStats.Add($"Thorns {_ship.ThornsPct * 100f:0}%");
         }
         // Sprint 5 迭代 17 C2：属性预览三栏分组（攻击/防御/技能，LD §7）
-        var attackRows = new List<string> { $"火力 {_ship.Firepower:0}", $"攻速 ×{_ship.FireRateMultiplier:0.00}", $"暴击 {_ship.CritChance * 100f:0}%", $"暴伤 ×{_ship.CritDamage:0.00}" };
-        var defenseRows = new List<string> { $"护盾 {_ship.Shield}/{_ship.MaxShield}", $"耐久 {_ship.Hull}/{_ship.MaxHull}", $"抗性 {_ship.Armor}" };
-        if (_ship.DamageReductionPct > 0f) { defenseRows.Add($"减伤 {_ship.DamageReductionPct * 100f:0}%"); }
-        if (_ship.ThornsPct > 0f) { defenseRows.Add($"反伤 {_ship.ThornsPct * 100f:0}%"); }
-        var skillRows = new List<string> { $"能量 {_ship.Energy}/{_ship.MaxEnergy}", $"回复 {_ship.EnergyRegenBonus:0}·s", $"Q耗 {_ship.EffectiveSkillCost(30)} / E耗 {_ship.EffectiveSkillCost(40)}" };
-        if (_ship.SkillCooldownMultiplier < 1f) { skillRows.Add($"冷却 ×{_ship.SkillCooldownMultiplier:0.00}"); }
+        var attackRows = new List<string> { $"Firepower {_ship.Firepower:0}", $"Atk Speed ×{_ship.FireRateMultiplier:0.00}", $"Crit {_ship.CritChance * 100f:0}%", $"Crit Dmg ×{_ship.CritDamage:0.00}" };
+        var defenseRows = new List<string> { $"Shield {_ship.Shield}/{_ship.MaxShield}", $"Hull {_ship.Hull}/{_ship.MaxHull}", $"Resist {_ship.Armor}" };
+        if (_ship.DamageReductionPct > 0f) { defenseRows.Add($"DR {_ship.DamageReductionPct * 100f:0}%"); }
+        if (_ship.ThornsPct > 0f) { defenseRows.Add($"Thorns {_ship.ThornsPct * 100f:0}%"); }
+        var skillRows = new List<string> { $"Energy {_ship.Energy}/{_ship.MaxEnergy}", $"Regen {_ship.EnergyRegenBonus:0}·s", $"Q Cost {_ship.EffectiveSkillCost(30)} / E Cost {_ship.EffectiveSkillCost(40)}" };
+        if (_ship.SkillCooldownMultiplier < 1f) { skillRows.Add($"CD ×{_ship.SkillCooldownMultiplier:0.00}"); }
         if (_ship.MagicFind > 0) { skillRows.Add($"MF +{_ship.MagicFind}"); }
 
         var statsRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         statsRow.AddThemeConstantOverride("separation", 8);
-        statsRow.AddChild(StatColumn("⚔ 攻击", attackRows));
-        statsRow.AddChild(StatColumn("🛡 防御", defenseRows));
-        statsRow.AddChild(StatColumn("✦ 技能", skillRows));
+        statsRow.AddChild(StatColumn("⚔ Attack", attackRows));
+        statsRow.AddChild(StatColumn("🛡 Defense", defenseRows));
+        statsRow.AddChild(StatColumn("✦ Skills", skillRows));
         box.AddChild(statsRow);
 
         // 槽位列表（点击选中/卸下；显示词缀数，LD §4.6 B3）
@@ -386,8 +386,8 @@ public sealed partial class MothershipPanel : Control
             int slotIndex = i;
             ModuleDrop? drop = _slots[i];
             string label = drop == null
-                ? $"[{i + 1}] 空槽"
-                : $"[{i + 1}] {drop.DisplayName}" + (drop.Affixes.Count > 0 ? $"（{drop.Affixes.Count}词缀）" : "");
+                ? $"[{i + 1}] Empty Slot"
+                : $"[{i + 1}] {drop.DisplayName}" + (drop.Affixes.Count > 0 ? $" ({drop.Affixes.Count} affixes)" : "");
             // 槽位行：IconBox 固定 20×20（与列表项一致，不使用 Button.Icon 避免拉伸）+ 文字按钮
             var slotBox = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
             slotBox.AddThemeConstantOverride("separation", 6);
@@ -420,7 +420,7 @@ public sealed partial class MothershipPanel : Control
         }
 
         // 卸下选中槽
-        var unequip = new Button { Text = "卸下选中槽", CustomMinimumSize = new Vector2(140, 44) };
+        var unequip = new Button { Text = "Unequip Slot", CustomMinimumSize = new Vector2(140, 44) };
         unequip.AddThemeFontSizeOverride("font_size", 15);
         unequip.AddThemeColorOverride("font_color", new Color(TextColor));
         unequip.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = new Color("3a4868"), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
@@ -432,13 +432,13 @@ public sealed partial class MothershipPanel : Control
             if (_selectedSlot >= 0 && ShipFittingService.TryUnequip(_inventory, _slots, _selectedSlot))
             {
                 _selectedSlot = -1;
-                _status = "已卸下模块回仓库";
+                _status = "Module returned to inventory";
                 _onChanged();
                 Rebuild();
             }
             else
             {
-                _status = "请先选中一个已装配的槽位";
+                _status = "Select an equipped slot first";
                 Rebuild();
             }
         };
@@ -447,14 +447,14 @@ public sealed partial class MothershipPanel : Control
         // 配装方案
         var presetRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         presetRow.AddThemeConstantOverride("separation", 8);
-        var saveA = new Button { Text = _presets.IsSaved('A') ? $"保存方案A（{_presets.NameOf('A')}）" : "保存为方案A", CustomMinimumSize = new Vector2(200, 40) };
-        var applyA = new Button { Text = "应用方案A", CustomMinimumSize = new Vector2(130, 40) };
-        var saveB = new Button { Text = _presets.IsSaved('B') ? $"保存方案B（{_presets.NameOf('B')}）" : "保存为方案B", CustomMinimumSize = new Vector2(200, 40) };
-        var applyB = new Button { Text = "应用方案B", CustomMinimumSize = new Vector2(130, 40) };
+        var saveA = new Button { Text = _presets.IsSaved('A') ? $"Loadout A（{_presets.NameOf('A')}）" : "Save as Loadout A", CustomMinimumSize = new Vector2(200, 40) };
+        var applyA = new Button { Text = "Apply Loadout A", CustomMinimumSize = new Vector2(130, 40) };
+        var saveB = new Button { Text = _presets.IsSaved('B') ? $"Loadout B（{_presets.NameOf('B')}）" : "Save as Loadout B", CustomMinimumSize = new Vector2(200, 40) };
+        var applyB = new Button { Text = "Apply Loadout B", CustomMinimumSize = new Vector2(130, 40) };
         StyleSmall(saveA); StyleSmall(saveB); StyleSmall(applyA); StyleSmall(applyB);
-        saveA.Pressed += () => { _presets.Save('A', "方案A", _slots); _status = "已保存方案A（当前装配快照）"; Rebuild(); };
+        saveA.Pressed += () => { _presets.Save('A', "Loadout A", _slots); _status = "Loadout A saved (current equip snapshot)"; Rebuild(); };
         applyA.Pressed += () => ApplyPreset('A');
-        saveB.Pressed += () => { _presets.Save('B', "方案B", _slots); _status = "已保存方案B（当前装配快照）"; Rebuild(); };
+        saveB.Pressed += () => { _presets.Save('B', "Loadout B", _slots); _status = "Loadout B saved (current equip snapshot)"; Rebuild(); };
         applyB.Pressed += () => ApplyPreset('B');
         presetRow.AddChild(saveA); presetRow.AddChild(applyA);
         presetRow.AddChild(saveB); presetRow.AddChild(applyB);
@@ -467,7 +467,7 @@ public sealed partial class MothershipPanel : Control
             ModuleDrop selected = _slots[_selectedSlot]!;
             var detail = new Label
             {
-                Text = $"◆ 槽位 {_selectedSlot + 1}：{selected.DisplayName}\n{selected.AffixSummary()}",
+                Text = $"◆ Slot {_selectedSlot + 1}: {selected.DisplayName}\n{selected.AffixSummary()}",
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
@@ -476,14 +476,14 @@ public sealed partial class MothershipPanel : Control
             box.AddChild(detail);
         }
 
-        box.AddChild(new Label { Text = "点击槽位选中 → 在下方背包模块列表点击模块装入该槽（未选中则装入首个空槽）", HorizontalAlignment = HorizontalAlignment.Left, MouseFilter = Control.MouseFilterEnum.Ignore });
+        box.AddChild(new Label { Text = "Click a slot to select, then click a module below to equip it (auto-fills first empty slot if none selected)", HorizontalAlignment = HorizontalAlignment.Left, MouseFilter = Control.MouseFilterEnum.Ignore });
 
         // 背包模块列表（点击装入）
         var bagBox = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         bagBox.AddThemeConstantOverride("separation", 6);
         if (_inventory.Modules.Count == 0)
         {
-            bagBox.AddChild(InfoLabel("仓库空空如也 —— 出击拾取模块后返回这里装配"));
+            bagBox.AddChild(InfoLabel("Inventory is empty — go on sortie and bring modules back"));
         }
         for (int i = 0; i < _inventory.Modules.Count; i++)
         {
@@ -500,21 +500,21 @@ public sealed partial class MothershipPanel : Control
             };
             info.AddThemeFontSizeOverride("font_size", 14);
             info.AddThemeColorOverride("font_color", RarityColor(drop.Rarity));
-            var equip = new Button { Text = "装入", CustomMinimumSize = new Vector2(70, 34) };
+            var equip = new Button { Text = "Equip", CustomMinimumSize = new Vector2(70, 34) };
             StyleSmall(equip);
             equip.Pressed += () =>
             {
                 int target = _selectedSlot >= 0 ? _selectedSlot : FirstEmptySlot();
                 if (target >= 0 && ShipFittingService.TryEquip(_inventory, _slots, moduleIndex, target))
                 {
-                    _status = $"已装入槽位 {target + 1}";
+                    _status = $"Equipped to slot {target + 1}";
                     _selectedSlot = -1;
                     _onChanged();
                     Rebuild();
                 }
                 else
                 {
-                    _status = "槽位已满或无可用空槽";
+                    _status = "Slot full or no empty slot available";
                     Rebuild();
                 }
             };
@@ -531,13 +531,13 @@ public sealed partial class MothershipPanel : Control
     {
         if (_presets.TryApply(id, _inventory, _slots))
         {
-            _status = $"已应用方案{id}";
+            _status = $"Applied Loadout {id}";
             _onChanged();
             Rebuild();
         }
         else
         {
-            _status = $"方案{id}未保存或模块缺失";
+            _status = $"Loadout {id} not saved or module missing";
             Rebuild();
         }
     }
@@ -563,7 +563,7 @@ public sealed partial class MothershipPanel : Control
 
         var filterRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         filterRow.AddThemeConstantOverride("separation", 6);
-        string[] options = { "全部", "白", "蓝", "黄", "绿", "太古" };
+        string[] options = { "All", "Common", "Magic", "Rare", "Set", "Ancient" };
         ItemRarity?[] rarities = { null, ItemRarity.Common, ItemRarity.Magic, ItemRarity.Rare, ItemRarity.Set, ItemRarity.Ancient };
         for (int i = 0; i < options.Length; i++)
         {
@@ -587,7 +587,7 @@ public sealed partial class MothershipPanel : Control
 
         var count = new Label
         {
-            Text = $"仓库模块 {_inventory.Modules.Count} 件｜合金 {_inventory.Alloy}",
+            Text = $"Inventory: {_inventory.Modules.Count} modules｜Alloy: {_inventory.Alloy}",
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         count.AddThemeFontSizeOverride("font_size", 15);
@@ -602,7 +602,7 @@ public sealed partial class MothershipPanel : Control
             .ToList();
         if (filtered.Count == 0)
         {
-            list.AddChild(InfoLabel("没有符合筛选的模块"));
+            list.AddChild(InfoLabel("No modules match the filter"));
         }
         foreach (var entry in filtered)
         {
@@ -611,7 +611,7 @@ public sealed partial class MothershipPanel : Control
             var info = new Label
             {
                 Text = $"{entry.M.DisplayName}　{entry.M.AffixSummary().Replace("\n", " ｜ ")}" +
-                       (entry.M.Rarity == ItemRarity.Rare || entry.M.Rarity == ItemRarity.Set ? $"　（洗练费用 {entry.M.RerollCost}）" : ""),
+                       (entry.M.Rarity == ItemRarity.Rare || entry.M.Rarity == ItemRarity.Set ? $"　 (Reroll cost {entry.M.RerollCost})" : ""),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore
@@ -633,7 +633,7 @@ public sealed partial class MothershipPanel : Control
         box.AddThemeConstantOverride("separation", 8);
         var hint = new Label
         {
-            Text = "拆解：白1/蓝3/黄8/绿15 合金（太古不可拆）｜洗练：黄+ 重 roll 词缀，费用递增 5/10/20/40…",
+            Text = "Disassemble: Common 1 / Magic 3 / Rare 8 / Set 15 Alloy (Ancient cannot be scrapped)｜Reroll: Rare+ re-rolls affixes, cost rises 5/10/20/40…",
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         hint.AddThemeFontSizeOverride("font_size", 14);
@@ -644,7 +644,7 @@ public sealed partial class MothershipPanel : Control
         list.AddThemeConstantOverride("separation", 6);
         if (_inventory.Modules.Count == 0)
         {
-            list.AddChild(InfoLabel("仓库空空如也"));
+            list.AddChild(InfoLabel("Inventory is empty"));
         }
         for (int i = 0; i < _inventory.Modules.Count; i++)
         {
@@ -665,19 +665,19 @@ public sealed partial class MothershipPanel : Control
 
             if (WorkshopService.CanDisassemble(drop.Rarity))
             {
-                var scrap = new Button { Text = $"拆解 +{WorkshopService.ScrapValue(drop.Rarity)}", CustomMinimumSize = new Vector2(130, 36) };
+                var scrap = new Button { Text = $"Disassemble +{WorkshopService.ScrapValue(drop.Rarity)}", CustomMinimumSize = new Vector2(130, 36) };
                 StyleSmall(scrap);
                 scrap.Pressed += () =>
                 {
                     if (WorkshopService.Disassemble(_inventory, moduleIndex))
                     {
-                        _status = $"已拆解，回收 {WorkshopService.ScrapValue(drop.Rarity)} 合金";
+                        _status = $"Scrapped, recovered {WorkshopService.ScrapValue(drop.Rarity)} Alloy";
                         _onChanged();
                         Rebuild();
                     }
                     else
                     {
-                        _status = "拆解失败";
+                        _status = "Disassemble failed";
                         Rebuild();
                     }
                 };
@@ -686,19 +686,19 @@ public sealed partial class MothershipPanel : Control
 
             if (WorkshopService.CanReroll(drop))
             {
-                var reroll = new Button { Text = $"洗练 {drop.RerollCost}", CustomMinimumSize = new Vector2(110, 36) };
+                var reroll = new Button { Text = $"Reroll {drop.RerollCost}", CustomMinimumSize = new Vector2(110, 36) };
                 StyleSmall(reroll);
                 reroll.Pressed += () =>
                 {
                     if (WorkshopService.Reroll(_inventory, moduleIndex, _rng))
                     {
-                        _status = $"已洗练（下次费用 {drop.RerollCost}）—— 词缀已重 roll";
+                        _status = $"Rerolled (next cost {drop.RerollCost}) — affixes re-rolled";
                         _onChanged();
                         Rebuild();
                     }
                     else
                     {
-                        _status = "洗练失败：太古不可洗 或 合金不足";
+                        _status = "Reroll failed: Ancient cannot be rerolled or not enough Alloy";
                         Rebuild();
                     }
                 };
@@ -720,7 +720,7 @@ public sealed partial class MothershipPanel : Control
 
         var info = new Label
         {
-            Text = $"当前耐久：{_ship.Hull} / {_ship.MaxHull}　（护盾 {_ship.Shield}/{_ship.MaxShield}，护盾随出战重置，仅维修耐久）",
+            Text = $"Current Hull: {_ship.Hull} / {_ship.MaxHull}　(Shield {_ship.Shield}/{_ship.MaxShield}, shield resets each sortie, only Hull is repaired)",
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         info.AddThemeFontSizeOverride("font_size", 18);
@@ -730,7 +730,7 @@ public sealed partial class MothershipPanel : Control
         int cost = WorkshopService.RepairCost(_ship);
         var repair = new Button
         {
-            Text = cost == 0 ? "船体完好，无需维修" : $"维修至满耐久 —— 消耗 {cost} 合金",
+            Text = cost == 0 ? "Hull intact, no repair needed" : $"Repair to full — costs {cost} Alloy",
             CustomMinimumSize = new Vector2(380, 48),
             MouseFilter = Control.MouseFilterEnum.Stop
         };
@@ -745,18 +745,18 @@ public sealed partial class MothershipPanel : Control
         {
             if (WorkshopService.Repair(_ship, _inventory))
             {
-                _status = "维修完成，船体已恢复";
+                _status = "Repair complete, hull restored";
                 _onChanged();
                 Rebuild();
             }
             else
             {
-                _status = "维修失败：合金不足";
+                _status = "Repair failed: not enough Alloy";
                 Rebuild();
             }
         };
         box.AddChild(repair);
-        box.AddChild(InfoLabel("维修计价：按受损比例（缺失 1 点耐久 = 0.1 合金，最低 1）"));
+        box.AddChild(InfoLabel("Repair pricing: by damage ratio (1 missing Hull = 0.1 Alloy, min 1)"));
         return MakeScroll(box);
     }
 
@@ -768,7 +768,7 @@ public sealed partial class MothershipPanel : Control
         box.AddThemeConstantOverride("separation", 8);
         var hint = new Label
         {
-            Text = "补给商店 —— 合金计价，只售白/蓝模块（不卖高阶）",
+            Text = "Supply Shop — priced in Alloy, sells Common/Magic modules only (no higher tiers)",
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         hint.AddThemeFontSizeOverride("font_size", 14);
@@ -794,19 +794,19 @@ public sealed partial class MothershipPanel : Control
             };
             info.AddThemeFontSizeOverride("font_size", 14);
             info.AddThemeColorOverride("font_color", RarityColor(item.Module.Rarity));
-            var buy = new Button { Text = $"购买 {item.Price} 合金", CustomMinimumSize = new Vector2(140, 36) };
+            var buy = new Button { Text = $"Buy {item.Price} Alloy", CustomMinimumSize = new Vector2(140, 36) };
             StyleSmall(buy);
             buy.Pressed += () =>
             {
                 if (shop.TryBuy(_inventory, itemIndex))
                 {
-                    _status = $"已购得 {item.Module.DisplayName}";
+                    _status = $"Purchased {item.Module.DisplayName}";
                     _onChanged();
                     Rebuild();
                 }
                 else
                 {
-                    _status = "合金不足";
+                    _status = "Not enough Alloy";
                     Rebuild();
                 }
             };

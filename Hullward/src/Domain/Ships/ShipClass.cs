@@ -38,18 +38,18 @@ public static class ShipCatalog
     /// <summary>型号名称。</summary>
     public static string DisplayName(ShipClass shipClass) => shipClass switch
     {
-        ShipClass.Assault => "突击舰",
-        ShipClass.Battleship => "战列舰",
-        ShipClass.Fortress => "要塞舰",
-        _ => "轻巡"
+        ShipClass.Assault => "Assault",
+        ShipClass.Battleship => "Battleship",
+        ShipClass.Fortress => "Fortress",
+        _ => "Scout"
     };
 
     /// <summary>型号定位描述（船坞展示）。</summary>
     public static string Role(ShipClass shipClass) => shipClass switch
     {
-        ShipClass.Assault => "火力优先，攻强速快",
-        ShipClass.Battleship => "重装重火力，攻坚主力",
-        ShipClass.Fortress => "极致生存，终极壁垒",
-        _ => "均衡机动，全能开荒"
+        ShipClass.Assault => "Strike: high firepower, fast",
+        ShipClass.Battleship => "Heavy: raw power, line breaker",
+        ShipClass.Fortress => "Bulwark: max survivability",
+        _ => "Balanced: versatile starter"
     };
 }

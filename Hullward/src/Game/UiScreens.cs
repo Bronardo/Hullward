@@ -103,12 +103,12 @@ public static class UiScreens
     {
         Control root = Fullscreen();
         var box = CenterBox();
-        box.AddChild(Title("Hullward《深空暗骸》"));
+        box.AddChild(Title("Hullward"));
         box.AddChild(Subtitle("Echoes of Collapsed Eons"));
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 30) });
-        box.AddChild(ActionButton("开始游戏（新建远征）", onNew, new Color("4da6ff")));
-        box.AddChild(ActionButton("继续游戏", onContinue, new Color("6ee06e")));
-        box.AddChild(ActionButton("退出", onQuit, new Color("ff6b4a")));
+        box.AddChild(ActionButton("New Game", onNew, new Color("4da6ff")));
+        box.AddChild(ActionButton("Continue", onContinue, new Color("6ee06e")));
+        box.AddChild(ActionButton("Quit", onQuit, new Color("ff6b4a")));
         var center = Centered();
         center.AddChild(box);
         root.AddChild(center);
@@ -120,11 +120,11 @@ public static class UiScreens
     {
         Control root = Fullscreen();
         var box = CenterBox();
-        box.AddChild(Title("命名舰长"));
-        box.AddChild(Subtitle("名字将作为远征档案的唯一标识（≤12 字，禁特殊字符）"));
+        box.AddChild(Title("Name Your Commander"));
+        box.AddChild(Subtitle("Name is your expedition save ID (max 12 chars, no special chars)"));
         var edit = new LineEdit
         {
-            PlaceholderText = "输入舰长名…",
+            PlaceholderText = "Enter commander name…",
             MaxLength = SaveNameValidator.MaxLength,
             CustomMinimumSize = new Vector2(360, 48),
             MouseFilter = Control.MouseFilterEnum.Stop
@@ -136,8 +136,8 @@ public static class UiScreens
             box.AddChild(Info($"⚠ {error}", "ff6b4a"));
         }
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
-        box.AddChild(ActionButton("确认命名，出发", () => onConfirm(edit.Text), new Color("4da6ff")));
-        box.AddChild(ActionButton("返回", onBack, new Color("9aa7c0")));
+        box.AddChild(ActionButton("Confirm & Launch", () => onConfirm(edit.Text), new Color("4da6ff")));
+        box.AddChild(ActionButton("Back", onBack, new Color("9aa7c0")));
         var center = Centered();
         center.AddChild(box);
         root.AddChild(center);
@@ -149,13 +149,13 @@ public static class UiScreens
     {
         Control root = Fullscreen();
         var box = CenterBox(520);
-        box.AddChild(Title("选择远征档案"));
-        box.AddChild(Subtitle("每个名字都是一位舰长的宇宙"));
+        box.AddChild(Title("Choose Expedition Save"));
+        box.AddChild(Subtitle("Each name is a whole universe"));
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
 
         if (names.Count == 0)
         {
-            box.AddChild(Info("暂无存档 —— 返回并开始新的远征", SubColor));
+            box.AddChild(Info("No saves — go back and start a new expedition", SubColor));
         }
         else
         {
@@ -184,7 +184,7 @@ public static class UiScreens
         }
 
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
-        box.AddChild(ActionButton("返回", onBack, new Color("9aa7c0")));
+        box.AddChild(ActionButton("Back", onBack, new Color("9aa7c0")));
         var center = Centered();
         center.AddChild(box);
         root.AddChild(center);
@@ -213,7 +213,7 @@ public static class UiScreens
         header.OffsetTop = 24;
         var title = new Label
         {
-            Text = $"星图 · 第 {map.Chapter} 章（母舰 Lv.{map.MothershipLevel}）",
+            Text = $"Star Map · Sector {map.Chapter} (Starship Lv.{map.MothershipLevel})",
             HorizontalAlignment = HorizontalAlignment.Center
         };
         title.AddThemeFontSizeOverride("font_size", 30);
@@ -221,7 +221,7 @@ public static class UiScreens
         header.AddChild(title);
         var hint = new Label
         {
-            Text = "选择任务出击 · 无论成败，返回后星图将全部重随机",
+            Text = "Pick a mission — the map re-randomizes either way",
             HorizontalAlignment = HorizontalAlignment.Center
         };
         hint.AddThemeFontSizeOverride("font_size", 15);
@@ -231,7 +231,7 @@ public static class UiScreens
         // 进入母舰仓库（底部按钮，锚定底部居中）
         var mothershipBtn = new Button
         {
-            Text = "⚙ 进入母舰（仓库/装配/工坊/维修/商店）",
+            Text = "⚙ Enter Starship (Dock/Equip/Workshop/Repair/Shop)",
             CustomMinimumSize = new Vector2(360, 48),
             MouseFilter = Control.MouseFilterEnum.Stop
         };
@@ -250,7 +250,7 @@ public static class UiScreens
         // 迭代 22：主菜单按钮（进入母舰按钮下方）
         var menuBtn = new Button
         {
-            Text = "⌂ 主菜单",
+            Text = "⌂ Main Menu",
             CustomMinimumSize = new Vector2(160, 36),
             MouseFilter = Control.MouseFilterEnum.Stop
         };
@@ -272,7 +272,7 @@ public static class UiScreens
         // 母舰居中（锚定窗口中心）
         var mothership = new Label
         {
-            Text = "◆ 母舰",
+            Text = "◆ Starship",
             HorizontalAlignment = HorizontalAlignment.Center,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
@@ -287,7 +287,7 @@ public static class UiScreens
         {
             var btn = new Button
             {
-                Text = node.IsBoss ? (node.GateLabel ?? "☠ BOSS") : $"⚔ 清剿 ★{node.DangerStars}", // Sprint5 迭代17：任务类型图标（清剿=剑）；章节门显示专属名
+                Text = node.IsBoss ? (node.GateLabel ?? "☠ BOSS") : $"⚔ Cleansing ★{node.DangerStars}", // Sprint5 迭代17：任务类型图标（清剿=剑）；章节门显示专属名
                 CustomMinimumSize = new Vector2(node.IsBoss ? 120 : 96, node.IsBoss ? 56 : 44),
                 MouseFilter = Control.MouseFilterEnum.Stop
             };
@@ -303,7 +303,7 @@ public static class UiScreens
 
             var info = new Label
             {
-                Text = $"强度 {node.Strength}",
+                Text = $"Power {node.Strength}",
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
             info.AddThemeFontSizeOverride("font_size", 12);
@@ -326,7 +326,7 @@ public static class UiScreens
     {
         Control root = Fullscreen();
         var box = CenterBox();
-        box.AddChild(Title(victory ? "任务完成" : "远征失败"));
+        box.AddChild(Title(victory ? "Mission Complete" : "Mission Failed"));
         box.AddChild(Info(missionSummary, victory ? TitleColor : "ff6b4a"));
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
         if (!string.IsNullOrEmpty(lootSummary))
@@ -334,9 +334,9 @@ public static class UiScreens
             box.AddChild(Info(lootSummary));
         }
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
-        box.AddChild(Info("无论成败，此次出击已消耗一次时间 —— 返回后星图将全部重随机", SubColor));
+        box.AddChild(Info("The sortie consumed a turn either way — the map re-randomizes on return", SubColor));
         box.AddChild(new Control { CustomMinimumSize = new Vector2(0, 16) });
-        box.AddChild(ActionButton("返回星图", onReturn, victory ? new Color("6ee06e") : new Color("4da6ff")));
+        box.AddChild(ActionButton("Back to Map", onReturn, victory ? new Color("6ee06e") : new Color("4da6ff")));
         var center = Centered();
         center.AddChild(box);
         root.AddChild(center);

@@ -101,11 +101,11 @@ public partial class Main : Node
         GD.Print("UI ready: 主菜单");
     }
 
-    /// <summary>技能状态文本：冷却中 → 剩余秒；冷却就绪但能量不足 → "能量不足"（灰态）；否则"就绪"。</summary>
+    /// <summary>技能状态文本：冷却中 → 剩余秒；冷却就绪但能量不足 → "Low Energy"（灰态）；否则"Ready"。</summary>
     private string SkillState(Domain.Combat.ActiveSkill skill)
         => !skill.IsReady
             ? $"{skill.Remaining:0.0}s"
-            : _player.ShipStats.HasEnergyFor(skill.EnergyCost) ? "就绪" : "能量不足";
+            : _player.ShipStats.HasEnergyFor(skill.EnergyCost) ? "Ready" : "Low Energy";
 
     public override void _Process(double delta)
     {
@@ -136,7 +136,7 @@ public partial class Main : Node
             Energy = ship.Energy, MaxEnergy = ship.MaxEnergy,
             Alloy = _inventory.Alloy, ModulesPicked = _modulesPicked,
             EnemiesLeft = _targets.Count,
-            MissionHint = _taskIsBoss ? "击破禁区守卫" : "清剿全部敌舰",
+            MissionHint = _taskIsBoss ? "Destroy the Relic Guardian" : "Destroy all hostiles",
             SkillQReady = _player.SkillQ.IsReady,
             SkillQEnough = ship.HasEnergyFor(_player.SkillQ.EnergyCost),
             SkillQRemain = _player.SkillQ.Remaining,
@@ -709,7 +709,7 @@ public partial class Main : Node
         {
             int alloy = ExtractAlloyAmount(pickup.Label);
             _inventory.AddAlloy(alloy);
-            _hud.ShowToast($"获得 合金 ×{alloy}");
+            _hud.ShowToast($"Alloy +{alloy}");
             GD.Print($"拾取合金×{alloy} | 合金总量 {_inventory.Alloy}");
         }
     }

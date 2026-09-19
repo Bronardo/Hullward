@@ -16,10 +16,10 @@ public class DockAndShipClassTests
     // ---------- ShipCatalog：四档船体工厂 ----------
 
     [Theory]
-    [InlineData(ShipClass.Scout, "轻巡", 2)]
-    [InlineData(ShipClass.Assault, "突击舰", 3)]
-    [InlineData(ShipClass.Battleship, "战列舰", 4)]
-    [InlineData(ShipClass.Fortress, "要塞舰", 5)]
+    [InlineData(ShipClass.Scout, "Scout", 2)]
+    [InlineData(ShipClass.Assault, "Assault", 3)]
+    [InlineData(ShipClass.Battleship, "Battleship", 4)]
+    [InlineData(ShipClass.Fortress, "Fortress", 5)]
     public void Create_ReturnsExpectedHullAndSlots(ShipClass shipClass, string name, int slots)
     {
         ShipBase ship = ShipCatalog.Create(shipClass);

@@ -8,22 +8,22 @@ namespace Hullward.Tests;
 public class Sprint5ModuleNamingTests
 {
     [Theory]
-    [InlineData(ModuleCategory.PulseCannon, "脉冲炮")]
-    [InlineData(ModuleCategory.RailGun, "磁轨炮")]
-    [InlineData(ModuleCategory.LaserArray, "激光阵列")]
-    [InlineData(ModuleCategory.Gatling, "速射机炮")]
-    [InlineData(ModuleCategory.Composite, "复合装甲")]
-    [InlineData(ModuleCategory.Reactive, "反应装甲")]
-    [InlineData(ModuleCategory.NanoCoating, "纳米镀层")]
-    [InlineData(ModuleCategory.Phase, "相位装甲")]
-    [InlineData(ModuleCategory.FusionCore, "聚变核心")]
-    [InlineData(ModuleCategory.Capacitor, "电容电池")]
-    [InlineData(ModuleCategory.Reactor, "反应炉")]
-    [InlineData(ModuleCategory.EnergyNode, "能源节点")]
-    [InlineData(ModuleCategory.Scanner, "扫描器")]
-    [InlineData(ModuleCategory.Jammer, "干扰器")]
-    [InlineData(ModuleCategory.WarpEngine, "跃迁引擎")]
-    [InlineData(ModuleCategory.EmergencyShield, "应急护盾")]
+    [InlineData(ModuleCategory.PulseCannon, "Pulse Cannon")]
+    [InlineData(ModuleCategory.RailGun, "Railgun")]
+    [InlineData(ModuleCategory.LaserArray, "Laser Array")]
+    [InlineData(ModuleCategory.Gatling, "Autocannon")]
+    [InlineData(ModuleCategory.Composite, "Composite Armor")]
+    [InlineData(ModuleCategory.Reactive, "Reactive Armor")]
+    [InlineData(ModuleCategory.NanoCoating, "Nano Plating")]
+    [InlineData(ModuleCategory.Phase, "Phase Armor")]
+    [InlineData(ModuleCategory.FusionCore, "Fusion Core")]
+    [InlineData(ModuleCategory.Capacitor, "Capacitor Cell")]
+    [InlineData(ModuleCategory.Reactor, "Reactor")]
+    [InlineData(ModuleCategory.EnergyNode, "Power Node")]
+    [InlineData(ModuleCategory.Scanner, "Scanner")]
+    [InlineData(ModuleCategory.Jammer, "Jammer")]
+    [InlineData(ModuleCategory.WarpEngine, "Warp Engine")]
+    [InlineData(ModuleCategory.EmergencyShield, "Emergency Shield")]
     public void CategoryNames_MatchLdTable(ModuleCategory category, string expected)
     {
         Assert.Equal(expected, ModuleNames.CategoryName(category));
@@ -31,10 +31,10 @@ public class Sprint5ModuleNamingTests
 
     [Theory]
     [InlineData(ItemRarity.Common, "")]
-    [InlineData(ItemRarity.Magic, "改良 ")]
-    [InlineData(ItemRarity.Rare, "精锐 ")]
-    [InlineData(ItemRarity.Set, "深烬 ")]
-    [InlineData(ItemRarity.Ancient, "太古 ")]
+    [InlineData(ItemRarity.Magic, "Improved ")]
+    [InlineData(ItemRarity.Rare, "Elite ")]
+    [InlineData(ItemRarity.Set, "Ember ")]
+    [InlineData(ItemRarity.Ancient, "Ancient ")]
     public void RarityPrefix_MatchLdTable(ItemRarity rarity, string expected)
     {
         Assert.Equal(expected, ModuleNames.RarityPrefix(rarity));
@@ -68,23 +68,23 @@ public class Sprint5ModuleNamingTests
     public void DisplayName_PrefixPlusCategory_NoLegacyClassName()
     {
         var drop = new ModuleDrop(ModuleType.Armor, ItemRarity.Rare) { Category = ModuleCategory.Reactive };
-        Assert.Equal("精锐 反应装甲", drop.DisplayName);
+        Assert.Equal("Elite Reactive Armor", drop.DisplayName);
         Assert.DoesNotContain("Rare", drop.DisplayName);
-        Assert.DoesNotContain("Armor", drop.DisplayName);
+        Assert.Contains("Reactive Armor", drop.DisplayName);
     }
 
     [Fact]
     public void DisplayName_Common_HasNoPrefix()
     {
         var drop = new ModuleDrop(ModuleType.Weapon, ItemRarity.Common) { Category = ModuleCategory.RailGun };
-        Assert.Equal("磁轨炮", drop.DisplayName);
+        Assert.Equal("Railgun", drop.DisplayName);
     }
 
     [Fact]
     public void DisplayName_Ancient_UsesTaiduPrefix()
     {
         var drop = new ModuleDrop(ModuleType.Power, ItemRarity.Ancient) { Category = ModuleCategory.FusionCore };
-        Assert.Equal("太古 聚变核心", drop.DisplayName);
+        Assert.Equal("Ancient Fusion Core", drop.DisplayName);
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class Sprint5ModuleNamingTests
         var a = new ModuleDrop(ModuleType.Special, ItemRarity.Magic);
         var b = new ModuleDrop(ModuleType.Special, ItemRarity.Magic);
         Assert.Equal(a.DisplayName, b.DisplayName);
-        Assert.StartsWith("改良 ", a.DisplayName);
+        Assert.StartsWith("Improved ", a.DisplayName);
         // 品类必须来自特殊槽池
         Assert.Contains(ModuleNames.DeterministicFallback(a.Slot, a.Name), ModuleNames.ForSlot(ModuleType.Special));
     }
@@ -116,7 +116,7 @@ public class Sprint5ModuleNamingTests
         var data = Hullward.Domain.Save.SaveDataMapper.ToData(drop);
         var restored = Hullward.Domain.Save.SaveDataMapper.ToDomain(data);
         Assert.Equal(ModuleCategory.Reactor, restored.Category);
-        Assert.Equal("深烬 反应炉", restored.DisplayName);
+        Assert.Equal("Ember Reactor", restored.DisplayName);
     }
 
     [Fact]
@@ -131,6 +131,6 @@ public class Sprint5ModuleNamingTests
         var restored = Hullward.Domain.Save.SaveDataMapper.ToDomain(data);
         Assert.Null(restored.Category);
         Assert.Equal(restored.DisplayName, restored.DisplayName); // 稳定
-        Assert.StartsWith("太古 ", restored.DisplayName);
+        Assert.StartsWith("Ancient ", restored.DisplayName);
     }
 }

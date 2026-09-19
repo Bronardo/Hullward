@@ -18,10 +18,10 @@ public static class ChapterCatalog
 {
     public static readonly ChapterInfo[] Chapters =
     {
-        new() { Chapter = 1, Name = "航标", UnlockMothershipLevel = 1, HasBoss = true, BaseStrength = 5 },
-        new() { Chapter = 2, Name = "星港", UnlockMothershipLevel = 2, HasBoss = true, BaseStrength = 8 },
-        new() { Chapter = 3, Name = "深空", UnlockMothershipLevel = 3, HasBoss = true, BaseStrength = 12 },
-        new() { Chapter = 4, Name = "坍缩", UnlockMothershipLevel = 4, HasBoss = true, BaseStrength = 16 }
+        new() { Chapter = 1, Name = "Beacon", UnlockMothershipLevel = 1, HasBoss = true, BaseStrength = 5 },
+        new() { Chapter = 2, Name = "Starport", UnlockMothershipLevel = 2, HasBoss = true, BaseStrength = 8 },
+        new() { Chapter = 3, Name = "Deep Space", UnlockMothershipLevel = 3, HasBoss = true, BaseStrength = 12 },
+        new() { Chapter = 4, Name = "Collapse", UnlockMothershipLevel = 4, HasBoss = true, BaseStrength = 16 }
     };
 
     public const int MaxChapter = 4;

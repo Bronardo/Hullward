@@ -24,7 +24,7 @@ public class Sprint4ChapterContentTests
         Assert.True(elite.MaxHull > gunboat.MaxHull);
         Assert.True(elite.MaxShield > gunboat.MaxShield);
         Assert.True(elite.Firepower > gunboat.Firepower);
-        Assert.Equal("旗舰护卫", elite.Name);
+        Assert.Equal("Elite Guard", elite.Name);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class Sprint4ChapterContentTests
     {
         var map = new StarMapGenerator().Generate(4, 4, new Random(42));
         var boss = map.Nodes.First(n => n.IsBoss);
-        Assert.Equal("坍缩禁区 · 遗迹守护", boss.GateLabel);
+        Assert.Equal("Collapse Zone: Relic Guardian", boss.GateLabel);
     }
 
     [Theory]

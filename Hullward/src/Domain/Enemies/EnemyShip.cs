@@ -190,7 +190,7 @@ public sealed class GunboatShip : EnemyShip
     private float _fireCooldown;
 
     public GunboatShip()
-        : base("远程炮艇", hull: 90, shield: 30, armor: 8, firepower: 9f)
+        : base("Gunboat", hull: 90, shield: 30, armor: 8, firepower: 9f)
     {
     }
 

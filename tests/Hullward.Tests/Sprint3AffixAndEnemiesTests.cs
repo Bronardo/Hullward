@@ -230,7 +230,7 @@ public class Sprint3AffixAndEnemiesTests
     public void GunboatShip_IsDistinctEnemyKind_AndSubclassOfEnemyShip()
     {
         EnemyShip ship = new GunboatShip();
-        Assert.Equal("远程炮艇", ship.Name);
+        Assert.Equal("Gunboat", ship.Name);
         Assert.IsType<GunboatShip>(ship);
         // 近战敌舰默认不开火（多态默认实现）
         EnemyShip recon = new ReconDrone();

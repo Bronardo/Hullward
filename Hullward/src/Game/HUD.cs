@@ -73,7 +73,7 @@ public partial class HUD : CanvasLayer
         _taskLabel = MakeLabel(16, "#d8ecff");
         _taskLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         var pause = MakeLabel(14, "#8fa3c8");
-        pause.Text = "▮▮ Esc 暂停";
+        pause.Text = "▮▮ Esc Pause";
         pause.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         pause.HorizontalAlignment = HorizontalAlignment.Right;
         row.AddChild(_taskLabel);
@@ -134,7 +134,7 @@ public partial class HUD : CanvasLayer
         row.Alignment = BoxContainer.AlignmentMode.Center;
         row.AddThemeConstantOverride("separation", 10);
 
-        _slotQ = new SkillSlot("⚡", "Q", "过载炮") { MouseFilter = Control.MouseFilterEnum.Ignore };
+        _slotQ = new SkillSlot("⚡", "Q", "Overload Cannon") { MouseFilter = Control.MouseFilterEnum.Ignore };
         row.AddChild(_slotQ);
 
         var energyCol = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -146,7 +146,7 @@ public partial class HUD : CanvasLayer
         energyCol.AddChild(_energyText);
         row.AddChild(energyCol);
 
-        _slotE = new SkillSlot("🛡", "E", "护盾充能") { MouseFilter = Control.MouseFilterEnum.Ignore };
+        _slotE = new SkillSlot("🛡", "E", "Shield Boost") { MouseFilter = Control.MouseFilterEnum.Ignore };
         row.AddChild(_slotE);
         AddChild(row);
     }
@@ -217,24 +217,24 @@ public partial class HUD : CanvasLayer
 
         _shieldBar.MaxValue = d.MaxShield;
         _shieldBar.Value = d.Shield;
-        _shieldText.Text = $"护盾 {d.Shield}/{d.MaxShield}";
+        _shieldText.Text = $"Shield {d.Shield}/{d.MaxShield}";
 
         _hullBar.MaxValue = d.MaxHull;
         _hullBar.Value = d.Hull;
-        _hullText.Text = $"耐久 {d.Hull}/{d.MaxHull}";
+        _hullText.Text = $"Hull {d.Hull}/{d.MaxHull}";
 
-        _resourceLabel.Text = $"合金 {d.Alloy}　模块 {d.ModulesPicked}";
+        _resourceLabel.Text = $"Alloy {d.Alloy}　Modules {d.ModulesPicked}";
 
-        _missionLabel.Text = $"剩余敌舰 {d.EnemiesLeft}\n{d.MissionHint}";
+        _missionLabel.Text = $"Hostiles {d.EnemiesLeft}\n{d.MissionHint}";
 
         _energyBar.MaxValue = d.MaxEnergy;
         _energyBar.Value = d.Energy;
-        _energyText.Text = $"能量 {d.Energy:0}/{d.MaxEnergy:0}";
+        _energyText.Text = $"Energy {d.Energy:0}/{d.MaxEnergy:0}";
 
         _slotQ.SetState(d.SkillQReady, d.SkillQEnough, d.SkillQRemain, d.SkillQCooldown);
         _slotE.SetState(d.SkillEReady, d.SkillEEnough, d.SkillERemain, d.SkillECooldown);
 
-        _shipLabel.Text = $"{d.ShipName}　Lv.{d.ShipLevel}\n火力 {d.Firepower:0} · 攻速 ×{d.FireRate:0.00}";
+        _shipLabel.Text = $"{d.ShipName}　Lv.{d.ShipLevel}\nFirepower {d.Firepower:0} · Atk Speed ×{d.FireRate:0.00}";
 
         _radar.UpdateRadar(d.PlayerPos, d.Hostiles, d.RadarRange);
     }
@@ -317,7 +317,7 @@ public partial class HUD : CanvasLayer
             else if (!enoughEnergy)
             {
                 Modulate = new Color(0.6f, 0.4f, 0.4f, 1f);
-                _cd.Text = "能量";
+                _cd.Text = "Energy";
                 _readyPulse = false;
                 SetBox(new Color("#ff5555"));
             }
