@@ -510,7 +510,7 @@ public partial class Main : Node
             }
             else
             {
-                lootText += $"\n母舰经验 +{expGain}（{_mothershipExp}/{ExpPerLevel}）";
+                lootText += $"\nStarship XP +{expGain} ({_mothershipExp}/{ExpPerLevel})";
             }
         }
         else
