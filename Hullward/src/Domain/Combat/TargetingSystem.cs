@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace Hullward.Domain.Combat;
 
 /// <summary>
-/// 主炮自动索敌（拍板项：自动索敌 + 手动技能）。
-/// 目标优先级：可配置（默认最近优先）。
+/// 主炮auto索敌（拍板项：auto索敌 + manualskill）。
+/// targetpriority：可config（default最近优先）。
 /// 纯 C# 域层，可单测。
 /// </summary>
 public sealed class TargetingSystem
@@ -18,7 +18,7 @@ public sealed class TargetingSystem
 
     public TargetPriority Priority { get; set; } = TargetPriority.Nearest;
 
-    /// <summary>从候选目标中选出当前锁定目标；无候选返回 null。</summary>
+    /// <summary>从候选targetmedium选出currentlock定target；无候选back null。</summary>
     public ITargetable? Acquire(IReadOnlyList<ITargetable> candidates, float sourceX, float sourceY)
     {
         if (candidates.Count == 0)
@@ -61,7 +61,7 @@ public sealed class TargetingSystem
     }
 }
 
-/// <summary>可被索敌/受击的实体（敌人、可破坏物）。</summary>
+/// <summary>可被索敌/受击的entity（enemy、可破坏物）。</summary>
 public interface ITargetable
 {
     float X { get; }

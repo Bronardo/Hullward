@@ -4,20 +4,20 @@ using System.Collections.Generic;
 namespace Hullward.Domain.WorldGen;
 
 /// <summary>
-/// 星图生成器（UI 规格 v0.2 §4.1）：
-/// 平面视图 · 母舰居中 · 节点散点分布（非线性航线）；
-/// 数量随机 [MinNodes, MaxNodes]；强度随机 [章节基准 × 0.8, × 1.4]；
-/// 章节主线 Boss 节点固定生成 1 个，其余节点随机。
+/// starmapgenerator（UI spec v0.2 §4.1）：
+/// 平面view · mothership居medium · node散点distribution（非linearizable航线）；
+/// 数量random [MinNodes, MaxNodes]；强度random [sectorbenchmark × 0.8, × 1.4]；
+/// sector主线 Boss nodefixed生成 1 个，其余noderandom。
 /// </summary>
 public sealed class StarMapGenerator
 {
     public const int MinNodes = 4;
     public const int MaxNodes = 8;
 
-    /// <summary>章节强度基准（敌人总量参考，来自章节目录）。</summary>
+    /// <summary>sector强度benchmark（enemy总量参考，来自sector目录）。</summary>
     public static int ChapterBase(int chapter) => ChapterCatalog.Get(chapter).BaseStrength;
 
-    /// <summary>强度 → 危险等级 ★（1-5）。</summary>
+    /// <summary>强度 → 危险level ★（1-5）。</summary>
     public static int DangerStars(int strength) => strength switch
     {
         <= 5 => 1,
@@ -33,7 +33,7 @@ public sealed class StarMapGenerator
         float baseStrength = ChapterBase(chapter);
         var nodes = new List<StarMapNode>(count);
 
-        // 环形布局：角度均分 + 抖动，半径带内随机；母舰 (0,0) 居中
+        // 环形布局：angle均分 + jitter，半径带内random；mothership (0,0) 居medium
         const float minRadius = 260f, maxRadius = 430f;
         for (int i = 0; i < count; i++)
         {

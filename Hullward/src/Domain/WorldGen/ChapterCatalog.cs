@@ -1,6 +1,6 @@
 namespace Hullward.Domain.WorldGen;
 
-/// <summary>章节信息（UI 规格 v0.2 §5）：解锁条件 / 强度基准 / Boss 存在。</summary>
+/// <summary>sectorinfo（UI spec v0.2 §5）：unlock条件 / 强度benchmark / Boss 存在。</summary>
 public sealed class ChapterInfo
 {
     public int Chapter { get; init; }
@@ -11,8 +11,8 @@ public sealed class ChapterInfo
 }
 
 /// <summary>
-/// 章节目录（统一配置源）：章节随母舰等级解锁，每章强度基准递进。
-/// 星图生成与波次生成均以本章数据为准。
+/// sector目录（统一config源）：sector随mothership levelunlock，每章强度benchmark递进。
+/// starmap生成与wave生成均以本章data为准。
 /// </summary>
 public static class ChapterCatalog
 {
@@ -33,7 +33,7 @@ public static class ChapterCatalog
         _ => Chapters[chapter - 1]
     };
 
-    /// <summary>章节是否已随母舰等级解锁。</summary>
+    /// <summary>sector是否已随mothership levelunlock。</summary>
     public static bool IsUnlocked(int mothershipLevel, int chapter)
         => mothershipLevel >= chapter;
 }

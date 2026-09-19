@@ -8,9 +8,9 @@ using Hullward.Domain.WorldGen;
 namespace Hullward.Game;
 
 /// <summary>
-/// UI 屏幕构建器（UI 规格 v0.2）：主菜单 / 命名 / 存档列表 / 星图 / 结算。
-/// 全部代码构建 Control 树（像素风基调：深色底 + 高对比文字，美术规范后替换样式）。
-/// 居中策略：全屏根 + CenterContainer 真居中（随窗口 resize 自适应）；星图节点锚定窗口中心。
+/// UI 屏幕build器（UI spec v0.2）：main menu / 命名 / savelist / starmap / 结算。
+/// 全部codebuild Control 树（像素风基调：深色底 + high对比文字，美术norms后替换样式）。
+/// 居mediumstrategy：全屏根 + CenterContainer 真居medium（随window resize 自适应）；starmapnode锚定windowmedium心。
 /// </summary>
 public static class UiScreens
 {
@@ -19,10 +19,10 @@ public static class UiScreens
     private const string TextColor = "e8ecf4";
     private const string PanelColor = "10131f";
 
-    /// <summary>UI 点击音效钩子（Main 在 _Ready 注入 Sfx.PlayClick；未注入时静默）。</summary>
+    /// <summary>UI 点击sfxhook（Main 在 _Ready 注入 Sfx.PlayClick；未注入时静默）。</summary>
     public static Action? ClickSound { get; set; }
 
-    /// <summary>全屏遮罩容器（每屏复用，调用方负责切换）。</summary>
+    /// <summary>全屏遮罩container（每屏复用，call方负责switch）。</summary>
     public static Control Fullscreen()
     {
         var bg = new ColorRect
@@ -34,7 +34,7 @@ public static class UiScreens
         return bg;
     }
 
-    /// <summary>全屏居中容器：子内容随窗口尺寸自动居中。</summary>
+    /// <summary>全屏居mediumcontainer：子content随window尺寸auto居medium。</summary>
     private static CenterContainer Centered()
     {
         var center = new CenterContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -99,7 +99,7 @@ public static class UiScreens
         return btn;
     }
 
-    /// <summary>主菜单（规格 §2）。</summary>
+    /// <summary>main menu（spec §2）。</summary>
     public static Control Menu(Action onNew, Action onContinue, Action onQuit)
     {
         Control root = Fullscreen();
@@ -116,7 +116,7 @@ public static class UiScreens
         return root;
     }
 
-    /// <summary>命名界面（规格 §3：主角名为唯一标识，必填）。</summary>
+    /// <summary>命名UI（spec §3：主角名为唯一标识，必填）。</summary>
     public static Control Naming(string error, Action<string> onConfirm, Action onBack)
     {
         Control root = Fullscreen();
@@ -145,7 +145,7 @@ public static class UiScreens
         return root;
     }
 
-    /// <summary>存档列表（规格 §3：只显示主角名称）。</summary>
+    /// <summary>savelist（spec §3：只show主角名称）。</summary>
     public static Control SaveList(List<string> names, Action<string> onPick, Action onBack)
     {
         Control root = Fullscreen();
@@ -192,12 +192,12 @@ public static class UiScreens
         return root;
     }
 
-    /// <summary>星图（规格 §4）：母舰居中，任务节点散点分布；节点锚定窗口中心，随 resize 自适应。</summary>
+    /// <summary>starmap（spec §4）：mothership居medium，missionnode散点distribution；node锚定windowmedium心，随 resize 自适应。</summary>
     public static Control Starmap(StarMap map, Action<StarMapNode> onPick, Action onMothership, Action onMenu)
     {
         Control root = Fullscreen();
 
-        // Sprint 5 P0-B：星图章节星云背景（zone1-4，冷蓝/青绿/紫红/暗红），叠加于深色底
+        // Sprint 5 P0-B：starmapsector星云背景（zone1-4，冷蓝/青绿/紫红/暗红），stack于深色底
         var nebula = new TextureRect
         {
             Texture = GD.Load<Texture2D>($"res://assets/background/zone{Math.Clamp(map.Chapter, 1, 4)}.png"),
@@ -208,7 +208,7 @@ public static class UiScreens
         nebula.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         root.AddChild(nebula);
 
-        // 标题区
+        // title区
         var header = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         header.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         header.OffsetTop = 24;
@@ -229,7 +229,7 @@ public static class UiScreens
         hint.AddThemeColorOverride("font_color", new Color(SubColor));
         header.AddChild(hint);
 
-        // 底部按钮：直接锚定左下角/右下角，offset_top = -(按钮高 + 24 margin)（迭代 27.3 修正裁切）
+        // 底部button：直接锚定左下角/右下角，offset_top = -(buttonhigh + 24 margin)（iteration 27.3 correction裁切）
         var menuBtn = new Button
         {
             Text = "⌂ Main Menu",
@@ -267,7 +267,7 @@ public static class UiScreens
 
         root.AddChild(header);
 
-        // 母舰居中（锚定窗口中心）
+        // mothership居medium（锚定windowmedium心）
         var mothership = new Label
         {
             Text = "◆ Starship",
@@ -280,7 +280,7 @@ public static class UiScreens
         mothership.Position = new Vector2(-40, -18);
         root.AddChild(mothership);
 
-        // 任务节点：普通节点绕母舰环形均匀分布，Boss 固定右侧（迭代 27.1 UI 重排）
+        // missionnode：普通node绕mothership环形均匀distribution，Boss fixed右侧（iteration 27.1 UI 重排）
         var normalNodes = map.Nodes.Where(n => !n.IsBoss).ToList();
         var bossNode = map.Nodes.FirstOrDefault(n => n.IsBoss);
         const float ringRx = 300f;
@@ -362,7 +362,7 @@ public static class UiScreens
         return root;
     }
 
-    /// <summary>任务结算（规格 §4.3）：无论成败消耗一次时间，返回星图重随机。</summary>
+    /// <summary>mission结算（spec §4.3）：无论成败消耗一次time，backstarmap重random。</summary>
     public static Control Settlement(bool victory, string lootSummary, string missionSummary, Action onReturn)
     {
         Control root = Fullscreen();

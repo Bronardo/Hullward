@@ -5,8 +5,8 @@ using Hullward.Domain.Loot;
 namespace Hullward.Domain.Modules;
 
 /// <summary>
-/// 玩家背包（纯 C# 域层）：模块 + 合金。
-/// 装配消耗模块；拆解回收合金。
+/// 玩家inventory（纯 C# 域层）：module + alloy。
+/// fit消耗module；disassemblesalvagealloy。
 /// </summary>
 public sealed class Inventory
 {
@@ -17,7 +17,7 @@ public sealed class Inventory
 
     public void AddAlloy(int amount) => Alloy += Math.Max(0, amount);
 
-    /// <summary>消费合金（工坊/商店）。不足返回 false。</summary>
+    /// <summary>消费alloy（workshop/shop）。不足back false。</summary>
     public bool SpendAlloy(int amount)
     {
         if (amount < 0 || Alloy < amount)

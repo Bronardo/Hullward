@@ -5,8 +5,8 @@ using Hullward.Domain.Loot;
 namespace Hullward.Game;
 
 /// <summary>
-/// 掉落物（表现层）：模块（品质色）/合金（金色）方块。
-/// 玩家接近即拾取（通知 Main 入背包/装配；背包系统已接入）。
+/// drop物（presentation）：module（rarity color）/alloy（金色）方块。
+/// 玩家接近即pickup（notify Main 入inventory/fit；inventorysystem已接入）。
 /// </summary>
 public partial class Pickup : Node2D
 {
@@ -51,7 +51,7 @@ public partial class Pickup : Node2D
 
     public override void _Ready()
     {
-        // Sprint 4 线 A：CC0 掉落图标——模块=蓝色菱形 powerupBlue、合金=金色螺栓 bolt_gold
+        // Sprint 4 线 A：CC0 drop图标——module=蓝色菱形 powerupBlue、alloy=金色螺栓 bolt_gold
         var (path, scale) = Kind == PickupKind.Module
             ? ("res://assets/effects/powerupBlue.png", 0.5f)
             : ("res://assets/effects/bolt_gold.png", 0.8f);

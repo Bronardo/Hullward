@@ -7,10 +7,10 @@ using Hullward.Domain.WorldGen;
 namespace Hullward.Game;
 
 /// <summary>
-/// 敌舰表现层节点（渲染桥接）：
-/// 持有域层 EnemyShip 对象（多态行为在域层），每帧调用 UpdateBehavior 并同步位置。
-/// Boss（GuardianBoss）额外执行域层技能意图（召唤/点射/湮灭脉冲/冲锋碰撞），
-/// 视觉/受击反馈留在表现层；逻辑全部走域层（ULO2/ULO3 证据）。
+/// enemy shippresentationnode（renderbridge）：
+/// 持有域层 EnemyShip object（polymorphismrow为在域层），每帧call UpdateBehavior 并syncposition。
+/// Boss（GuardianBoss）额外执row域层skill意图（spawn/burst/湮灭pulse/chargecollision），
+/// 视觉/受击反馈留在presentation；逻辑全部走域层（ULO2/ULO3 证据）。
 /// Sprint 4 线 A：视觉由方块占位替换为 CC0 像素船（Kenney Space Shooter Redux，按船型选纹理）。
 /// </summary>
 public partial class EnemyDrone : Node2D, ITargetable
@@ -19,23 +19,23 @@ public partial class EnemyDrone : Node2D, ITargetable
     public PlayerShip? Player { get; set; }
     public event Action<EnemyDrone>? Destroyed;
 
-    /// <summary>召唤请求（Main 注入）：Boss 召唤侦察机/突击舰。</summary>
+    /// <summary>spawnrequest（Main 注入）：Boss spawnrecon/assault ship。</summary>
     public Action<EnemyKind, Vector2>? SummonRequested { get; set; }
 
-    /// <summary>HUD 提示请求（Main 订阅，转发 _hud.ShowToast）。</summary>
+    /// <summary>HUD 提示request（Main subscribe，转发 _hud.ShowToast）。</summary>
     public event Action<string>? ToastRequested;
 
-    /// <summary>受击音效请求（Main 订阅）。</summary>
+    /// <summary>受击sfxrequest（Main subscribe）。</summary>
     public event Action? HitTaken;
 
-    /// <summary>Boss 阶段切换音效请求（Main 订阅，阶段 2/3 警示）。</summary>
+    /// <summary>Boss phaseswitchsfxrequest（Main subscribe，phase 2/3 警示）。</summary>
     public event Action? BossWarnRequested;
 
     private float _flashTimer;
     private float _attackCooldown;
     private Sprite2D _visual = null!;
 
-    // Boss 点射 3 连（salvo 状态机：每 0.16s 一发）
+    // Boss burst 3 连（salvo state machine：每 0.16s 一发）
     private int _salvoLeft;
     private float _salvoTimer;
     private Vector2 _salvoDir;
@@ -49,18 +49,18 @@ public partial class EnemyDrone : Node2D, ITargetable
     public float Y => Ship.Y;
     public int Hull => Ship.Hull;
 
-    /// <summary>注入域层敌舰 + 视觉（船型决定纹理，visualSize 决定显示尺寸）。</summary>
+    /// <summary>注入域层enemy ship + 视觉（船型决定纹理，visualSize 决定show尺寸）。</summary>
     public void Setup(EnemyShip ship, Color color, Vector2 visualSize)
     {
         Ship = ship;
 
-        // 域对象是行为真源：用节点出生点初始化域位置，避免首帧被覆盖回原点
+        // 域object是row为真源：用node出生点initial化域position，avoidance首帧被覆盖回原点
         ship.X = Position.X;
         ship.Y = Position.Y;
 
         var (path, canvasW) = TextureFor(ship);
         float scale = canvasW > 0f ? visualSize.X / canvasW : 1f;
-        // 纹理本色显示（CC0 红紫系敌船），Main 传入的方块占位色不再参与渲染
+        // 纹理本色show（CC0 红紫系敌船），Main 传入的方块占位色不再参与render
         _ = color;
         _visual = new Sprite2D
         {
@@ -71,7 +71,7 @@ public partial class EnemyDrone : Node2D, ITargetable
         };
         AddChild(_visual);
 
-        // Boss：阶段切换提示
+        // Boss：phaseswitch提示
         if (ship is GuardianBoss boss)
         {
             boss.PhaseChanged += phase =>
@@ -90,7 +90,7 @@ public partial class EnemyDrone : Node2D, ITargetable
         }
     }
 
-    /// <summary>船型 → 精灵纹理与画布宽（等比缩放基准）。</summary>
+    /// <summary>船型 → 精灵纹理与canvas宽（等比缩放benchmark）。</summary>
     private static (string Path, float CanvasWidth) TextureFor(EnemyShip ship) => ship switch
     {
         RaiderShip => ("res://assets/ships/enemy_raider.png", 104f),
@@ -124,7 +124,7 @@ public partial class EnemyDrone : Node2D, ITargetable
             ExecuteBossIntent(boss.TickSkills((float)delta, Player.Position.X, Player.Position.Y), boss);
         }
 
-        // 近身攻击玩家（按域层火力）；Boss 冲锋时路径持续伤害（更短间隔、更大范围）
+        // 近身攻击玩家（按域层firepower）；Boss charge时pathdurationdamage（更短间隔、更大range）
         _attackCooldown -= (float)delta;
         if (Player != null && _attackCooldown <= 0f)
         {
@@ -139,13 +139,13 @@ public partial class EnemyDrone : Node2D, ITargetable
             }
         }
 
-        // 远程射击（LD Sprint 3 §4.2：炮艇类敌舰多态 TryFire）
+        // remote射击（LD Sprint 3 §4.2：gunboat类enemy shippolymorphism TryFire）
         if (Player != null && Ship.TryFire((float)delta, Player.Position.X, Player.Position.Y, out float tx, out float ty))
         {
             SpawnEnemyProjectile(tx, ty);
         }
 
-        // Boss 点射 3 连（salvo）
+        // Boss burst 3 连（salvo）
         if (_salvoLeft > 0)
         {
             _salvoTimer -= (float)delta;
@@ -164,20 +164,20 @@ public partial class EnemyDrone : Node2D, ITargetable
         }
     }
 
-    /// <summary>执行 Boss 技能意图（召唤/点射/湮灭脉冲/冲锋视觉）。</summary>
+    /// <summary>执row Boss skill意图（spawn/burst/湮灭pulse/charge视觉）。</summary>
     private void ExecuteBossIntent(BossIntent intent, GuardianBoss boss)
     {
         switch (intent.Kind)
         {
             case BossSkillKind.PhaseCharge:
-                // 冲锋视觉：高亮
+                // charge视觉：high亮
                 _visual.SelfModulate = new Color("ff9aa8");
                 _flashTimer = 0.12f;
                 break;
             case BossSkillKind.SummonScouts:
                 if (SummonRequested != null)
                 {
-                    // P3 狂暴召唤突击舰，否则召唤侦察机（LD §4.3）
+                    // P3 enragespawnassault ship，elsespawnrecon（LD §4.3）
                     EnemyKind kind = boss.Phase == BossPhase.Phase3 ? EnemyKind.Raider : EnemyKind.Recon;
                     for (int i = 0; i < intent.Payload; i++)
                     {
@@ -187,7 +187,7 @@ public partial class EnemyDrone : Node2D, ITargetable
                 }
                 break;
             case BossSkillKind.PointFire:
-                // 3 连弹幕：锁定玩家方向，逐发间隔 0.16s
+                // 3 连弹幕：lock定玩家direction，逐发间隔 0.16s
                 _salvoLeft = intent.Payload;
                 _salvoTimer = 0f;
                 _salvoDir = Player != null
@@ -235,7 +235,7 @@ public partial class EnemyDrone : Node2D, ITargetable
     {
         Ship.TakeHit(damage);
         GD.Print($"{Ship.Name} hit -{damage}, hull {Ship.Hull}");
-        // 受击反馈：提亮闪烁（>1 分量让 Sprite2D 超白高亮，方块占位时是闪白）
+        // 受击反馈：提亮闪烁（>1 分量让 Sprite2D 超白high亮，方块占位时是闪白）
         _visual.SelfModulate = new Color(2.6f, 2.6f, 2.6f);
         _flashTimer = 0.1f;
         HitTaken?.Invoke();

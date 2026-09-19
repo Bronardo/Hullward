@@ -3,10 +3,10 @@ using System;
 namespace Hullward.Domain.Enemies;
 
 /// <summary>
-/// 精英·旗舰护卫（Sprint 4 线 B1 · LD：第 3 章精英，高数值，行为可感知）。
-/// 定位：介于远程炮艇与重装堡垒之间的压制型精英——中速逼近、保持射程环形、
-/// 短冷却点射。高护盾高火力，是第 3 章（深空）的强度担当。
-/// 域层多态扩展（ULO2：新敌人类 = 继承 EnemyShip 覆写行为/数值/射击）。
+/// elite·elite guard（Sprint 4 线 B1 · LD：第 3 章elite，highstat，row为可感知）。
+/// locate：介于gunboat与重装堡垒between的压制型elite——medium速逼近、保持射程环形、
+/// 短cooldownburst。highshieldhighfirepower，是第 3 章（deep space）的强度担当。
+/// 域层polymorphismextension（ULO2：新enemy类 = inheritance EnemyShip 覆writerow为/stat/射击）。
 /// </summary>
 public sealed class EliteGuardShip : EnemyShip
 {
@@ -41,7 +41,7 @@ public sealed class EliteGuardShip : EnemyShip
             return;
         }
 
-        // 保持 300 距离环形游走（射程内），过近退后、过远逼近（旗舰护卫式压迫）
+        // 保持 300 distance环形游走（射程内），过近退后、过远逼近（elite guard式压迫）
         if (dist > PreferredDistance + Deadband)
         {
             MoveToward(playerX, playerY, BehaviorSpeed, dt);
@@ -52,7 +52,7 @@ public sealed class EliteGuardShip : EnemyShip
         }
         else
         {
-            // 环形（沿切线方向）
+            // 环形（沿切线direction）
             float tx = X + (-dy / dist) * _orbitDir * BehaviorSpeed * dt;
             float ty = Y + (dx / dist) * _orbitDir * BehaviorSpeed * dt;
             X = tx;

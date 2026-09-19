@@ -4,10 +4,10 @@ using Hullward.Domain.Loot;
 
 namespace Hullward.Domain.Modules;
 
-/// <summary>词缀属性类型（LD 词缀表 §3.2）。</summary>
+/// <summary>affixattribute类型（LD affix表 §3.2）。</summary>
 public enum AffixStat
 {
-    // 武器槽
+    // weapon slot
     FirepowerPercent,      // 强化炮击：武器伤害 +%
     AttackSpeedPercent,    // 急速供弹：攻击速度 +%
     CritChance,            // 致命一击：暴击概率 +%
@@ -16,20 +16,20 @@ public enum AffixStat
     SlowOnHit,             // 减速磁场：命中减速 %（2s）
     EnergyOnKill,          // 能量反馈：击杀回复能源
     AoeBlast,              // 范围爆破：命中范围爆炸（黄+）
-    // 装甲槽
+    // armor slot
     MaxShieldPercent,      // 护盾扩容：最大护盾 +%
     MaxHullPercent,        // 船体加固：船体耐久 +%
     ResistancePercent,     // 全向抗性：全抗性 +%
     ShieldRegen,           // 纳米修复：护盾每秒恢复 +
     DamageReduction,       // 受击减伤：受击后减伤 %
     Thorns,                // 反伤镀层：反弹近身伤害 %（黄+）
-    // 能源槽
+    // power slot
     MaxEnergyPercent,      // 能源扩容：能源上限 +%
     EnergyRegenPercent,    // 快速充能：能源回复 +%
     SkillCostPercent,      // 节能模块：技能能耗 -%
     CooldownPercent,       // 冷却缩减：技能冷却 -%
     OverdrivePercent,      // 过载缓冲：过载炮伤害 +%（黄+）
-    // 特殊槽
+    // special slot
     WarpCooldownPercent,   // 跃迁加速：跃迁冷却 -%
     TargetingRangePercent, // 广域扫描：索敌范围 +%
     MagicFind,             // 打捞增效：MF 寻宝值 +
@@ -38,7 +38,7 @@ public enum AffixStat
 }
 
 /// <summary>
-/// 模块词缀（LD 词缀表 §3）：一条词缀 = 属性类型 + 数值（百分比或绝对值）。
+/// moduleaffix（LD affix表 §3）：一条affix = attribute类型 + stat（百分比或绝对值）。
 /// </summary>
 public sealed class Affix
 {
@@ -72,7 +72,7 @@ public sealed class Affix
 
     private string DisplayName => LegacyNameMap.TryGetValue(Name, out var en) ? en : Name;
 
-    /// <summary>显示文本：词缀名 + 数值（百分比统一四舍五入；触发型词缀无数值只显名）。</summary>
+    /// <summary>showtext：affix name + stat（百分比统一四舍五入；trigger型affix无stat只显名）。</summary>
     public string Describe()
     {
         bool triggered = Stat is AffixStat.AoeBlast or AffixStat.EmergencyShield;
@@ -98,8 +98,8 @@ public sealed class Affix
 }
 
 /// <summary>
-/// 词缀池配置（LD 词缀表 §3.2 原样录入）：
-/// 每槽位一个词缀池，条目 = 词缀名 + 属性 + 品质数值区间 + 权重 + 最低品质。
+/// affix poolconfig（LD affix表 §3.2 原样录入）：
+/// 每slot一个affix pool，entry = affix name + attribute + rarity valuesrange + weight + 最lowrarity。
 /// </summary>
 public sealed class AffixPool
 {
@@ -109,7 +109,7 @@ public sealed class AffixPool
         public AffixStat Stat { get; }
         public float Min { get; }
         public float Max { get; }
-        /// <summary>黄/绿（Rare/Set）专属区间；-1 = 未设置，回退普通区间（蓝）。</summary>
+        /// <summary>黄/绿（Rare/Set）专属range；-1 = 未setting，回退普通range（蓝）。</summary>
         public float RareMin { get; }
         public float RareMax { get; }
         public float AncientMin { get; }
@@ -182,13 +182,13 @@ public sealed class AffixPool
 }
 
 /// <summary>
-/// 模块词缀生成器（LD 词缀表 §3.3 roll 规则）：
-/// 品质词缀数（白0/蓝1-2/黄2-3/绿3/太古2条暗金区间）、按权重抽取、同模块不重复、数值区间均匀随机。
-/// 太古不可洗练；套件词缀（绿固定件）暂以随机条数近似（体系 v2.0 细化）。
+/// moduleaffixgenerator（LD affix表 §3.3 roll 规则）：
+/// rarityaffix count（白0/蓝1-2/黄2-3/绿3/太古2条暗金range）、按weight抽取、同module不重复、statrange均匀random。
+/// 太古不可reroll；套件affix（绿fixed件）暂以random条数approximate（体系 v2.0 细化）。
 /// </summary>
 public static class ModuleRoller
 {
-    /// <summary>品质 → 词缀条数范围（LD §3.1：蓝 1-2、黄 2-3；白 0）。</summary>
+    /// <summary>rarity → affix条数range（LD §3.1：蓝 1-2、黄 2-3；白 0）。</summary>
     public static (int Min, int Max) AffixCountRange(ItemRarity rarity) => rarity switch
     {
         ItemRarity.Common => (0, 0),
@@ -199,10 +199,10 @@ public static class ModuleRoller
         _ => (0, 0)
     };
 
-    /// <summary>是否为暗金区间（太古专用强数值）。</summary>
+    /// <summary>是否为暗金range（太古专用强stat）。</summary>
     public static bool IsAncientRoll(ItemRarity rarity) => rarity == ItemRarity.Ancient;
 
-    /// <summary>给掉落模块 roll 词缀（LootTable 生成时调用；太古固定 2 条暗金区间）。</summary>
+    /// <summary>给dropmodule roll affix（LootTable 生成时call；太古fixed 2 条暗金range）。</summary>
     public static void RollAffixes(ModuleDrop drop, Random rng)
     {
         drop.Affixes.Clear();
@@ -213,7 +213,7 @@ public static class ModuleRoller
         }
         int count = min == max ? min : rng.Next(min, max + 1);
         var pool = AffixPool.ForSlot(drop.Slot);
-        // 按权重预展开候选（同模块不重复）
+        // 按weight预展开候选（同module不重复）
         var candidates = new List<AffixPool.AffixEntry>();
         foreach (var entry in pool)
         {
@@ -235,7 +235,7 @@ public static class ModuleRoller
         }
     }
 
-    /// <summary>洗练：黄+ 重 roll 词缀数与数值（太古不可洗，调用方校验）。</summary>
+    /// <summary>reroll：黄+ 重 roll affix count与stat（太古不可洗，call方validate）。</summary>
     public static void RerollAffixes(ModuleDrop drop, Random rng)
     {
         drop.Affixes.Clear();
@@ -243,7 +243,7 @@ public static class ModuleRoller
         drop.RerollCount++;
     }
 
-    /// <summary>按品质区间均匀随机数值。</summary>
+    /// <summary>按rarity range均匀randomstat。</summary>
     private static float RollValue(AffixPool.AffixEntry entry, ItemRarity rarity, Random rng)
     {
         float min, max;
@@ -254,7 +254,7 @@ public static class ModuleRoller
         }
         else if ((rarity is ItemRarity.Rare or ItemRarity.Set) && entry.RareMin >= 0f)
         {
-            // 黄/绿专属区间（LD 线 C C2：致命一击蓝 5-8 / 黄 8-12 / 暗金 15-18）
+            // 黄/绿专属range（LD 线 C C2：fatal一击蓝 5-8 / 黄 8-12 / 暗金 15-18）
             min = entry.RareMin;
             max = entry.RareMax;
         }
@@ -265,7 +265,7 @@ public static class ModuleRoller
         }
         if (min == 0f && max == 0f)
         {
-            // 无暗金列的词缀：黄+ 才可 roll，取非暗金区间
+            // 无暗金column的affix：黄+ 才可 roll，取非暗金range
             min = entry.Min;
             max = entry.Max;
         }

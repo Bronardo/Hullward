@@ -3,16 +3,16 @@ using Godot;
 namespace Hullward.Game;
 
 /// <summary>
-/// 爆炸特效（Sprint 4 线 A 修复版）：CPUParticles2D 径向爆裂粒子，一次性爆发后自动消散自毁。
-/// 说明：初版用 Kenney fire00-19 帧序列做动画——素材实为长条光束（观感如光柱），且动画未设
-/// OneShot（SetAnimationLoop 误删）导致 AnimationFinished 永不触发、节点跨关卡累积。
-/// 粒子方案无素材依赖、生命周期确定、必自毁（ULO1 修复证据）。
+/// 爆炸特效（Sprint 4 线 A fix版）：CPUParticles2D 径向爆裂particle，一次性爆发后auto消散自毁。
+/// note：初版用 Kenney fire00-19 帧序column做animation——素材实为长条光束（观感如光柱），且animation未设
+/// OneShot（SetAnimationLoop 误删）导致 AnimationFinished 永不trigger、node跨关卡累积。
+/// particle方案无素材dependency、生命周期确定、必自毁（ULO1 fix证据）。
 /// </summary>
 public partial class ExplosionFx : Node2D
 {
     public override void _Ready()
     {
-        // 橙红→透明渐隐
+        // 橙红→transparency渐隐
         var ramp = new Gradient();
         ramp.SetColor(0, new Color(1f, 0.82f, 0.45f, 1f));
         ramp.SetOffset(0, 0f);
@@ -39,7 +39,7 @@ public partial class ExplosionFx : Node2D
         };
         AddChild(particles);
 
-        // 粒子播完（0.45s + 余量）后自毁；SceneTreeTimer 默认 Always，暂停中也会倒计时，避免残留
+        // particle播完（0.45s + 余量）后自毁；SceneTreeTimer default Always，pausemedium也会倒计时，avoidance残留
         var timer = GetTree().CreateTimer(0.8f);
         timer.Timeout += QueueFree;
     }

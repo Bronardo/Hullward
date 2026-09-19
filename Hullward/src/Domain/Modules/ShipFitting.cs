@@ -5,12 +5,12 @@ using Hullward.Domain.Ships;
 namespace Hullward.Domain.Modules;
 
 /// <summary>
-/// 舰船装配（纯 C# 域层）：
-/// 将背包模块按品质降序自动装配到船体空闲槽位，模块数值随品质递增。
+/// shipfit（纯 C# 域层）：
+/// 将inventorymodule按rarity降序autofit到hull空闲slot，modulestat随rarity递增。
 /// </summary>
 public static class ShipFitting
 {
-    /// <summary>品质 → 火力加成（武器/特种）。</summary>
+    /// <summary>rarity → firepowerbonus（weapon/特种）。</summary>
     public static float FirepowerBonus(ItemRarity rarity) => rarity switch
     {
         ItemRarity.Common => 2f,
@@ -21,7 +21,7 @@ public static class ShipFitting
         _ => 2f
     };
 
-    /// <summary>品质 → 护盾加成（装甲）。</summary>
+    /// <summary>rarity → shieldbonus（armor）。</summary>
     public static int ShieldBonus(ItemRarity rarity) => rarity switch
     {
         ItemRarity.Common => 10,
@@ -32,7 +32,7 @@ public static class ShipFitting
         _ => 10
     };
 
-    /// <summary>把背包最高品质模块逐个装入空闲槽位（装配即消耗）。</summary>
+    /// <summary>把inventory最highraritymodule逐个装入空闲slot（fit即消耗）。</summary>
     public static void AutoEquipBest(ShipBase ship, Inventory inventory)
     {
         while (ship.Modules.Count < ship.ModuleSlots)
@@ -42,7 +42,7 @@ public static class ShipFitting
 
             for (int i = 0; i < inventory.Modules.Count; i++)
             {
-                // bestIndex < 0：首个模块兜底选中，避免"只有 Common 时永远不装"的边界 bug
+                // bestIndex < 0：首个module兜底选medium，avoidance"只有 Common 时永远不装"的boundary bug
                 if (bestIndex < 0 || inventory.Modules[i].Rarity > bestRarity)
                 {
                     bestRarity = inventory.Modules[i].Rarity;
@@ -62,7 +62,7 @@ public static class ShipFitting
         }
     }
 
-    /// <summary>模块掉落 → 具体模块实现（数值随品质；词缀按 LD §3 并入加成）。</summary>
+    /// <summary>module drop → 具体moduleimplement（stat随rarity；affix按 LD §3 并入bonus）。</summary>
     public static IShipModule CreateModule(ModuleDrop drop)
     {
         float fp = FirepowerBonus(drop.Rarity);

@@ -1,6 +1,6 @@
 namespace Hullward.Domain.Enemies;
 
-/// <summary>Boss 阶段（LD Sprint 3 §4.3：100%–60% / 60%–30% / 30%–0%）。</summary>
+/// <summary>Boss phase（LD Sprint 3 §4.3：100%–60% / 60%–30% / 30%–0%）。</summary>
 public enum BossPhase
 {
     Phase1,
@@ -8,7 +8,7 @@ public enum BossPhase
     Phase3
 }
 
-/// <summary>Boss 技能种类（域层只负责"何时用什么技能"，表现层执行实体/视觉）。</summary>
+/// <summary>Boss skill种类（域层只负责"何时用什么skill"，presentation执rowentity/视觉）。</summary>
 public enum BossSkillKind
 {
     None,
@@ -19,8 +19,8 @@ public enum BossSkillKind
 }
 
 /// <summary>
-/// Boss 技能意图：域层技能调度器的输出。
-/// Payload 语义：SummonScouts = 召唤数量；PointFire = 连发数（3）；AnnihilationPulse = 双发数（P3=2）。
+/// Boss skill意图：域层skillschedule器的output。
+/// Payload 语义：SummonScouts = spawn数量；PointFire = 连发数（3）；AnnihilationPulse = 双发数（P3=2）。
 /// </summary>
 public readonly record struct BossIntent(BossSkillKind Kind, int Payload)
 {

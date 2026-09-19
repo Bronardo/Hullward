@@ -5,7 +5,7 @@ using Hullward.Domain.Modules;
 
 namespace Hullward.Domain.Loot;
 
-/// <summary>装备品质：白蓝黄绿太古（策划 §3.3）。</summary>
+/// <summary>装备rarity：白蓝黄绿太古（策划 §3.3）。</summary>
 public enum ItemRarity
 {
     Common,  // 白
@@ -15,26 +15,26 @@ public enum ItemRarity
     Ancient  // 太古
 }
 
-/// <summary>一次模块掉落结果（含词缀，LD 词缀表 §3）。</summary>
+/// <summary>一次module dropresult（含affix，LD affix表 §3）。</summary>
 public sealed class ModuleDrop
 {
     public ModuleType Slot { get; }
     public ItemRarity Rarity { get; }
     public string Name { get; }
 
-    /// <summary>品类（LD Sprint5 §2：掉落时随机分配，与词缀 roll 正交）；旧档 null → 确定性映射显示名。</summary>
+    /// <summary>品类（LD Sprint5 §2：drop时random分配，与affix roll 正交）；old save null → deterministicmapshow名。</summary>
     public ModuleCategory? Category { get; set; }
 
-    /// <summary>玩家可读显示名（品质前缀 + 品类名，LD §3-4；弃用代码类名）。</summary>
+    /// <summary>玩家可readshow名（quality prefix + 品类名，LD §3-4；弃用code类名）。</summary>
     public string DisplayName => ModuleNames.DisplayName(this);
 
-    /// <summary>词缀列表（白装为空）。</summary>
+    /// <summary>affixlist（白装为空）。</summary>
     public List<Affix> Affixes { get; } = new();
 
-    /// <summary>洗练次数（费用递增 5×2^n，太古不可洗）。</summary>
+    /// <summary>reroll次数（费用递增 5×2^n，太古不可洗）。</summary>
     public int RerollCount { get; set; }
 
-    /// <summary>本次洗练费用（LD §4：5/10/20/40…）。</summary>
+    /// <summary>本次reroll费用（LD §4：5/10/20/40…）。</summary>
     public int RerollCost => 5 * (1 << RerollCount);
 
     public ModuleDrop(ModuleType slot, ItemRarity rarity)
@@ -44,17 +44,17 @@ public sealed class ModuleDrop
         Name = $"{rarity}{slot} Module";
     }
 
-    /// <summary>词缀摘要（多行，用于 UI/存档显示）。</summary>
+    /// <summary>affixsummary（多row，用于 UI/saveshow）。</summary>
     public string AffixSummary() => Affixes.Count == 0 ? "(no affixes)" : string.Join("\n", Affixes.Select(a => a.Describe()));
 }
 
 /// <summary>
-/// 掉落表（纯 C# 域层，可单测）。
-/// 星域等级越高，高品质权重越大；合金随等级增产。
+/// drop表（纯 C# 域层，可单测）。
+/// 星域level越high，highrarityweight越大；alloy随level增产。
 /// </summary>
 public sealed class LootTable
 {
-    /// <summary>按星域等级（1-4）的模块品质权重：Safe/Contested/DeepVoid/CollapseZone。</summary>
+    /// <summary>按星域level（1-4）的modulerarityweight：Safe/Contested/DeepVoid/CollapseZone。</summary>
     private static readonly int[][] ZoneRarityWeights =
     {
         new[] { 60, 25, 12, 3, 0 },  // 安全
@@ -79,7 +79,7 @@ public sealed class LootTable
         ItemRarity rarity = (ItemRarity)WeightedPick(weights, rng);
         if (rarity == ItemRarity.Common && zoneLevel == 4)
         {
-            // 坍缩禁区不掉白装（权重为 0，不会到这里）
+            // collapse禁区不掉白装（weight为 0，不会到这里）
         }
 
         ModuleType slot = Slots[rng.Next(Slots.Length)];
@@ -88,7 +88,7 @@ public sealed class LootTable
         return drop;
     }
 
-    /// <summary>合金掉落量：随等级提升；受打捞增效（MF）加成。</summary>
+    /// <summary>alloydrop量：随level提升；受打捞增效（MF）bonus。</summary>
     public int RollAlloy(int zoneLevel, Random rng, int magicFind = 0)
     {
         if (zoneLevel < 1 || zoneLevel > 4)
@@ -107,8 +107,8 @@ public sealed class LootTable
     }
 
     /// <summary>
-    /// Boss 必掉奖励（LD Sprint 3 §4.3）：必掉黄+（Rare/Set/Ancient），
-    /// 暗金低概率 1–3%，随打捞增效（MF）提升至封顶 3%。
+    /// Boss guaranteed drop奖励（LD Sprint 3 §4.3）：必掉黄+（Rare/Set/Ancient），
+    /// 暗金lowchance 1–3%，随打捞增效（MF）提升至封顶 3%。
     /// </summary>
     public ModuleDrop RollBossModule(int zoneLevel, Random rng, int magicFind = 0)
     {

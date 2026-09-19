@@ -4,7 +4,7 @@ using Hullward.Domain.Combat;
 namespace Hullward.Game;
 
 /// <summary>
-/// 主炮投射物（表现层）：直线飞向锁定目标，命中（距离判定）后对目标施加伤害。
+/// 主炮投射物（presentation）：直线飞向lock定target，hit（distance判定）后对target施加damage。
 /// </summary>
 public partial class Projectile : Area2D
 {
@@ -14,7 +14,7 @@ public partial class Projectile : Area2D
     public float HitRadius { get; set; } = 14f;
     public float MaxLifetime { get; set; } = 4f;
 
-    /// <summary>暴击弹丸标记（词缀"致命一击/暴击增幅"）：尺寸/颜色增强，仅表现层。</summary>
+    /// <summary>crit弹丸marker（affix"fatal一击/crit增幅"）：尺寸/颜色增强，仅presentation。</summary>
     public bool IsCritical { get; set; }
 
     private float _lifetime;
@@ -22,7 +22,7 @@ public partial class Projectile : Area2D
 
     public override void _Ready()
     {
-        // Sprint 4 线 A：CC0 激光精灵（13×37 竖直弹体）；暴击更大更亮（金色提亮）
+        // Sprint 4 线 A：CC0 激光精灵（13×37 竖直弹体）；crit更大更亮（金色提亮）
         _sprite = new Sprite2D
         {
             Texture = GD.Load<Texture2D>("res://assets/lasers/laser_player.png"),
@@ -36,7 +36,7 @@ public partial class Projectile : Area2D
 
     private void RotateToTarget()
     {
-        // 竖直弹体指向目标方向（纹理长轴沿 Y）
+        // 竖直弹体指向targetdirection（纹理长轴沿 Y）
         if (Target != null)
         {
             var dir = new Vector2(Target.X, Target.Y) - Position;
@@ -56,7 +56,7 @@ public partial class Projectile : Area2D
             return;
         }
 
-        // 目标已被击毁/释放（Godot 对象）：本投射物自行消失
+        // target已被击毁/释放（Godot object）：本投射物自row消失
         if (Target is GodotObject go && !GodotObject.IsInstanceValid(go))
         {
             QueueFree();

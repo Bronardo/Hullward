@@ -2,39 +2,39 @@ using System.Collections.Generic;
 
 namespace Hullward.Domain.WorldGen;
 
-/// <summary>任务类型（UI 规格 v0.2 §4.2）。</summary>
+/// <summary>mission类型（UI spec v0.2 §4.2）。</summary>
 public enum MissionType
 {
-    /// <summary>清剿：消灭全部暗骸（MVP 必做）。</summary>
+    /// <summary>清剿：clear全部暗骸（MVP 必做）。</summary>
     Clear
 }
 
-/// <summary>星图节点 = 一个可进入的任务关卡。</summary>
+/// <summary>starmapnode = 一个可enter的mission关卡。</summary>
 public sealed class StarMapNode
 {
     public int Index { get; init; }
 
     public MissionType Type { get; init; }
 
-    /// <summary>节点强度（敌人总量参考，章节基准 × 随机系数）。</summary>
+    /// <summary>node强度（enemy总量参考，sectorbenchmark × random系数）。</summary>
     public int Strength { get; init; }
 
-    /// <summary>危险等级 ★ 1-5。</summary>
+    /// <summary>危险level ★ 1-5。</summary>
     public int DangerStars { get; init; }
 
-    /// <summary>章节 Boss 节点（固定生成，非随机）。</summary>
+    /// <summary>sector Boss node（fixed生成，非random）。</summary>
     public bool IsBoss { get; init; }
 
-    /// <summary>章节门标签（非空 = 该节点是章节门，UI 显示专属名；Sprint 4 线 B2：终章"坍缩禁区 · 遗迹守护"）。</summary>
+    /// <summary>sector门tab（非空 = 该node是sector门，UI show专属名；Sprint 4 线 B2：终章"collapse禁区 · 遗迹守护"）。</summary>
     public string? GateLabel { get; init; }
 
-    /// <summary>平面坐标（母舰居中 (0,0)）。</summary>
+    /// <summary>平面position（mothership居medium (0,0)）。</summary>
     public float X { get; init; }
 
     public float Y { get; init; }
 }
 
-/// <summary>一局星图（进入即消耗一次时间，返回后整体重随机）。</summary>
+/// <summary>一局starmap（enter即消耗一次time，back后整体重random）。</summary>
 public sealed class StarMap
 {
     public int Chapter { get; init; }

@@ -4,27 +4,27 @@ using Hullward.Domain.Loot;
 namespace Hullward.Domain.Modules;
 
 /// <summary>
-/// 模块品类（LD Sprint5 命名映射 v0.1 §2）：每槽位 4 个玩家可读品类，掉落时随机分配，与词缀 roll 正交。
-/// 品质前缀（§3）：白=无 / 蓝=改良 / 黄=精锐 / 绿=深烬 / 暗金=太古。
+/// module品类（LD Sprint5 命名map v0.1 §2）：每slot 4 个玩家可read品类，drop时random分配，与affix roll 正交。
+/// quality prefix（§3）：白=无 / 蓝=改良 / 黄=精锐 / 绿=深烬 / 暗金=太古。
 /// </summary>
 public enum ModuleCategory
 {
-    // 武器槽（§2 品类表）
+    // weapon slot（§2 品类表）
     PulseCannon,   // 脉冲炮：均衡射速
     RailGun,       // 磁轨炮：高单发
     LaserArray,    // 激光阵列：持续输出
     Gatling,       // 速射机炮：多发快攻
-    // 装甲槽
+    // armor slot
     Composite,     // 复合装甲：均衡耐久
     Reactive,      // 反应装甲：格挡减伤
     NanoCoating,   // 纳米镀层：自修复感
     Phase,         // 相位装甲：闪避感
-    // 能源槽
+    // power slot
     FusionCore,    // 聚变核心：能量上限
     Capacitor,     // 电容电池：能量回复
     Reactor,       // 反应炉：能耗效率
     EnergyNode,    // 能源节点：冷却缩减
-    // 特殊槽
+    // special slot
     Scanner,       // 扫描器：索敌 / MF
     Jammer,        // 干扰器：敌方 debuff
     WarpEngine,    // 跃迁引擎：跃迁 / 速度
@@ -32,8 +32,8 @@ public enum ModuleCategory
 }
 
 /// <summary>
-/// 模块显示名服务（LD Sprint5 §2-4）：品类名 + 品质前缀 → 玩家可读名。
-/// 旧存档兼容（A3）：Category 未分配（null）时按槽位 + 名称哈希确定性映射，显示稳定、数值不变。
+/// moduleshow名service（LD Sprint5 §2-4）：品类名 + quality prefix → 玩家可read名。
+/// old save兼容（A3）：Category 未分配（null）时按slot + 名称hashdeterministicmap，showstable、stat不变。
 /// </summary>
 public static class ModuleNames
 {
@@ -58,7 +58,7 @@ public static class ModuleNames
         _ => "Emergency Shield"
     };
 
-    /// <summary>品质前缀（LD §3；白无前缀）。</summary>
+    /// <summary>quality prefix（LD §3；白无前缀）。</summary>
     public static string RarityPrefix(ItemRarity rarity) => rarity switch
     {
         ItemRarity.Magic => "Improved ",
@@ -68,7 +68,7 @@ public static class ModuleNames
         _ => ""
     };
 
-    /// <summary>该槽位全部品类（4 选 1 池）。</summary>
+    /// <summary>该slot全部品类（4 选 1 池）。</summary>
     public static ModuleCategory[] ForSlot(ModuleType slot) => slot switch
     {
         ModuleType.Weapon => new[] { ModuleCategory.PulseCannon, ModuleCategory.RailGun, ModuleCategory.LaserArray, ModuleCategory.Gatling },
@@ -77,14 +77,14 @@ public static class ModuleNames
         _ => new[] { ModuleCategory.Scanner, ModuleCategory.Jammer, ModuleCategory.WarpEngine, ModuleCategory.EmergencyShield }
     };
 
-    /// <summary>掉落时随机品类（与词缀 roll 正交，LD §2）。</summary>
+    /// <summary>drop时random品类（与affix roll 正交，LD §2）。</summary>
     public static ModuleCategory RandomCategory(ModuleType slot, Random rng)
     {
         var pool = ForSlot(slot);
         return pool[rng.Next(pool.Length)];
     }
 
-    /// <summary>旧存档确定性映射：按槽位 + 名称哈希稳定落入该槽位 4 品类之一（同档同模块显示名恒定）。</summary>
+    /// <summary>old savedeterministicmap：按slot + 名称hashstable落入该slot 4 品类之一（同档同moduleshow名恒定）。</summary>
     public static ModuleCategory DeterministicFallback(ModuleType slot, string legacyName)
     {
         var pool = ForSlot(slot);
@@ -96,7 +96,7 @@ public static class ModuleNames
         return pool[Math.Abs(hash) % pool.Length];
     }
 
-    /// <summary>完整显示名：`[品质前缀][品类名]`（LD §4 列表项格式）。</summary>
+    /// <summary>完整show名：`[quality prefix][品类名]`（LD §4 list项格式）。</summary>
     public static string DisplayName(ModuleDrop drop)
     {
         ModuleCategory category = drop.Category ?? DeterministicFallback(drop.Slot, drop.Name);

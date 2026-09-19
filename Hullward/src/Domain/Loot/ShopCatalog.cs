@@ -5,8 +5,8 @@ using Hullward.Domain.Modules;
 namespace Hullward.Domain.Loot;
 
 /// <summary>
-/// 母舰商店（LD 空间站清单 §4：白/蓝模块，合金计价，不卖高阶）：
-/// 每次进店刷新 3 件商品（1 白 + 1 蓝 + 1 随机白/蓝），购买后该商品售罄。
+/// mothershipshop（LD 空间站清单 §4：白/蓝module，alloy计价，不卖high阶）：
+/// 每次进店refresh 3 件商品（1 白 + 1 蓝 + 1 random白/蓝），购买后该商品售罄。
 /// </summary>
 public sealed class ShopCatalog
 {
@@ -27,13 +27,13 @@ public sealed class ShopCatalog
         ModuleType.Weapon, ModuleType.Armor, ModuleType.Power, ModuleType.Special
     };
 
-    /// <summary>当前在售商品。</summary>
+    /// <summary>current在售商品。</summary>
     public List<ShopItem> Items { get; } = new();
 
-    /// <summary>商品定价：白 10 / 蓝 30 合金（LD §4 合金计价）。</summary>
+    /// <summary>商品定价：白 10 / 蓝 30 alloy（LD §4 alloy计价）。</summary>
     public static int Price(ItemRarity rarity) => rarity == ItemRarity.Common ? 10 : 30;
 
-    /// <summary>刷新商品（进店调用）。</summary>
+    /// <summary>refresh商品（进店call）。</summary>
     public void Refresh(Random rng)
     {
         Items.Clear();
@@ -42,7 +42,7 @@ public sealed class ShopCatalog
         Items.Add(MakeItem(rng.Next(2) == 0 ? ItemRarity.Common : ItemRarity.Magic, rng));
     }
 
-    /// <summary>购买第 index 件商品：扣合金、模块入背包、商品售罄。失败返回 false。</summary>
+    /// <summary>购买第 index 件商品：扣alloy、module入inventory、商品售罄。failback false。</summary>
     public bool TryBuy(Inventory inventory, int index)
     {
         if (index < 0 || index >= Items.Count)

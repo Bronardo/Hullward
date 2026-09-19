@@ -4,14 +4,14 @@ using Hullward.Domain.Combat;
 namespace Hullward.Game;
 
 /// <summary>
-/// 敌方弹幕（表现层，LD Sprint 3 §4.2 远程炮艇）：沿固定方向飞行，命中玩家造成伤害。
-/// 反伤镀层：命中玩家时经 Player.TakeDamage 反弹给发射者（Attacker）。
+/// enemy弹幕（presentation，LD Sprint 3 §4.2 gunboat）：沿fixeddirection飞row，hit玩家造成damage。
+/// thorns镀层：hit玩家时经 Player.TakeDamage 反弹给发射者（Attacker）。
 /// </summary>
 public partial class EnemyProjectile : Area2D
 {
     public PlayerShip? Player { get; set; }
 
-    /// <summary>发射者（远程炮艇表现层节点）：反伤的目标（ITargetable）。</summary>
+    /// <summary>发射者（gunboatpresentationnode）：thorns的target（ITargetable）。</summary>
     public ITargetable? Attacker { get; set; }
 
     public float Speed { get; set; } = 300f;
@@ -23,7 +23,7 @@ public partial class EnemyProjectile : Area2D
 
     public override void _Ready()
     {
-        // Sprint 4 线 A：CC0 敌方激光精灵，旋转指向飞行方向（纹理长轴沿 Y）
+        // Sprint 4 线 A：CC0 enemy激光精灵，旋转指向飞rowdirection（纹理长轴沿 Y）
         var sprite = new Sprite2D
         {
             Texture = GD.Load<Texture2D>("res://assets/lasers/laser_enemy.png"),

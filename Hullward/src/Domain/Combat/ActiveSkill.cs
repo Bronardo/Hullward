@@ -3,7 +3,7 @@ using Hullward.Domain.Ships;
 
 namespace Hullward.Domain.Combat;
 
-/// <summary>技能施放上下文（玩家当前状态与锁定目标）。</summary>
+/// <summary>skill施放context（玩家currentstate与lock定target）。</summary>
 public sealed class PlayerContext
 {
     public required ShipBase Ship { get; init; }
@@ -11,14 +11,14 @@ public sealed class PlayerContext
 }
 
 /// <summary>
-/// 主动技能抽象基类（拍板项：主炮自动索敌 + 手动主动技能）。
-/// 冷却/施放条件/效果均为纯 C# 域层，可单测。
+/// 主动skillabstraction基类（拍板项：主炮auto索敌 + manual主动skill）。
+/// cooldown/施放条件/效果均为纯 C# 域层，可单测。
 /// </summary>
 public abstract class ActiveSkill
 {
     public string Name { get; }
     public float Cooldown { get; }
-    /// <summary>基础能耗（LD Sprint4 §3.2：Q 过载炮 30 / E 护盾充能 40；词缀"节能模块"减免）。</summary>
+    /// <summary>基础energy cost（LD Sprint4 §3.2：Q 过载炮 30 / E shield boost 40；affix"节能module"reduction）。</summary>
     public float EnergyCost { get; }
     public float Remaining { get; private set; }
     public bool IsReady => Remaining <= 0f;
@@ -31,8 +31,8 @@ public abstract class ActiveSkill
     }
 
     /// <summary>
-    /// 尝试施放：冷却就绪 + 条件满足 + 能量充足则生效并进入冷却（冷却受"冷却缩减"词缀缩放）。
-    /// 能量不足拒绝施放（LD §3.2：技能不可用 + 不扣费不重置冷却）。
+    /// 尝试施放：cooldownready + 条件满足 + energy充足则生效并entercooldown（cooldown受"cooldown缩减"affix缩放）。
+    /// energy不足reject施放（LD §3.2：skill不可用 + 不扣费不resetcooldown）。
     /// </summary>
     public bool TryUse(PlayerContext context)
     {
@@ -62,7 +62,7 @@ public abstract class ActiveSkill
     protected abstract void Apply(PlayerContext context);
 }
 
-/// <summary>Q：过载炮——对锁定目标造成 3× 火力直击伤害。</summary>
+/// <summary>Q：过载炮——对lock定target造成 3× firepower直击damage。</summary>
 public sealed class OverdriveCannon : ActiveSkill
 {
     public const float DamageMultiplier = 3f;
@@ -82,7 +82,7 @@ public sealed class OverdriveCannon : ActiveSkill
     }
 }
 
-/// <summary>E：护盾充能——立即回复 50% 护盾上限。</summary>
+/// <summary>E：shield boost——instant回复 50% shieldmax。</summary>
 public sealed class ShieldBurst : ActiveSkill
 {
     public ShieldBurst()

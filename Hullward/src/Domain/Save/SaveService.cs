@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace Hullward.Domain.Save;
 
-/// <summary>主角名称校验（存档唯一标识）：≤12 字，禁系统非法文件字符。</summary>
+/// <summary>主角名称validate（save唯一标识）：≤12 字，禁system非法文件字符。</summary>
 public static class SaveNameValidator
 {
     public const int MaxLength = 12;
@@ -18,8 +18,8 @@ public static class SaveNameValidator
 }
 
 /// <summary>
-/// 多文件制存档服务（UI 规格 v0.2 §3）：
-/// 每个存档独立文件 `saves/&lt;主角名&gt;.json`，主角名为唯一标识。
+/// 多文件制saveservice（UI spec v0.2 §3）：
+/// 每个save独立文件 `saves/&lt;主角名&gt;.json`，主角名为唯一标识。
 /// </summary>
 public sealed class SaveService
 {
@@ -34,7 +34,7 @@ public sealed class SaveService
 
     public string SavePathFor(string name) => Path.Combine(_directory, $"{name}.json");
 
-    /// <summary>写入（重名=覆盖，需调用方先检测）。</summary>
+    /// <summary>write入（重名=覆盖，需call方先检测）。</summary>
     public void Save(string name, SaveData data)
     {
         File.WriteAllText(SavePathFor(name), JsonSerializer.Serialize(data, Options));
@@ -50,7 +50,7 @@ public sealed class SaveService
         return JsonSerializer.Deserialize<SaveData>(File.ReadAllText(path));
     }
 
-    /// <summary>列出全部存档名（文件名去扩展名，仅用于展示）。</summary>
+    /// <summary>column出全部save名（文件名去extension名，仅用于展示）。</summary>
     public List<string> List()
     {
         return Directory.EnumerateFiles(_directory, "*.json")
@@ -62,7 +62,7 @@ public sealed class SaveService
 
     public bool Exists(string name) => File.Exists(SavePathFor(name));
 
-    /// <summary>删除存档（调用方需二次确认）。</summary>
+    /// <summary>deletesave（call方需二次confirm）。</summary>
     public bool Delete(string name)
     {
         string path = SavePathFor(name);

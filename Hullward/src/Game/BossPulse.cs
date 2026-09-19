@@ -3,9 +3,9 @@ using Godot;
 namespace Hullward.Game;
 
 /// <summary>
-/// Boss 湮灭脉冲（LD Sprint 3 §4.3）：范围 AOE，预兆后闪避。
-/// 预兆期 0.9s 红圈由内向外扩大 → 爆炸对半径内玩家造成伤害（护盾/耐久）。
-/// 纯表现层节点；伤害数值由调用方（Boss 意图执行）按 Boss 火力提供。
+/// Boss 湮灭pulse（LD Sprint 3 §4.3）：range AOE，预兆后闪避。
+/// 预兆期 0.9s 红圈由内向外扩大 → 爆炸对半径内玩家造成damage（shield/hull）。
+/// 纯presentationnode；damagestat由call方（Boss 意图执row）按 Boss firepower提供。
 /// </summary>
 public partial class BossPulse : Node2D
 {
@@ -43,12 +43,12 @@ public partial class BossPulse : Node2D
 
     public override void _Draw()
     {
-        // 预兆圈：内圈已覆盖区域（淡红填充），外圈收缩（即将爆炸范围）
+        // 预兆圈：内圈已覆盖区域（淡红填充），外圈收缩（即将爆炸range）
         float coverRadius = Radius * _grow;
         Color inner = new Color(1f, 0.2f, 0.25f, 0.35f * _grow);
         DrawCircle(Vector2.Zero, coverRadius, inner);
         DrawArc(Vector2.Zero, Radius, 0f, Mathf.Tau, 48, new Color(1f, 0.35f, 0.4f, 0.9f), 3f);
-        // 剩余时间环（越细越接近爆炸）
+        // 剩余time环（越细越接近爆炸）
         float remain = Mathf.Max(0f, _life / WarnTime);
         DrawArc(Vector2.Zero, Radius + 12f, 0f, Mathf.Tau * (1f - remain), 48, new Color(1f, 0.9f, 0.4f, 0.8f), 2f);
     }

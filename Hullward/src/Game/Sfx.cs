@@ -3,10 +3,10 @@ using Godot;
 namespace Hullward.Game;
 
 /// <summary>
-/// 音效与 BGM 管理器（Sprint 4 线 A · LD 规范 §4）。
-/// 全部素材 CC0（Kenney），引用记录见 assets/引用记录表.md。
-/// 每个事件独立 AudioStreamPlayer；射击双资源轮换避免叠爆音。
-/// 默认 ProcessMode=Pausable：Esc 暂停时音频一并静止（LD 规范）。
+/// sfx与 BGM 管理器（Sprint 4 线 A · LD norms §4）。
+/// 全部素材 CC0（Kenney），引用record见 assets/引用record表.md。
+/// 每个event独立 AudioStreamPlayer；射击双资源rotateavoidance叠爆音。
+/// default ProcessMode=Pausable：Esc pause时音频一并静止（LD norms）。
 /// </summary>
 public partial class Sfx : Node
 {
@@ -24,7 +24,7 @@ public partial class Sfx : Node
 
     public override void _Ready()
     {
-        // 显式 Pausable：Main 为 Always（暂停时收 Esc），Sfx 若不设会继承 Always 导致暂停时 BGM 不停
+        // 显式 Pausable：Main 为 Always（pause时收 Esc），Sfx 若不设会inheritance Always 导致pause时 BGM 不停
         ProcessMode = ProcessModeEnum.Pausable;
 
         _shot1 = Make("res://assets/audio/sfx/shot_1.ogg", 0.35f);
@@ -36,8 +36,8 @@ public partial class Sfx : Node
         _click = Make("res://assets/audio/sfx/click.ogg", 0.25f);
         _bossWarn = Make("res://assets/audio/sfx/boss_warn.mp3", 0.6f); // 0.45→0.6：用户反馈阶段警示不明显
 
-        // 双 BGM：休闲（主菜单/星图/母舰）与战斗（迭代 26 v0.6.26）
-        // 0.2 音量；播放完毕自动从头
+        // 双 BGM：休闲（main menu/starmap/mothership）与combat（iteration 26 v0.6.26）
+        // 0.2 音量；播放完毕auto从头
         _bgmLounge = Make("res://assets/audio/bgm/theme.mp3", 0.2f);
         _bgmLounge.Finished += () => _bgmLounge.Play();
         _bgmBattle = Make("res://assets/audio/bgm/battle.mp3", 0.2f);
@@ -70,7 +70,7 @@ public partial class Sfx : Node
     public void PlayClick() => _click.Play();
     public void PlayBossWarn() => _bossWarn.Play();
 
-    /// <summary>切到战斗 BGM（The Arplands，upbeat 8-bit）。</summary>
+    /// <summary>切到combat BGM（The Arplands，upbeat 8-bit）。</summary>
     public void PlayBattleBgm()
     {
         _bgmLounge.Stop();

@@ -5,19 +5,19 @@ using Hullward.Domain.Ships;
 namespace Hullward.Domain.Enemies;
 
 /// <summary>
-/// 暗骸敌舰抽象基类（ULO2 多态核心：行为差异由子类 UpdateBehavior 提供，杜绝 if-else 分支）。
-/// 位置与耐久均为纯 C# 域数据，表现层节点仅做渲染桥接。
+/// 暗骸enemy shipabstraction基类（ULO2 polymorphism核心：row为差异由子类 UpdateBehavior 提供，杜绝 if-else branch）。
+/// position与hull均为纯 C# 域data，presentationnode仅做renderbridge。
 /// </summary>
 public abstract class EnemyShip : ShipBase, ITargetable
 {
-    /// <summary>域层位置（世界坐标，表现层每帧同步到节点）。</summary>
+    /// <summary>域层position（世界position，presentation每帧sync到node）。</summary>
     public float X { get; set; }
     public float Y { get; set; }
 
-    /// <summary>行为速度上限（子类定）。</summary>
+    /// <summary>row为speedmax（子类定）。</summary>
     protected abstract float BehaviorSpeed { get; }
 
-    /// <summary>索敌触发距离（玩家进入后开始追击/攻击）。</summary>
+    /// <summary>索敌triggerdistance（玩家enter后start追击/攻击）。</summary>
     protected abstract float AggroRange { get; }
 
     public const float WorldHalfWidth = 950f;
@@ -28,12 +28,12 @@ public abstract class EnemyShip : ShipBase, ITargetable
     {
     }
 
-    /// <summary>多态行为入口：子类实现各自战术。</summary>
+    /// <summary>polymorphismrow为入口：子类implement各自战术。</summary>
     public abstract void UpdateBehavior(float dt, float playerX, float playerY);
 
     /// <summary>
-    /// 远程开火入口（LD Sprint 3 §4.2：远程炮艇弹幕）。
-    /// 基类默认不开火（近战敌舰）；子类覆写：冷却到且射程内返回 true 并给出弹道目标点。
+    /// remote开火入口（LD Sprint 3 §4.2：gunboat弹幕）。
+    /// 基类default不开火（近战enemy ship）；子类覆write：cooldown到且射程内back true 并给出弹道target点。
     /// </summary>
     public virtual bool TryFire(float dt, float playerX, float playerY, out float targetX, out float targetY)
     {
@@ -42,7 +42,7 @@ public abstract class EnemyShip : ShipBase, ITargetable
         return false;
     }
 
-    /// <summary>按星域等级缩放强度（Zone4 = 2.5× 耐久 / 1.75× 火力）。</summary>
+    /// <summary>按星域level缩放强度（Zone4 = 2.5× hull / 1.75× firepower）。</summary>
     public void ScaleForZone(int zoneLevel)
     {
         if (zoneLevel < 1)
@@ -56,7 +56,7 @@ public abstract class EnemyShip : ShipBase, ITargetable
         Firepower *= dmgMult;
     }
 
-    /// <summary>向目标方向移动（子类调用）。</summary>
+    /// <summary>向targetdirection移动（子类call）。</summary>
     protected void MoveToward(float tx, float ty, float speed, float dt)
     {
         float dx = tx - X;
@@ -85,7 +85,7 @@ public abstract class EnemyShip : ShipBase, ITargetable
     }
 }
 
-/// <summary>侦察机：高速直线追击，轻甲轻火。</summary>
+/// <summary>recon：high速直线追击，轻甲轻火。</summary>
 public sealed class ReconDrone : EnemyShip
 {
     protected override float BehaviorSpeed => 190f;
@@ -106,7 +106,7 @@ public sealed class ReconDrone : EnemyShip
     }
 }
 
-/// <summary>劫掠舰：保持中距环形游走，中等火力。</summary>
+/// <summary>劫掠舰：保持medium距环形游走，medium等firepower。</summary>
 public sealed class RaiderShip : EnemyShip
 {
     protected override float BehaviorSpeed => 130f;
@@ -141,7 +141,7 @@ public sealed class RaiderShip : EnemyShip
         }
         else
         {
-            // 距离合适：切向环绕
+            // distance合适：切向环绕
             float tangentX = -(playerY - Y) * _orbitDir;
             float tangentY = (playerX - X) * _orbitDir;
             X += tangentX / dist * BehaviorSpeed * dt;
@@ -173,8 +173,8 @@ public sealed class HeavyFortress : EnemyShip
 }
 
 /// <summary>
-/// 远程炮艇（LD Sprint 3 §4.2 第 2 章新敌人）：保持中距环形游走，射程内周期性弹幕。
-/// 行为差异 = 多态扩展（TryFire 覆写），近战敌舰不受影响。
+/// gunboat（LD Sprint 3 §4.2 第 2 章新enemy）：保持medium距环形游走，射程内周期性弹幕。
+/// row为差异 = polymorphismextension（TryFire 覆write），近战enemy ship不受impact。
 /// </summary>
 public sealed class GunboatShip : EnemyShip
 {
@@ -239,30 +239,30 @@ public sealed class GunboatShip : EnemyShip
 }
 
 /// <summary>
-/// 坍缩禁区守卫（Boss，LD Sprint 3 §4.3 三阶段技能）：
-/// 阶段 1（100%–60%）相位冲锋 + 召唤 2 侦察机 + 点射 3 连；
-/// 阶段 2（60%–30%）新增湮灭脉冲 AOE，技能频率 +20%；
-/// 阶段 3（30%–0%）狂暴：冲锋频率提升、湮灭脉冲双发、召唤突击舰。
-/// 状态机与技能调度全在域层（可单测阶段切换血量条件）；表现层执行实体/视觉。
+/// collapse禁区守卫（Boss，LD Sprint 3 §4.3 三phaseskill）：
+/// phase 1（100%–60%）相位charge + spawn 2 recon + burst 3 连；
+/// phase 2（60%–30%）new湮灭pulse AOE，skillrate +20%；
+/// phase 3（30%–0%）enrage：chargerate提升、湮灭pulse双发、spawnassault ship。
+/// state machine与skillschedule全在域层（可单测phaseswitch血量条件）；presentation执rowentity/视觉。
 /// </summary>
 public sealed class GuardianBoss : EnemyShip
 {
     protected override float BehaviorSpeed => 42f;
     protected override float AggroRange => 950f;
 
-    // 阶段阈值（LD §4.3）
+    // phasethreshold（LD §4.3）
     public const float Phase2Threshold = 0.6f; // 60%
     public const float Phase3Threshold = 0.3f; // 30%
 
     private BossPhase _phase = BossPhase.Phase1;
 
-    // 技能冷却（秒）
+    // skillcooldown（秒）
     private float _chargeCd = 5f;
     private float _summonCd = 14f;
     private float _pointCd = 3f;
     private float _pulseCd = 8f;
 
-    // 冲锋状态（域层移动，表现层碰撞判定路径伤害）
+    // chargestate（域层移动，presentationcollision判定pathdamage）
     private bool _charging;
     private float _chargeTimer;
     private float _chargeDirX;
@@ -274,19 +274,19 @@ public sealed class GuardianBoss : EnemyShip
     {
     }
 
-    /// <summary>当前阶段（按耐久比例实时判定）。</summary>
+    /// <summary>currentphase（按hull比例real-time判定）。</summary>
     public BossPhase Phase => _phase;
 
-    /// <summary>是否处于相位冲锋中（表现层据此做路径碰撞伤害与视觉）。</summary>
+    /// <summary>是否处于相位chargemedium（presentation据此做pathcollisiondamage与视觉）。</summary>
     public bool IsCharging => _charging;
 
-    /// <summary>耐久比例（0-1）。</summary>
+    /// <summary>hull比例（0-1）。</summary>
     public float HullPct => MaxHull > 0 ? (float)Hull / MaxHull : 0f;
 
-    /// <summary>阶段切换事件（表现层弹提示/变色；单测验证阈值）。</summary>
+    /// <summary>phaseswitchevent（presentation弹提示/变色；单测verifythreshold）。</summary>
     public event Action<BossPhase>? PhaseChanged;
 
-    /// <summary>阶段判定并触发切换事件（每次调用幂等，仅跨阈值时触发一次）。</summary>
+    /// <summary>phase判定并triggerswitchevent（每次callidempotent，仅跨threshold时trigger一次）。</summary>
     public BossPhase UpdatePhase()
     {
         BossPhase next = HullPct > Phase2Threshold
@@ -312,7 +312,7 @@ public sealed class GuardianBoss : EnemyShip
 
         if (_charging)
         {
-            // 相位冲锋：沿锁定方向高速直线冲撞，路径持续伤害由表现层按 IsCharging 判定
+            // 相位charge：沿lock定directionhigh速直线冲撞，pathdurationdamage由presentation按 IsCharging 判定
             _chargeTimer -= dt;
             X += _chargeDirX * _chargeSpeed * dt;
             Y += _chargeDirY * _chargeSpeed * dt;
@@ -328,9 +328,9 @@ public sealed class GuardianBoss : EnemyShip
     }
 
     /// <summary>
-    /// 技能调度器（每帧调用，至多返回一个意图）：
-    /// 优先级 脉冲 &gt; 冲锋 &gt; 召唤 &gt; 点射；冷却按阶段频率修正（P2 ×1.2，P3 ×1.6）。
-    /// 纯域层逻辑，意图由表现层执行。
+    /// skillschedule器（每帧call，至多back一个意图）：
+    /// priority pulse &gt; charge &gt; spawn &gt; burst；cooldown按phaseratecorrection（P2 ×1.2，P3 ×1.6）。
+    /// 纯域层逻辑，意图由presentation执row。
     /// </summary>
     public BossIntent TickSkills(float dt, float playerX, float playerY)
     {
@@ -347,7 +347,7 @@ public sealed class GuardianBoss : EnemyShip
         _pointCd -= dt * freqMult;
         _pulseCd -= dt * freqMult;
 
-        // 阶段 2 起：湮灭脉冲（P3 双发）
+        // phase 2 起：湮灭pulse（P3 双发）
         if (_phase >= BossPhase.Phase2 && _pulseCd <= 0f)
         {
             int bursts = _phase == BossPhase.Phase3 ? 2 : 1;
@@ -355,7 +355,7 @@ public sealed class GuardianBoss : EnemyShip
             return new BossIntent(BossSkillKind.AnnihilationPulse, bursts);
         }
 
-        // 相位冲锋（P3 冷却更短 → 频率提升）
+        // 相位charge（P3 cooldown更短 → rate提升）
         if (_chargeCd <= 0f)
         {
             float dx = playerX - X;
@@ -378,14 +378,14 @@ public sealed class GuardianBoss : EnemyShip
             return new BossIntent(BossSkillKind.PhaseCharge, 0);
         }
 
-        // 召唤（P1/P2 侦察机 ×2，P3 突击舰，由表现层按 Phase 决定种类）
+        // spawn（P1/P2 recon ×2，P3 assault ship，由presentation按 Phase 决定种类）
         if (_summonCd <= 0f)
         {
             _summonCd = _phase == BossPhase.Phase3 ? 12f : 14f;
             return new BossIntent(BossSkillKind.SummonScouts, 2);
         }
 
-        // 点射 3 连弹幕
+        // burst 3 连弹幕
         if (_pointCd <= 0f)
         {
             _pointCd = 3f;

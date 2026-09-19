@@ -5,8 +5,8 @@ using Godot;
 namespace Hullward.Game;
 
 /// <summary>
-/// 战斗 HUD（LD v0.6.0 §3 布局）：顶部栏 / 左下雷达+状态条+资源 / 右侧任务面板 / 底部中央 Q·E 技能槽+能量条 / 右下船体信息。
-/// 表现层，不持有战斗状态；数据由 Main 每帧推入。
+/// combat HUD（LD v0.6.0 §3 布局）：顶部栏 / 左下雷达+state条+资源 / 右侧missionpanel / 底部medium央 Q·E skill槽+energy条 / 右下hullinfo。
+/// presentation，不持有combatstate；data由 Main 每帧推入。
 /// </summary>
 public partial class HUD : CanvasLayer
 {
@@ -23,17 +23,17 @@ public partial class HUD : CanvasLayer
     private Label _hullText = null!;
     private Label _resourceLabel = null!;
 
-    // 右侧任务面板
+    // 右侧missionpanel
     private PanelContainer _missionPanel = null!;
     private Label _missionLabel = null!;
 
-    // 底部中央技能槽
+    // 底部medium央skill槽
     private SkillSlot _slotQ = null!;
     private SkillSlot _slotE = null!;
     private ProgressBar _energyBar = null!;
     private Label _energyText = null!;
 
-    // 右下船体
+    // 右下hull
     private Label _shipLabel = null!;
 
     // 飘字（保留）
@@ -81,7 +81,7 @@ public partial class HUD : CanvasLayer
         _topBar.AddChild(row);
         AddChild(_topBar);
 
-        // 波次标题独立居中于屏幕顶部（不参与 HBox 三列布局，避免被左右列挤偏）
+        // wavetitle独立居medium于屏幕顶部（不参与 HBox 三column布局，avoidance被左右column挤偏）
         _waveLabel = MakeLabel(13, "#8fa3c8");
         _waveLabel.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
         _waveLabel.OffsetLeft = -200; _waveLabel.OffsetRight = 200; _waveLabel.OffsetTop = 18;
@@ -209,7 +209,7 @@ public partial class HUD : CanvasLayer
         }
     }
 
-    /// <summary>战斗帧数据推送（迭代 19 替代旧 UpdateStatus 长串）。</summary>
+    /// <summary>combat帧datapush（iteration 19 替代旧 UpdateStatus 长串）。</summary>
     public void UpdateBattle(BattleHudData d)
     {
         _taskLabel.Text = d.TaskTitle;
@@ -239,10 +239,10 @@ public partial class HUD : CanvasLayer
         _radar.UpdateRadar(d.PlayerPos, d.Hostiles, d.RadarRange);
     }
 
-    /// <summary>旧接口保留兼容（不再使用，顶部长串由 UpdateBattle 取代）。</summary>
+    /// <summary>旧interface保留兼容（不再using，顶部长串由 UpdateBattle 取代）。</summary>
     public void UpdateStatus(string text) { }
 
-    /// <summary>屏幕中央浮动提示（3 秒后淡出）。</summary>
+    /// <summary>屏幕medium央浮动提示（3 秒后淡出）。</summary>
     public void ShowToast(string text)
     {
         _toast.Text = text;
@@ -252,10 +252,10 @@ public partial class HUD : CanvasLayer
         _toast.Position = new Vector2((GetViewport().GetVisibleRect().Size.X - _toast.Size.X) / 2f, 64f);
     }
 
-    /// <summary>雷达上的敌舰点。</summary>
+    /// <summary>雷达上的enemy ship点。</summary>
     public readonly record struct RadarBlip(Vector2 Pos, bool Elite, bool Boss);
 
-    /// <summary>技能槽（64×64，冷却灰化+剩余秒）。</summary>
+    /// <summary>skill槽（64×64，cooldown灰化+剩余秒）。</summary>
     private sealed partial class SkillSlot : PanelContainer
     {
         private readonly Label _icon;
@@ -330,7 +330,7 @@ public partial class HUD : CanvasLayer
         }
     }
 
-    /// <summary>雷达小地图（自绘：中心玩家 + 敌舰点）。</summary>
+    /// <summary>雷达小地图（自绘：medium心玩家 + enemy ship点）。</summary>
     private sealed partial class RadarView : Control
     {
         private Vector2 _player;
@@ -355,7 +355,7 @@ public partial class HUD : CanvasLayer
             DrawLine(c - new Vector2(r, 0), c + new Vector2(r, 0), new Color(1f, 1f, 1f, 0.08f), 1f);
             DrawLine(c - new Vector2(0, r), c + new Vector2(0, r), new Color(1f, 1f, 1f, 0.08f), 1f);
 
-            // 玩家中心（白色三角/点）
+            // player center（白色三角/点）
             DrawCircle(c, 3.5f, Colors.White);
 
             foreach (var h in _hostiles)
@@ -371,7 +371,7 @@ public partial class HUD : CanvasLayer
     }
 }
 
-/// <summary>战斗 HUD 帧快照（Main → HUD）。</summary>
+/// <summary>combat HUD 帧snapshot（Main → HUD）。</summary>
 public sealed class BattleHudData
 {
     public string TaskTitle = "";

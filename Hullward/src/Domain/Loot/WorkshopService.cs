@@ -5,12 +5,12 @@ using Hullward.Domain.Ships;
 namespace Hullward.Domain.Loot;
 
 /// <summary>
-/// 空间站工坊（LD 空间站清单 §4）：
-/// 拆解（白1/蓝3/黄8/绿15/暗金不可拆）、洗练（黄+ 重 roll 词缀，费用 5×2^n 递增）、维修（按受损比例计合金）。
+/// 空间站workshop（LD 空间站清单 §4）：
+/// disassemble（白1/蓝3/黄8/绿15/暗金不可拆）、reroll（黄+ 重 roll affix，费用 5×2^n 递增）、repair（按受损比例计alloy）。
 /// </summary>
 public static class WorkshopService
 {
-    /// <summary>拆解回收合金（LD §4：白1/蓝3/黄8/绿15/暗金不可拆）。</summary>
+    /// <summary>disassemblesalvagealloy（LD §4：白1/蓝3/黄8/绿15/暗金不可拆）。</summary>
     public static int ScrapValue(ItemRarity rarity) => rarity switch
     {
         ItemRarity.Common => 1,
@@ -22,7 +22,7 @@ public static class WorkshopService
 
     public static bool CanDisassemble(ItemRarity rarity) => rarity != ItemRarity.Ancient;
 
-    /// <summary>拆解背包第 index 个模块：移除并回收合金。失败返回 false。</summary>
+    /// <summary>disassembleinventory第 index 个module：remove并salvagealloy。failback false。</summary>
     public static bool Disassemble(Inventory inventory, int index)
     {
         if (index < 0 || index >= inventory.Modules.Count)
@@ -41,10 +41,10 @@ public static class WorkshopService
         return true;
     }
 
-    /// <summary>是否可洗练：黄/绿（太古不可洗，LD §3.3）。</summary>
+    /// <summary>是否可reroll：黄/绿（太古不可洗，LD §3.3）。</summary>
     public static bool CanReroll(ModuleDrop drop) => drop.Rarity is ItemRarity.Rare or ItemRarity.Set;
 
-    /// <summary>洗练：扣费（费用递增）并重 roll 词缀。失败返回 false（不可洗/合金不足）。</summary>
+    /// <summary>reroll：扣费（费用递增）并重 roll affix。failback false（不可洗/alloy不足）。</summary>
     public static bool Reroll(Inventory inventory, int index, Random rng)
     {
         if (index < 0 || index >= inventory.Modules.Count)
@@ -65,7 +65,7 @@ public static class WorkshopService
         return true;
     }
 
-    /// <summary>维修费用：按受损比例计（缺失 1 点耐久 = 0.1 合金，向上取整，最低 1）。</summary>
+    /// <summary>repair费用：按受损比例计（缺失 1 点hull = 0.1 alloy，向上取整，最low 1）。</summary>
     public static int RepairCost(ShipBase ship)
     {
         int missing = ship.MaxHull - ship.Hull;
@@ -76,7 +76,7 @@ public static class WorkshopService
         return Math.Max(1, (int)Math.Ceiling(missing * 0.1f));
     }
 
-    /// <summary>维修：扣合金恢复耐久至满。失败返回 false（无损伤/合金不足）。</summary>
+    /// <summary>repair：扣alloyrecoveryhull至满。failback false（无损伤/alloy不足）。</summary>
     public static bool Repair(ShipBase ship, Inventory inventory)
     {
         int cost = RepairCost(ship);

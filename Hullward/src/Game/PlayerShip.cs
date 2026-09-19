@@ -7,9 +7,9 @@ using Hullward.Domain.Ships;
 namespace Hullward.Game;
 
 /// <summary>
-/// 玩家舰船（表现层）：WASD/方向键移动，主炮自动索敌开火（域层 TargetingSystem）。
-/// 船体属性来自域层 ShipBase（ScoutShip）：耐久/护盾/火力受模块装配影响。
-/// 技能位（迭代 4 接入 ActiveSkill）。
+/// 玩家ship（presentation）：WASD/direction键移动，主炮auto索敌开火（域层 TargetingSystem）。
+/// hullattribute来自域层 ShipBase（ScoutShip）：hull/shield/firepower受modulefitimpact。
+/// skill位（iteration 4 接入 ActiveSkill）。
 /// Sprint 4 线 A：视觉由方块占位替换为 CC0 像素船（Kenney Space Shooter Redux，按船型选纹理）。
 /// </summary>
 public partial class PlayerShip : CharacterBody2D
@@ -20,13 +20,13 @@ public partial class PlayerShip : CharacterBody2D
     [Export] public float WorldHalfWidth = 960f;
     [Export] public float WorldHalfHeight = 540f;
 
-    /// <summary>玩家船体（域层多态：轻巡/突击舰/战列舰/要塞舰，由 Main 按船坞选择注入）。</summary>
+    /// <summary>玩家hull（域层polymorphism：轻巡/assault ship/battleship/fortress，由 Main 按dockselect注入）。</summary>
     public ShipBase ShipStats { get; private set; } = new ScoutShip();
 
-    /// <summary>船坞切换后注入新船体（同一引用贯穿母舰/出战，装配与耐久即时共享）。</summary>
+    /// <summary>dockswitch后注入新hull（同一引用贯穿mothership/出战，fit与hull即时共享）。</summary>
     public void SetShip(ShipBase ship) => ShipStats = ship;
 
-    /// <summary>手动技能（拍板项）：Q 过载炮 / E 护盾充能。</summary>
+    /// <summary>manualskill（拍板项）：Q 过载炮 / E shield boost。</summary>
     public OverdriveCannon SkillQ { get; } = new();
     public ShieldBurst SkillE { get; } = new();
 
@@ -36,16 +36,16 @@ public partial class PlayerShip : CharacterBody2D
     private float _fireCooldown;
     private float _hitFlashTimer;
 
-    /// <summary>当前船体耐久（域层数据）。</summary>
+    /// <summary>currenthull（域层data）。</summary>
     public int Hull => ShipStats.Hull;
 
-    /// <summary>舰船被击毁（任务失败判定，由 Main 接管结算）。</summary>
+    /// <summary>ship被击毁（missionfail判定，由 Main 接管结算）。</summary>
     public event Action? Died;
 
-    /// <summary>主炮开火（音效：射击轮换）。</summary>
+    /// <summary>主炮开火（sfx：射击rotate）。</summary>
     public event Action? Fired;
 
-    /// <summary>玩家受击（音效：受击）。</summary>
+    /// <summary>玩家受击（sfx：受击）。</summary>
     public event Action? Damaged;
 
     public override void _Ready()
@@ -57,10 +57,10 @@ public partial class PlayerShip : CharacterBody2D
 
     public override void _PhysicsProcess(double delta)
     {
-        // 清理已击毁/释放的目标，避免访问 disposed 对象
+        // 清理已击毁/释放的target，avoidance访问 disposed object
         _targets.RemoveAll(t => t is GodotObject go && !GodotObject.IsInstanceValid(go));
 
-        // 方向键/WASD 移动（MVP 直接读键，避免 input map 配置风险）
+        // direction键/WASD 移动（MVP 直接read键，avoidance input map configrisk）
         Vector2 input = Vector2.Zero;
         if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left)) input.X -= 1f;
         if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right)) input.X += 1f;
@@ -69,14 +69,14 @@ public partial class PlayerShip : CharacterBody2D
         Velocity = input.Normalized() * MoveSpeed;
         MoveAndSlide();
 
-        // 世界边界（开发期像素原型：Clamp 到世界矩形）
+        // 世界boundary（开发期像素prototype：Clamp 到世界矩形）
         Position = new Vector2(
             Mathf.Clamp(Position.X, -WorldHalfWidth, WorldHalfWidth),
             Mathf.Clamp(Position.Y, -WorldHalfHeight, WorldHalfHeight));
 
         _fireCooldown -= (float)delta;
 
-        // 主炮自动索敌开火
+        // 主炮auto索敌开火
         ITargetable? target = _targeting.Acquire(_targets, Position.X, Position.Y);
         if (target != null && _fireCooldown <= 0f)
         {
@@ -84,7 +84,7 @@ public partial class PlayerShip : CharacterBody2D
             _fireCooldown = FireInterval / Math.Max(0.2f, ShipStats.FireRateMultiplier); // 词缀"急速供弹"
         }
 
-        // 受击闪红恢复
+        // 受击闪红recovery
         if (_hitFlashTimer > 0f)
         {
             _hitFlashTimer -= (float)delta;
@@ -94,7 +94,7 @@ public partial class PlayerShip : CharacterBody2D
             }
         }
 
-        // 能量回复（LD Sprint4 §3.2：战斗中 8/s、脱战 12/s；索敌列表有存活目标即战斗）
+        // energy regen（LD Sprint4 §3.2：combatmedium 8/s、脱战 12/s；索敌list有alivetarget即combat）
         bool inCombat = false;
         foreach (var t in _targets)
         {
@@ -106,11 +106,11 @@ public partial class PlayerShip : CharacterBody2D
         }
         ShipStats.RegenEnergy((float)delta, inCombat);
 
-        // 技能冷却
+        // skillcooldown
         SkillQ.Tick((float)delta);
         SkillE.Tick((float)delta);
 
-        // 受击减伤窗口递减（词缀"受击减伤"：受击后 2s）
+        // 受击damage reductionwindow递减（affix"受击damage reduction"：受击后 2s）
         ShipStats.TickTimers((float)delta);
     }
 
@@ -135,10 +135,10 @@ public partial class PlayerShip : CharacterBody2D
         }
     }
 
-    /// <summary>敌舰攻击入口：扣耐久（护盾先吸收）+ 闪红反馈；反伤镀层反弹近身伤害；归零重生。</summary>
+    /// <summary>enemy ship攻击入口：扣hull（shield先吸收）+ 闪红反馈；thorns镀层反弹近身damage；归零重生。</summary>
     public void TakeDamage(int damage, ITargetable? attacker = null)
     {
-        // 词缀"反伤镀层"：反弹近身伤害 % 给攻击者
+        // affix"thorns镀层"：反弹近身damage % 给攻击者
         if (attacker != null && ShipStats.ThornsPct > 0f)
         {
             int thorns = Math.Max(1, (int)(damage * ShipStats.ThornsPct));
@@ -159,7 +159,7 @@ public partial class PlayerShip : CharacterBody2D
         }
     }
 
-    /// <summary>由 Main 注入当前星域内的可索敌目标。</summary>
+    /// <summary>由 Main 注入current星域内的可索敌target。</summary>
     public void SetTargets(IEnumerable<ITargetable> targets)
     {
         _targets.Clear();
@@ -168,7 +168,7 @@ public partial class PlayerShip : CharacterBody2D
 
     private void FireAt(ITargetable target)
     {
-        // 词缀"致命一击/暴击增幅"：开火按暴击率判定，暴击伤害 = 火力 × 暴伤倍率
+        // affix"fatal一击/crit增幅"：开火按crit chance判定，crit damage = firepower × 暴伤倍率
         int damage = CombatCalculator.RollAttackDamage(ShipStats, _rng, out bool isCritical);
         var projectile = new Projectile
         {
@@ -195,9 +195,9 @@ public partial class PlayerShip : CharacterBody2D
     }
 
     /// <summary>
-    /// 玩家舰船视觉（Sprint 4 线 A）：CC0 像素船纹理按船型替换方块占位。
-    /// 画布为紧凑船体（99-112px 宽），按档位缩放控制显示尺寸：
-    /// 轻巡 33×25 / 突击 39×26 / 战列 44×34 / 要塞 54×41（档位越大体积差越明显）。
+    /// 玩家ship视觉（Sprint 4 线 A）：CC0 像素船纹理按船型替换方块占位。
+    /// canvas为紧凑hull（99-112px 宽），按档位缩放控制show尺寸：
+    /// 轻巡 33×25 / 突击 39×26 / 战column 44×34 / 要塞 54×41（档位越大体积差越明显）。
     /// </summary>
     private static Node2D MakeShipVisual(ShipBase ship)
     {

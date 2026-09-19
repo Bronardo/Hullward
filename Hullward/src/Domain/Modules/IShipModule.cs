@@ -2,7 +2,7 @@ using Hullward.Domain.Ships;
 
 namespace Hullward.Domain.Modules;
 
-/// <summary>模块类型（装配槽位类型）。</summary>
+/// <summary>module类型（fit slot位类型）。</summary>
 public enum ModuleType
 {
     Weapon,
@@ -12,18 +12,18 @@ public enum ModuleType
 }
 
 /// <summary>
-/// 舰船模块接口（ULO2：接口多态锚点）。
-/// 实现类：WeaponModule / ArmorModule / PowerModule / SpecialModule（迭代 4 装配系统完整接入）。
+/// shipmoduleinterface（ULO2：interfacepolymorphism锚点）。
+/// implement类：WeaponModule / ArmorModule / PowerModule / SpecialModule（iteration 4 fitsystem完整接入）。
 /// </summary>
 public interface IShipModule
 {
     ModuleType Type { get; }
     string Name { get; }
-    /// <summary>装配生效时对船体属性施加加成。</summary>
+    /// <summary>fit生效时对hullattribute施加bonus。</summary>
     void ApplyEffect(ShipBase ship);
 }
 
-/// <summary>武器模块：火力/攻速/暴击（词缀"强化炮击/急速供弹/致命一击/暴击增幅"并入加成）。</summary>
+/// <summary>weaponmodule：firepower/attack speed/crit（affix"reinforcement炮击/急速供弹/fatal一击/crit增幅"并入bonus）。</summary>
 public sealed class WeaponModule : IShipModule
 {
     public ModuleType Type => ModuleType.Weapon;
@@ -57,7 +57,7 @@ public sealed class WeaponModule : IShipModule
     }
 }
 
-/// <summary>装甲模块：护盾/耐久/抗性/减伤/反伤（词缀"护盾扩容/船体加固/全向抗性/受击减伤/反伤镀层"并入加成）。</summary>
+/// <summary>armormodule：shield/hull/抗性/damage reduction/thorns（affix"shieldscale out/hull加固/全向抗性/受击damage reduction/thorns镀层"并入bonus）。</summary>
 public sealed class ArmorModule : IShipModule
 {
     public ModuleType Type => ModuleType.Armor;
@@ -97,19 +97,19 @@ public sealed class ArmorModule : IShipModule
     }
 }
 
-/// <summary>能源模块：能量条/技能系加成（LD Sprint4 §3.2：能源扩容/快速充能/节能模块/冷却缩减；过载缓冲由技能侧消费）。</summary>
+/// <summary>能源module：energy条/skill系bonus（LD Sprint4 §3.2：能源scale out/快速charge/节能module/cooldown缩减；过载缓冲由skill侧消费）。</summary>
 public sealed class PowerModule : IShipModule
 {
     public ModuleType Type => ModuleType.Power;
     public string Name { get; }
     public float OverdriveBonus { get; }
-    /// <summary>能源扩容：能量上限 +%（LD：8-12 / 暗金 25-30）。</summary>
+    /// <summary>能源scale out：max energy +%（LD：8-12 / 暗金 25-30）。</summary>
     public float MaxEnergyPercent { get; }
-    /// <summary>快速充能：能量回复 +%（LD：8-12 / 暗金 25-30）。</summary>
+    /// <summary>快速charge：energy regen +%（LD：8-12 / 暗金 25-30）。</summary>
     public float EnergyRegenPercent { get; }
-    /// <summary>节能模块：Q/E 技能能耗 -%（LD：5-8 / 暗金 15-20）。</summary>
+    /// <summary>节能module：Q/E skillenergy cost -%（LD：5-8 / 暗金 15-20）。</summary>
     public float SkillCostPercent { get; }
-    /// <summary>冷却缩减：技能冷却 -%（LD：5-8 / 暗金 15-20）。</summary>
+    /// <summary>cooldown缩减：skillcooldown -%（LD：5-8 / 暗金 15-20）。</summary>
     public float CooldownPercent { get; }
 
     public PowerModule(string name, float overdriveBonus = 0f, float maxEnergyPercent = 0f, float energyRegenPercent = 0f, float skillCostPercent = 0f, float cooldownPercent = 0f)
@@ -140,11 +140,11 @@ public sealed class PowerModule : IShipModule
         {
             ship.AddCooldownReduction(CooldownPercent);
         }
-        // 过载缓冲：过载炮伤害加成由技能侧读取（OverdriveBonus 在 ActiveSkill 层消费）
+        // 过载缓冲：过载炮damagebonus由skill侧read取（OverdriveBonus 在 ActiveSkill 层消费）
     }
 }
 
-/// <summary>特殊模块：寻宝增效等（词缀"打捞增效"生效）。</summary>
+/// <summary>特殊module：寻宝增效等（affix"打捞增效"生效）。</summary>
 public sealed class SpecialModule : IShipModule
 {
     public ModuleType Type => ModuleType.Special;

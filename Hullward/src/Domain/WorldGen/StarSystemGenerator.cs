@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Hullward.Domain.WorldGen;
 
-/// <summary>星域类型：风险递进，产出与爆船惩罚对应策划 §3.4。</summary>
+/// <summary>星域类型：risk递进，产出与爆船惩罚对应策划 §3.4。</summary>
 public enum StarSystemType
 {
     Safe,        // 安全星域：白/蓝、少量黄；拾取保留
@@ -12,7 +12,7 @@ public enum StarSystemType
     CollapseZone // 坍缩禁区：太古唯一产出；拾取全丢
 }
 
-/// <summary>单个星域节点：类型、功能点（空间站/矿点）、跃迁门连接。</summary>
+/// <summary>单个星域node：类型、feature点（空间站/矿点）、跃迁门connection。</summary>
 public sealed class StarSystem
 {
     public int Id { get; }
@@ -31,13 +31,13 @@ public sealed class StarSystem
 }
 
 /// <summary>
-/// 星域生成器（纯 C# 域层，可单测）。
+/// 星域generator（纯 C# 域层，可单测）。
 /// 规则：
 ///  1) 数量至少 4；
-///  2) 至少 1 个安全星域且必须带空间站；
-///  3) 恰好 1 个坍缩禁区（置于末段）；
-///  4) 其余按 安全/争议/深空 分布；
-///  5) 跃迁门成环连接，保证全图连通。
+///  2) 至少 1 个safe星域且必须带空间站；
+///  3) 恰好 1 个collapse禁区（置于末段）；
+///  4) 其余按 safe/争议/deep space distribution；
+///  5) 跃迁门成环connection，保证全图连通。
 /// </summary>
 public sealed class StarSystemGenerator
 {
@@ -57,13 +57,13 @@ public sealed class StarSystemGenerator
 
         var systems = new List<StarSystem>(count);
 
-        // 1) 安全区（首个必为安全区，作为起始站）
+        // 1) safe区（首个必为safe区，作为起始站）
         systems.Add(CreateSystem(0, StarSystemType.Safe, hasStation: true));
 
-        // 2) 坍缩禁区固定为最后一个
+        // 2) collapse禁区fixed为finally一个
         int collapseIndex = count - 1;
 
-        // 3) 中间段分布：安全 30% / 争议 45% / 深空 25%
+        // 3) medium间段distribution：safe 30% / 争议 45% / deep space 25%
         for (int i = 1; i < collapseIndex; i++)
         {
             double roll = _random.NextDouble();
@@ -79,7 +79,7 @@ public sealed class StarSystemGenerator
             systems.Add(CreateSystem(i, type, hasStation, hasMining));
         }
 
-        // 4) 禁区：无空间站，可带高价值矿点
+        // 4) 禁区：无空间站，可带highvalues矿点
         systems.Add(CreateSystem(collapseIndex, StarSystemType.CollapseZone,
             hasStation: false, hasMining: _random.NextDouble() < 0.6));
 

@@ -3,10 +3,10 @@ using System;
 namespace Hullward.Domain.Enemies;
 
 /// <summary>
-/// 虫群（第 3 章·深空 新增）：高速蛇形逼近，极脆低火，
-/// 用数量淹没防线 —— 章节新敌人的多态扩展（ULO2 证据增量）。
-/// Sprint 4 线 B1：补充"群体冲锋"行为——每只虫按个体随机相位周期性进入
-/// 冲锋态（直冲玩家、2.4× 速度、0.7s 持续），整体呈现波次冲锋感。
+/// swarm（第 3 章·deep space new）：high速蛇形逼近，极脆low火，
+/// 用数量淹没防线 —— sector新enemy的polymorphismextension（ULO2 证据增量）。
+/// Sprint 4 线 B1：补充"群体charge"row为——每只虫按个体random相位周期性enter
+/// charge态（直冲玩家、2.4× speed、0.7s duration），整体呈现wavecharge感。
 /// </summary>
 public sealed class SwarmDrone : EnemyShip
 {
@@ -17,7 +17,7 @@ public sealed class SwarmDrone : EnemyShip
     private const float SwayAmplitude = 140f;
     private const float SwayFrequency = 3.2f;
 
-    // 群体冲锋（Sprint 4 线 B1）
+    // 群体charge（Sprint 4 线 B1）
     private const float ChargeSpeedMult = 2.4f;
     private const float ChargeDuration = 0.7f;
     private const float MinChargeCooldown = 2.5f;
@@ -27,17 +27,17 @@ public sealed class SwarmDrone : EnemyShip
     private float _chargeTimer;
     private float _chargeCooldown;
 
-    /// <summary>是否处于冲锋态（域层可测）。</summary>
+    /// <summary>是否处于charge态（域层可测）。</summary>
     public bool IsCharging => _charging;
 
-    /// <summary>距下次冲锋剩余秒数（域层可测：个体错开）。</summary>
+    /// <summary>距下次charge剩余秒数（域层可测：个体错开）。</summary>
     public float ChargeCountdown => _chargeCooldown;
 
     public SwarmDrone() : this(new Random())
     {
     }
 
-    /// <param name="rng">随机源（测试注入固定 seed 获得确定性相位）。</param>
+    /// <param name="rng">random源（test注入fixed seed 获得deterministic相位）。</param>
     public SwarmDrone(Random rng)
         : base("虫群", hull: 18, shield: 0, armor: 0, firepower: 3f)
     {
@@ -63,7 +63,7 @@ public sealed class SwarmDrone : EnemyShip
             return;
         }
 
-        // 冲锋态：直冲玩家（无摆动），0.7s 后退出
+        // charge态：直冲玩家（无摆动），0.7s 后exit
         if (_charging)
         {
             X += dx / dist * BehaviorSpeed * ChargeSpeedMult * dt;
@@ -77,7 +77,7 @@ public sealed class SwarmDrone : EnemyShip
             return;
         }
 
-        // 非冲锋：蛇形逼近；冷却到 0 触发下一次冲锋
+        // 非charge：蛇形逼近；cooldown到 0 trigger下一次charge
         _chargeCooldown -= dt;
         if (_chargeCooldown <= 0f)
         {
@@ -89,7 +89,7 @@ public sealed class SwarmDrone : EnemyShip
         // 直线逼近 + 垂直摆动（蛇形），相位推进
         _phase += dt * SwayFrequency;
 
-        // 法向偏移：朝玩家行进方向侧向摆动
+        // 法向偏移：朝玩家row进direction侧向摆动
         float nx = -dy / dist;
         float ny = dx / dist;
         float sway = MathF.Sin(_phase) * SwayAmplitude * dt;
