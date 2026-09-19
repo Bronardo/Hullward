@@ -87,7 +87,7 @@ public partial class HUD : CanvasLayer
     {
         var box = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         box.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
-        box.OffsetLeft = 12; box.OffsetTop = -180; box.OffsetRight = -8; box.OffsetBottom = -12;
+        box.OffsetLeft = 12; box.OffsetTop = -240; box.OffsetRight = -8; box.OffsetBottom = -12;
         box.AddThemeConstantOverride("separation", 4);
 
         _radar = new RadarView { CustomMinimumSize = new Vector2(120, 120), MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -123,8 +123,8 @@ public partial class HUD : CanvasLayer
     private void BuildSkillBar()
     {
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
-        row.OffsetTop = -110; row.OffsetBottom = -12;
+        row.SetAnchorsPreset(Control.LayoutPreset.BottomWide);
+        row.OffsetLeft = 0; row.OffsetRight = 0; row.OffsetTop = -110; row.OffsetBottom = -12;
         row.Alignment = BoxContainer.AlignmentMode.Center;
         row.AddThemeConstantOverride("separation", 10);
 
